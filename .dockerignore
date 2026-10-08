@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+
+npm-debug.log*
+yarn-error.log*
+
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+Dockerfile
+.dockerignore
+README.md
+
+# Source maps are large, and a production image should not be shipping the
+# original sources back to the browser anyway.
+*.tsbuildinfo
