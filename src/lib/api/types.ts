@@ -149,6 +149,34 @@ export interface VehicleCreate {
 
 export type VehicleUpdate = Partial<VehicleCreate>;
 
+/* ------------------------------------------------------- service requests -- */
+
+export interface ServiceRequest {
+  id: string;
+  customer_id: string;
+  vehicle_id: string | null;
+  title: string;
+  description: string | null;
+  priority: string;
+  status: string;
+  service_advisor_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ServiceRequestCreate {
+  customer_id: string;
+  title: string;
+  description?: string | null;
+  priority?: string;
+  vehicle_id?: string | null;
+  service_advisor_notes?: string | null;
+}
+
+export type ServiceRequestUpdate = Partial<Omit<ServiceRequestCreate, "customer_id">> & {
+  status?: string;
+};
+
 /* ----------------------------------------------------------- notifications -- */
 
 export interface Notification {

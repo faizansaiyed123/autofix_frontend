@@ -11,6 +11,9 @@ import type {
   CustomerUpdate,
   MileageRecord,
   Paginated,
+  ServiceRequest,
+  ServiceRequestCreate,
+  ServiceRequestUpdate,
   Vehicle,
   VehicleCreate,
   VehicleStatus,
@@ -40,5 +43,16 @@ export const vehiclesApi = {
   mileage: (id: string) => api.get<MileageRecord[]>(`/vehicles/${id}/mileage`),
   addMileage: (id: string, body: { mileage: number; source?: string; notes?: string | null }) =>
     api.post<MileageRecord>(`/vehicles/${id}/mileage`, body),
+};
+
+export const serviceRequestsApi = {
+  list: (query?: Query) => api.get<Paginated<ServiceRequest>>("/service_requests/", query),
+  get: (id: string) => api.get<ServiceRequest>(`/service_requests/${id}`),
+  create: (body: ServiceRequestCreate) => api.post<ServiceRequest>("/service_requests/", body),
+  update: (id: string, body: ServiceRequestUpdate) =>
+    api.patch<ServiceRequest>(`/service_requests/${id}`, body),
+  remove: (id: string) => api.delete<void>(`/service_requests/${id}`),
+  setStatus: (id: string, status: string) =>
+    api.patch<ServiceRequest>(`/service_requests/${id}/status`, undefined, { status }),
 };
 
