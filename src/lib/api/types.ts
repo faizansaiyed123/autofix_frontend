@@ -1178,3 +1178,195 @@ export interface UserCreate {
   is_staff?: boolean;
 }
 
+/* ----------------------------------------------------------------- portal -- */
+
+export interface CustomerStatusView {
+  status: string;
+  label: string;
+  detail: string;
+  needs_customer: boolean;
+}
+
+export interface PortalVehicle {
+  id: string;
+  make: string;
+  model: string;
+  year: number | null;
+  color: string | null;
+  license_plate: string | null;
+  vin: string | null;
+  mileage: number | null;
+  status: string;
+  status_view: CustomerStatusView;
+}
+
+export interface PortalAppointment {
+  id: string;
+  vehicle_id: string;
+  vehicle_label: string;
+  service_type: string;
+  status: string;
+  status_view: CustomerStatusView;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  bay: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface PortalServiceRequest {
+  id: string;
+  vehicle_id: string | null;
+  title: string;
+  description: string | null;
+  priority: string;
+  status: string;
+  status_view: CustomerStatusView;
+  created_at: string;
+}
+
+export interface PortalEstimateLine {
+  id: string;
+  item_type: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+  status: string;
+  is_optional: boolean;
+  can_decide: boolean;
+}
+
+export interface PortalEstimate {
+  id: string;
+  estimate_number: string;
+  vehicle_id: string;
+  status: string;
+  status_view: CustomerStatusView;
+  valid_until: string | null;
+  is_expired: boolean;
+  total: number;
+  approved_total: number;
+  notes: string | null;
+  customer_notes: string | null;
+  decline_reason: string | null;
+  items: PortalEstimateLine[];
+  created_at: string;
+}
+
+export interface PortalInvoice {
+  id: string;
+  invoice_number: string;
+  vehicle_id: string;
+  status: string;
+  status_view: CustomerStatusView;
+  invoice_date: string;
+  due_date: string | null;
+  subtotal: number;
+  discount_amount: number;
+  tax_amount: number;
+  total: number;
+  amount_paid: number;
+  balance: number;
+  is_overdue: boolean;
+  days_overdue: number;
+  notes: string | null;
+}
+
+export interface PortalPayment {
+  id: string;
+  invoice_id: string;
+  invoice_number: string;
+  amount: number;
+  method: string;
+  status: string;
+  payment_date: string;
+  reference: string | null;
+}
+
+export interface PortalRepairOrder {
+  id: string;
+  ro_number: string;
+  vehicle_id: string;
+  status: string;
+  status_view: CustomerStatusView;
+  promised_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  delivered_at: string | null;
+  customer_notes: string | null;
+}
+
+export interface PortalInspection {
+  id: string;
+  vehicle_id: string;
+  status: string;
+  overall_condition: string;
+  mileage: number | null;
+  created_at: string;
+}
+
+export interface PortalVehicleHistory {
+  vehicle: PortalVehicle;
+  repair_orders: PortalRepairOrder[];
+  inspections: PortalInspection[];
+  invoices: PortalInvoice[];
+  service_requests: PortalServiceRequest[];
+  total_spent: number;
+  visit_count: number;
+}
+
+export interface PortalAccountSummary {
+  customer_id: string;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  vehicle_count: number;
+  open_balance: number;
+  overdue_balance: number;
+  awaiting_approval: number;
+  awaiting_payment: number;
+  ready_for_pickup: number;
+  next_appointment: PortalAppointment | null;
+}
+
+export interface PortalDecisionResult {
+  estimate_id: string;
+  estimate_number: string;
+  item_id: string;
+  item_status: string;
+  estimate_status: string;
+  estimate_status_view: CustomerStatusView;
+  approved_total: number;
+  total: number;
+  remaining_to_decide: number;
+}
+
+export interface PortalPaymentResult {
+  payment: PortalPayment;
+  invoice_status: string;
+  invoice_status_view: CustomerStatusView;
+  invoice_balance: number;
+}
+
+export interface PortalAppointmentCreate {
+  vehicle_id: string;
+  service_type?: string;
+  scheduled_start: string;
+  duration_minutes?: number;
+  customer_concern?: string | null;
+}
+
+export interface PortalServiceRequestCreate {
+  title: string;
+  description?: string | null;
+  priority?: string;
+  vehicle_id?: string | null;
+}
+
+export interface PortalPaymentCreate {
+  amount: number;
+  method?: string;
+  reference?: string | null;
+  notes?: string | null;
+}
