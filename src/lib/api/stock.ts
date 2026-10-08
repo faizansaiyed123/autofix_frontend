@@ -13,8 +13,12 @@ import type {
   Paginated,
   Part,
   PartCreate,
+  PurchaseOrder,
+  PurchaseOrderSummary,
+  ReceiveResult,
   StockLevel,
   StockSummary,
+  Supplier,
 } from "@/lib/api/types";
 
 export const partsApi = {
@@ -45,3 +49,52 @@ export const inventoryApi = {
     }),
 };
 
+export const suppliersApi = {
+  list: (query?: Query) => api.get<Paginated<Supplier>>("/suppliers/", query),
+  active: (preferredOnly = false) =>
+    api.get<Supplier[]>("/suppliers/active", { preferred_only: preferredOnly }),
+  get: (id: string) => api.get<Supplier>(`/suppliers/${id}`),
+  summary: (id: string) => api.get<Record<string, unknown>>(`/suppliers/${id}/summary`),
+  create: (body: Record<string, unknown>) => api.post<Supplier>("/suppliers/", body),
+  update: (id: string, body: Record<string, unknown>) => api.patch<Supplier>(`/suppliers/${id}`, body),
+  /** A supplier the shop has ever ordered from cannot be deleted, only retired. */
+  remove: (id: string) => api.delete<void>(`/suppliers/${id}`),
+  deactivate: (id: string) => api.post<Supplier>(`/suppliers/${id}/deactivate`),
+};
+
+export const purchaseOrdersApi = {
+  list: (query?: Query) => api.get<Paginated<PurchaseOrder>>("/purchase_orders/", query),
+  get: (id: string) => api.get<PurchaseOrder>(`/purchase_orders/${id}`),
+  byNumber: (poNumber: string) =>
+    api.get<PurchaseOrder>(`/purchase_orders/by-number/${encodeURIComponent(poNumber)}`),
+  summary: () => api.get<PurchaseOrderSummary>("/purchase_orders/summary"),
+  create: (body: Record<string, unknown>) => api.post<PurchaseOrder>("/purchase_orders/", body),
+  update: (id: string, body: Record<string, unknown>) =>
+    api.patch<PurchaseOrder>(`/purchase_orders/${id}`, body),
+  remove: (id: string) => api.delete<void>(`/purchase_orders/${id}`),
+  send: (id: string) => api.post<PurchaseOrder>(`/purchase_orders/${id}/send`),
+  cancel: (id: string, reason?: string) =>
+    api.post<PurchaseOrder>(`/purchase_orders/${id}/cancel`, { reason: reason ?? null }),
+  setStatus: (id: string, status: string) =>
+    api.patch<PurchaseOrder>(`/purchase_orders/${id}/status`, { status }),
+  /** One RECEIPT per line, all in one transaction — a bad line cannot half-book the good ones. */
+  receive: (id: string, body: { items: { item_id: string; quantity: number; unit_cost?: number }[]; notes?: string | null }) =>
+    api.post<ReceiveResult>(`/purchase_orders/${id}/receive`, body),
+  addItem: (id: string, body: Record<string, unknown>) =>
+    api.post<PurchaseOrder>(`/purchase_orders/${id}/items`, body),
+  updateItem: (id: string, itemId: string, body: Record<string, unknown>) =>
+    api.patch<PurchaseOrder>(`/purchase_orders/${id}/items/${itemId}`, body),
+  removeItem: (id: string, itemId: string) =>
+    api.delete<void>(`/purchase_orders/${id}/items/${itemId}`),
+  /** Builds a draft a buyer edits — an order is never placed on their behalf. */
+  fromLowStock: (body: {
+    supplier_id: string;
+    expected_delivery_date?: string | null;
+    tax_amount?: number;
+    shipping_amount?: number;
+    notes?: string | null;
+    shortage_multiplier?: number;
+    part_ids?: string[] | null;
+    include_discontinued?: boolean;
+  }) => api.post<PurchaseOrder>("/purchase_orders/from-low-stock", body),
+};

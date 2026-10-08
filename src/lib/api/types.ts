@@ -711,6 +711,88 @@ export interface ReceiveResult {
   receipts: ReceiptReference[];
 }
 
+/* ---------------------------------------------------- suppliers / ordering -- */
+
+export interface Supplier {
+  id: string;
+  name: string;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  /** The API's assembled postal address, for display; the stored parts are the lines above. */
+  address: string;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+  account_number: string | null;
+  website: string | null;
+  lead_time_days: number;
+  payment_terms: string | null;
+  notes: string | null;
+  status: string;
+  is_preferred: boolean;
+  is_active: boolean;
+}
+
+export interface PurchaseOrderItem {
+  id: string;
+  part_id: string;
+  line_number: number;
+  part_number: string;
+  part_name: string;
+  quantity_ordered: number;
+  quantity_received: number;
+  unit_cost: number;
+  line_total: number;
+  received_total: number;
+  quantity_outstanding: number;
+  is_fully_received: boolean;
+  notes: string | null;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  po_number: string;
+  supplier_id: string;
+  supplier_name: string | null;
+  status: string;
+  order_date: string;
+  expected_delivery_date: string | null;
+  subtotal: number;
+  tax_amount: number;
+  shipping_amount: number;
+  total_amount: number;
+  currency: string;
+  notes: string | null;
+  internal_notes: string | null;
+  sent_at: string | null;
+  received_at: string | null;
+  cancelled_at: string | null;
+  cancel_reason: string | null;
+  item_count: number;
+  total_units_ordered: number;
+  total_units_received: number;
+  is_fully_received: boolean;
+  is_terminal: boolean;
+  is_editable: boolean;
+  is_overdue: boolean;
+  items: PurchaseOrderItem[];
+}
+
+export interface PurchaseOrderSummary {
+  total_orders: number;
+  draft_orders: number;
+  open_orders: number;
+  received_orders: number;
+  cancelled_orders: number;
+  overdue_orders: number;
+  total_committed: number;
+  total_received_value: number;
+}
+
 /* --------------------------------------------------------------------- qc -- */
 
 export interface QCCheckItem {
