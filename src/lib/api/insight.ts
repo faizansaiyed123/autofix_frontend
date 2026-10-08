@@ -8,13 +8,32 @@
  */
 import { api, type Query } from "@/lib/api/client";
 import type {
+  CustomerRetentionReport,
+  DashboardReport,
+  InventoryValueReport,
   Notification,
   NotificationList,
   NotificationSummary,
   Paginated,
+  RepairOrderReport,
+  RevenueReport,
   ShopUser,
+  TechnicianProductivityReport,
   UserCreate,
 } from "@/lib/api/types";
+
+export const reportsApi = {
+  dashboard: (query?: Query) => api.get<DashboardReport>("/reports/dashboard", query),
+  revenue: (query?: Query) => api.get<RevenueReport>("/reports/revenue", query),
+  repairOrders: (query?: Query) => api.get<RepairOrderReport>("/reports/repair-orders", query),
+  technicians: (query?: Query) =>
+    api.get<TechnicianProductivityReport>("/reports/technicians", query),
+  /** Gated on `inventory:read`, not `reports:read`: these figures are shop purchase cost. */
+  inventoryValue: (query?: Query) => api.get<InventoryValueReport>("/reports/inventory-value", query),
+  /** Gated on `reports:analytics` — OWNER only. These two rank named people. */
+  customerRetention: (query?: Query) =>
+    api.get<CustomerRetentionReport>("/reports/customer-retention", query),
+};
 
 export const usersApi = {
   list: (query?: Query) => api.get<Paginated<ShopUser>>("/users/", query),

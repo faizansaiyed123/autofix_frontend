@@ -176,6 +176,152 @@ export interface NotificationSummary {
   latest_unread_at: string | null;
 }
 
+/* ----------------------------------------------------------------- reports -- */
+
+export interface ReportPeriod {
+  start_date: string;
+  end_date: string;
+  days: number;
+  granularity: string;
+}
+
+export interface DashboardReport {
+  period: ReportPeriod;
+  generated_for: string;
+  revenue: {
+    invoiced_total: number;
+    collected_total: number;
+    outstanding_balance: number;
+    overdue_balance: number;
+    overdue_count: number;
+  };
+  work: {
+    repair_orders_open: number;
+    repair_orders_in_progress: number;
+    repair_orders_on_hold: number;
+    repair_orders_awaiting_qc: number;
+    completed_in_period: number;
+    part_requests_pending: number;
+  };
+  money: {
+    invoices_draft: number;
+    invoices_issued: number;
+    invoices_partially_paid: number;
+    invoices_paid: number;
+  };
+  operations: {
+    low_stock_count: number;
+    out_of_stock_count: number;
+    inventory_cost_value: number;
+    appointments_today: number;
+    vehicles_in_shop: number;
+    pending_part_requests: number;
+    unread_notifications: number;
+  };
+}
+
+export interface RevenuePoint {
+  period_start: string;
+  invoiced: number;
+  collected: number;
+}
+
+export interface RevenueReport {
+  period: ReportPeriod;
+  invoiced_total: number;
+  invoice_count: number;
+  average_invoice: number;
+  collected_total: number;
+  payment_count: number;
+  voided_total: number;
+  void_count: number;
+  outstanding_balance: number;
+  outstanding_count: number;
+  overdue_balance: number;
+  overdue_count: number;
+  invoiced_by_status: Record<string, number>;
+  series: RevenuePoint[];
+}
+
+export interface RepairOrderSeriesPoint {
+  period_start: string;
+  opened: number;
+  completed: number;
+}
+
+export interface RepairOrderReport {
+  period: ReportPeriod;
+  status_counts: Record<string, number>;
+  total_orders: number;
+  opened: number;
+  completed: number;
+  delivered: number;
+  cancelled: number;
+  completion_rate: number;
+  average_cycle_hours: number;
+  series: RepairOrderSeriesPoint[];
+}
+
+export interface TechnicianProductivity {
+  technician_id: string;
+  name: string;
+  repair_orders_assigned: number;
+  repair_orders_completed: number;
+  tasks_completed: number;
+  labor_hours_actual: number;
+  labor_hours_billable: number;
+  labor_revenue: number;
+  average_cycle_hours: number;
+}
+
+export interface TechnicianTotals {
+  technician_count: number;
+  repair_orders_completed: number;
+  tasks_completed: number;
+  labor_hours_actual: number;
+  labor_hours_billable: number;
+  labor_revenue: number;
+}
+
+export interface TechnicianProductivityReport {
+  period: ReportPeriod;
+  technicians: TechnicianProductivity[];
+  totals: TechnicianTotals;
+}
+
+export interface InventoryValueReport {
+  as_of: string;
+  cost_value: number;
+  retail_value: number;
+  potential_margin: number;
+  part_count: number;
+  units_on_hand: number;
+  low_stock_count: number;
+  out_of_stock_count: number;
+  by_category: { category: string; cost_value: number; retail_value: number; part_count: number; units_on_hand: number }[];
+  low_stock_items: {
+    part_id: string;
+    part_number: string;
+    name: string;
+    quantity_on_hand: number;
+    reorder_level: number;
+    stock_status: string;
+    cost_value: number;
+  }[];
+  top_movers: { part_id: string; part_number: string; name: string; quantity_issued: number; value_issued: number }[];
+}
+
+export interface CustomerRetentionReport {
+  period: ReportPeriod;
+  customers_billed: number;
+  new_customers: number;
+  returning_customers: number;
+  repeat_rate: number;
+  settled_revenue: number;
+  revenue_per_customer: number;
+  top_customers: { customer_id: string; name: string; revenue: number; invoice_count: number }[];
+}
+
 /* ------------------------------------------------------------------ users -- */
 
 export interface ShopUser {
