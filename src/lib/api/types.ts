@@ -52,3 +52,151 @@ export interface PermissionBundle {
   permissions: string[];
 }
 
+/* -------------------------------------------------------------- customers -- */
+
+export type CustomerStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";
+export type ContactMethod = "EMAIL" | "PHONE" | "SMS";
+export type AddressType = "PRIMARY" | "BILLING" | "OTHER";
+
+export interface Address {
+  id?: string;
+  street: string;
+  city: string;
+  state?: string | null;
+  postal_code?: string | null;
+  country: string;
+  address_type: AddressType;
+}
+
+export interface Customer {
+  id: string;
+  first_name: string;
+  last_name: string;
+  company_name: string | null;
+  email: string | null;
+  phone: string | null;
+  preferred_contact: ContactMethod;
+  customer_status: CustomerStatus;
+  notes: string | null;
+  user_id: string | null;
+  addresses: Address[];
+}
+
+export interface CustomerCreate {
+  first_name: string;
+  last_name: string;
+  company_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  preferred_contact?: ContactMethod;
+  customer_status?: CustomerStatus;
+  notes?: string | null;
+  addresses?: Address[] | null;
+}
+
+export type CustomerUpdate = Partial<CustomerCreate>;
+
+/* --------------------------------------------------------------- vehicles -- */
+
+export type VehicleStatus = "ACTIVE" | "IN_SHOP" | "ARCHIVED";
+
+export interface MileageRecord {
+  id: string;
+  vehicle_id: string;
+  mileage: number;
+  source: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface Vehicle {
+  id: string;
+  customer_id: string;
+  vin: string | null;
+  license_plate: string | null;
+  make: string;
+  model: string;
+  year: number | null;
+  trim: string | null;
+  engine: string | null;
+  transmission: string | null;
+  mileage: number | null;
+  color: string | null;
+  fuel_type: string | null;
+  purchase_date: string | null;
+  notes: string | null;
+  status: VehicleStatus;
+  mileage_records: MileageRecord[];
+}
+
+export interface VehicleCreate {
+  customer_id: string;
+  make: string;
+  model: string;
+  vin?: string | null;
+  license_plate?: string | null;
+  year?: number | null;
+  trim?: string | null;
+  engine?: string | null;
+  transmission?: string | null;
+  mileage?: number | null;
+  color?: string | null;
+  fuel_type?: string | null;
+  purchase_date?: string | null;
+  notes?: string | null;
+  status?: VehicleStatus;
+}
+
+export type VehicleUpdate = Partial<VehicleCreate>;
+
+/* ----------------------------------------------------------- notifications -- */
+
+export interface Notification {
+  id: string;
+  notification_type: string;
+  title: string;
+  body: string | null;
+  entity_type: string | null;
+  entity_id: string | null;
+  priority: string;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface NotificationList {
+  notifications: Notification[];
+  total: number;
+  unread_count: number;
+}
+
+export interface NotificationSummary {
+  unread_count: number;
+  high_priority_unread: number;
+  latest_unread_at: string | null;
+}
+
+/* ------------------------------------------------------------------ users -- */
+
+export interface ShopUser {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone: string | null;
+  is_active: boolean;
+  is_staff: boolean;
+  roles: string[];
+}
+
+export interface UserCreate {
+  email: string;
+  first_name: string;
+  last_name: string;
+  password: string;
+  roles?: Role[];
+  phone?: string | null;
+  is_active?: boolean;
+  is_staff?: boolean;
+}
+
