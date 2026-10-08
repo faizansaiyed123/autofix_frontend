@@ -239,6 +239,38 @@ export interface ConflictCheckResponse {
   conflicts: ConflictDetail[];
 }
 
+/* --------------------------------------------------------------- check-ins -- */
+
+export interface CheckIn {
+  id: string;
+  vehicle_id: string;
+  customer_id: string;
+  odometer: number;
+  checkin_type: string;
+  status: string;
+  notes: string | null;
+  expected_completion: string | null;
+  tire_condition: string | null;
+  fluid_levels: string | null;
+  lights_status: string | null;
+  service_advisor_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CheckInCreate {
+  vehicle_id: string;
+  customer_id: string;
+  odometer: number;
+  checkin_type?: string;
+  notes?: string | null;
+  expected_completion?: string | null;
+  tire_condition?: string | null;
+  fluid_levels?: string | null;
+  lights_status?: string | null;
+  service_advisor_id?: string | null;
+}
+
 /* ----------------------------------------------------------- notifications -- */
 
 export interface Notification {

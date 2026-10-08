@@ -8,6 +8,8 @@ import { api, type Query } from "@/lib/api/client";
 import type {
   Appointment,
   CalendarResponse,
+  CheckIn,
+  CheckInCreate,
   ConflictCheckResponse,
   Customer,
   CustomerCreate,
@@ -82,5 +84,16 @@ export const appointmentsApi = {
   }) => api.post<ConflictCheckResponse>("/appointments/check-conflicts", body),
   fromServiceRequest: (id: string, body: Record<string, unknown>) =>
     api.post<Appointment>(`/appointments/from-service-request/${id}`, body),
+};
+
+export const checkInsApi = {
+  list: (query?: Query) => api.get<Paginated<CheckIn>>("/check_ins/", query),
+  get: (id: string) => api.get<CheckIn>(`/check_ins/${id}`),
+  create: (body: CheckInCreate) => api.post<CheckIn>("/check_ins/", body),
+  update: (id: string, body: Partial<CheckInCreate> & { status?: string }) =>
+    api.patch<CheckIn>(`/check_ins/${id}`, body),
+  remove: (id: string) => api.delete<void>(`/check_ins/${id}`),
+  setStatus: (id: string, status: string) =>
+    api.patch<CheckIn>(`/check_ins/${id}/status`, undefined, { status }),
 };
 
