@@ -17,6 +17,8 @@ import type {
   PartRequestCreate,
   PartRequestUpdate,
   Paginated,
+  QCQueueItem,
+  QualityCheck,
   RepairOrder,
   RepairOrderCreate,
   RepairOrderSummary,
@@ -112,3 +114,26 @@ export const partRequestsApi = {
     api.post<PartRequest>(`/part_requests/${id}/cancel`, undefined, { reason }),
 };
 
+export const qcApi = {
+  list: (query?: Query) => api.get<Paginated<QualityCheck>>("/qc/", query),
+  get: (id: string) => api.get<QualityCheck>(`/qc/${id}`),
+  queue: () => api.get<QCQueueItem[]>("/qc/queue"),
+  create: (body: { repair_order_id: string; notes?: string | null }) =>
+    api.post<QualityCheck>("/qc/", body),
+  update: (id: string, body: { notes?: string | null }) =>
+    api.patch<QualityCheck>(`/qc/${id}`, body),
+  remove: (id: string) => api.delete<void>(`/qc/${id}`),
+  /** An inspector's manual verdict survives re-verification; an automatic one does not. */
+  overrideCheck: (
+    id: string,
+    checkType: string,
+    body: { passed: boolean; blocking?: boolean | null; notes?: string | null },
+  ) => api.patch<QualityCheck>(`/qc/${id}/checks/${checkType}`, body),
+  reverify: (id: string) => api.post<QualityCheck>(`/qc/${id}/reverify`),
+  pass: (id: string) => api.post<QualityCheck>(`/qc/${id}/pass`),
+  fail: (id: string, reason?: string | null) =>
+    api.post<QualityCheck>(`/qc/${id}/fail`, { reason: reason ?? null }),
+  addPhoto: (id: string, body: { photo_url: string; caption?: string | null }) =>
+    api.post<QualityCheck>(`/qc/${id}/photos`, body),
+  removePhoto: (id: string, photoId: string) => api.delete<void>(`/qc/${id}/photos/${photoId}`),
+};

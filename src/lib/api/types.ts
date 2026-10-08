@@ -590,6 +590,53 @@ export interface PartRequestUpdate {
   reason?: string | null;
 }
 
+/* --------------------------------------------------------------------- qc -- */
+
+export interface QCCheckItem {
+  id: string;
+  quality_check_id: string;
+  check_type: string;
+  passed: boolean;
+  blocking: boolean;
+  auto_verified: boolean;
+  evidence: string | null;
+  notes: string | null;
+}
+
+export interface QCPhoto {
+  id: string;
+  quality_check_id: string;
+  photo_url: string;
+  caption: string | null;
+  created_at: string;
+}
+
+export interface QualityCheck {
+  id: string;
+  repair_order_id: string;
+  inspector_id: string | null;
+  status: string;
+  attempt_number: number;
+  started_at: string | null;
+  completed_at: string | null;
+  notes: string | null;
+  failure_reason: string | null;
+  is_terminal: boolean;
+  passed: boolean;
+  checks: QCCheckItem[];
+  photos: QCPhoto[];
+}
+
+export interface QCQueueItem {
+  repair_order_id: string;
+  ro_number: string;
+  customer_id: string;
+  vehicle_id: string;
+  technician_id: string | null;
+  completed_at: string | null;
+  has_open_check: boolean;
+}
+
 /* ----------------------------------------------------------- notifications -- */
 
 export interface Notification {
