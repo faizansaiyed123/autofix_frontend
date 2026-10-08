@@ -11,11 +11,17 @@ import type {
   EstimateItemUpdate,
   EstimateSummary,
   EstimateUpdate,
+  LaborRecord,
+  LaborRecordCreate,
+  PartRequest,
+  PartRequestCreate,
+  PartRequestUpdate,
   Paginated,
   RepairOrder,
   RepairOrderCreate,
   RepairOrderSummary,
   RepairTask,
+  TechnicianDashboard,
 } from "@/lib/api/types";
 
 export const estimatesApi = {
@@ -70,5 +76,39 @@ export const repairOrdersApi = {
       status,
       notes: notes ?? null,
     }),
+};
+
+export const laborApi = {
+  list: (query?: Query) => api.get<Paginated<LaborRecord>>("/labor/", query),
+  get: (id: string) => api.get<LaborRecord>(`/labor/${id}`),
+  create: (body: LaborRecordCreate) => api.post<LaborRecord>("/labor/", body),
+  update: (id: string, body: Partial<LaborRecordCreate>) =>
+    api.patch<LaborRecord>(`/labor/${id}`, body),
+  remove: (id: string) => api.delete<void>(`/labor/${id}`),
+  /**
+   * `technician_id` is required by `GET /labor/dashboard`, so it is required
+   * here too: passing nothing produced a 422, and "mine" has to be resolved by
+   * the caller from the signed-in user rather than by the route.
+   */
+  dashboard: (technicianId: string) =>
+    api.get<TechnicianDashboard>("/labor/dashboard", { technician_id: technicianId }),
+};
+
+export const partRequestsApi = {
+  list: (query?: Query) => api.get<Paginated<PartRequest>>("/part_requests/", query),
+  get: (id: string) => api.get<PartRequest>(`/part_requests/${id}`),
+  create: (body: PartRequestCreate) => api.post<PartRequest>("/part_requests/", body),
+  update: (id: string, body: PartRequestUpdate) =>
+    api.patch<PartRequest>(`/part_requests/${id}`, body),
+  remove: (id: string) => api.delete<void>(`/part_requests/${id}`),
+  /** The verbs are `PartRequestStatus` values the backend accepts: APPROVED or REJECTED. */
+  decide: (id: string, decision: "APPROVED" | "REJECTED", decisionReason?: string | null) =>
+    api.post<PartRequest>(`/part_requests/${id}/decision`, {
+      decision,
+      decision_reason: decisionReason ?? null,
+    }),
+  fulfil: (id: string) => api.post<PartRequest>(`/part_requests/${id}/fulfil`),
+  cancel: (id: string, reason?: string) =>
+    api.post<PartRequest>(`/part_requests/${id}/cancel`, undefined, { reason }),
 };
 

@@ -510,6 +510,86 @@ export interface RepairOrderSummary {
   counts: RepairOrderTaskCounts;
 }
 
+/* ------------------------------------------------------------------ labor -- */
+
+export interface LaborRecord {
+  id: string;
+  repair_order_id: string;
+  repair_task_id: string | null;
+  technician_id: string | null;
+  description: string;
+  actual_hours: number;
+  billable_hours: number;
+  hourly_rate: number;
+  labor_cost: number;
+  performed_at: string;
+  notes: string | null;
+}
+
+export interface LaborRecordCreate {
+  repair_order_id: string;
+  description: string;
+  actual_hours: number;
+  billable_hours?: number | null;
+  hourly_rate: number;
+  repair_task_id?: string | null;
+  technician_id?: string | null;
+  performed_at?: string | null;
+  notes?: string | null;
+}
+
+export interface TechnicianDashboardOpenTask {
+  task_id: string;
+  description: string;
+  repair_order_id: string;
+  ro_number: string;
+  status: string;
+}
+
+export interface TechnicianDashboard {
+  technician_id: string;
+  open_task_count: number;
+  in_progress_ro_count: number;
+  hours_this_week: number;
+  pending_part_request_count: number;
+  open_tasks: TechnicianDashboardOpenTask[];
+}
+
+/* ---------------------------------------------------------- part requests -- */
+
+export interface PartRequest {
+  id: string;
+  repair_order_id: string;
+  repair_task_id: string | null;
+  requested_by_id: string | null;
+  decided_by_id: string | null;
+  part_number: string | null;
+  part_name: string;
+  quantity: number;
+  reason: string;
+  status: string;
+  decision_reason: string | null;
+  decided_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PartRequestCreate {
+  repair_order_id: string;
+  part_name: string;
+  reason: string;
+  quantity?: number;
+  part_number?: string | null;
+  repair_task_id?: string | null;
+}
+
+export interface PartRequestUpdate {
+  part_number?: string | null;
+  part_name?: string | null;
+  quantity?: number | null;
+  reason?: string | null;
+}
+
 /* ----------------------------------------------------------- notifications -- */
 
 export interface Notification {
