@@ -590,6 +590,127 @@ export interface PartRequestUpdate {
   reason?: string | null;
 }
 
+/* ------------------------------------------------------------------ parts -- */
+
+export interface Part {
+  id: string;
+  part_number: string;
+  sku: string | null;
+  name: string;
+  description: string | null;
+  category: string;
+  brand: string | null;
+  location: string | null;
+  unit_cost: number;
+  unit_price: number;
+  quantity_on_hand: number;
+  reorder_level: number;
+  status: string;
+  margin: number;
+  stock_value: number;
+  stock_status: string;
+  is_low_stock: boolean;
+  is_out_of_stock: boolean;
+}
+
+export interface PartCreate {
+  part_number: string;
+  name: string;
+  category: string;
+  unit_cost?: number;
+  unit_price?: number;
+  reorder_level?: number;
+  sku?: string | null;
+  description?: string | null;
+  brand?: string | null;
+  location?: string | null;
+}
+
+export interface LowStockAlert {
+  part_id: string;
+  part_number: string;
+  name: string;
+  category: string;
+  brand: string | null;
+  location: string | null;
+  quantity_on_hand: number;
+  reorder_level: number;
+  shortage: number;
+  stock_status: string;
+}
+
+/* -------------------------------------------------------------- inventory -- */
+
+export interface InventoryTransaction {
+  id: string;
+  part_id: string;
+  transaction_type: string;
+  quantity: number;
+  quantity_before: number;
+  quantity_after: number;
+  unit_cost: number | null;
+  repair_order_id: string | null;
+  reference: string | null;
+  performed_by_id: string | null;
+  reason: string | null;
+  from_location: string | null;
+  to_location: string | null;
+  created_at: string;
+}
+
+export interface InventoryTransactionCreate {
+  part_id: string;
+  transaction_type: string;
+  quantity: number;
+  direction?: string | null;
+  unit_cost?: number | null;
+  repair_order_id?: string | null;
+  reference?: string | null;
+  reason?: string | null;
+  from_location?: string | null;
+  to_location?: string | null;
+}
+
+export interface StockSummary {
+  total_parts: number;
+  total_units: number;
+  total_stock_value: number;
+  low_stock_count: number;
+  out_of_stock_count: number;
+}
+
+/** A part's balance with the valuation it represents. */
+export interface StockLevel {
+  part_id: string;
+  part_number: string;
+  name: string;
+  category: string;
+  location: string | null;
+  quantity_on_hand: number;
+  reorder_level: number;
+  unit_cost: number;
+  stock_value: number;
+  stock_status: string;
+  is_low_stock: boolean;
+}
+
+/** The inventory receipt that one received purchase-order line produced. */
+export interface ReceiptReference {
+  item_id: string;
+  part_id: string;
+  part_number: string;
+  quantity: number;
+  unit_cost: number;
+  transaction_id: string;
+}
+
+/** What booking in a purchase order did: the order, and the receipts it filed. */
+export interface ReceiveResult {
+  purchase_order: PurchaseOrder;
+  received_units: number;
+  receipts: ReceiptReference[];
+}
+
 /* --------------------------------------------------------------------- qc -- */
 
 export interface QCCheckItem {
