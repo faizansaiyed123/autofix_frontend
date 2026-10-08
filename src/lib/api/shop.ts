@@ -6,6 +6,9 @@
  */
 import { api, type Query } from "@/lib/api/client";
 import type {
+  Appointment,
+  CalendarResponse,
+  ConflictCheckResponse,
   Customer,
   CustomerCreate,
   CustomerUpdate,
@@ -54,5 +57,30 @@ export const serviceRequestsApi = {
   remove: (id: string) => api.delete<void>(`/service_requests/${id}`),
   setStatus: (id: string, status: string) =>
     api.patch<ServiceRequest>(`/service_requests/${id}/status`, undefined, { status }),
+};
+
+export const appointmentsApi = {
+  list: (query?: Query) => api.get<Paginated<Appointment>>("/appointments/", query),
+  get: (id: string) => api.get<Appointment>(`/appointments/${id}`),
+  create: (body: Record<string, unknown>) => api.post<Appointment>("/appointments/", body),
+  update: (id: string, body: Record<string, unknown>) =>
+    api.patch<Appointment>(`/appointments/${id}`, body),
+  remove: (id: string) => api.delete<void>(`/appointments/${id}`),
+  setStatus: (id: string, status: string, cancellationReason?: string | null) =>
+    api.patch<Appointment>(`/appointments/${id}/status`, {
+      status,
+      cancellation_reason: cancellationReason ?? null,
+    }),
+  calendar: (query?: Query) => api.get<CalendarResponse>("/appointments/calendar", query),
+  checkConflicts: (body: {
+    scheduled_start: string;
+    duration_minutes: number;
+    technician_id?: string | null;
+    bay?: string | null;
+    vehicle_id?: string | null;
+    exclude_appointment_id?: string | null;
+  }) => api.post<ConflictCheckResponse>("/appointments/check-conflicts", body),
+  fromServiceRequest: (id: string, body: Record<string, unknown>) =>
+    api.post<Appointment>(`/appointments/from-service-request/${id}`, body),
 };
 

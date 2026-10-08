@@ -177,6 +177,68 @@ export type ServiceRequestUpdate = Partial<Omit<ServiceRequestCreate, "customer_
   status?: string;
 };
 
+/* ------------------------------------------------------------ appointments -- */
+
+export interface Appointment {
+  id: string;
+  customer_id: string;
+  vehicle_id: string;
+  service_request_id: string | null;
+  service_type: string;
+  scheduled_start: string;
+  scheduled_end: string;
+  duration_minutes: number;
+  advisor_id: string | null;
+  technician_id: string | null;
+  bay: string | null;
+  customer_concern: string | null;
+  notes: string | null;
+  status: string;
+  cancellation_reason: string | null;
+  checkin_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AppointmentCreate {
+  customer_id: string;
+  vehicle_id: string;
+  service_type: string;
+  scheduled_start: string;
+  duration_minutes?: number;
+  service_request_id?: string | null;
+  advisor_id?: string | null;
+  technician_id?: string | null;
+  bay?: string | null;
+  customer_concern?: string | null;
+  notes?: string | null;
+}
+
+export interface CalendarDay {
+  date: string;
+  appointments: Appointment[];
+}
+
+export interface CalendarResponse {
+  view: string;
+  range_start: string;
+  range_end: string;
+  total: number;
+  days: CalendarDay[];
+}
+
+export interface ConflictDetail {
+  appointment_id: string;
+  reason: string;
+  scheduled_start: string;
+  scheduled_end: string;
+}
+
+export interface ConflictCheckResponse {
+  has_conflict: boolean;
+  conflicts: ConflictDetail[];
+}
+
 /* ----------------------------------------------------------- notifications -- */
 
 export interface Notification {
