@@ -840,6 +840,114 @@ export interface QCQueueItem {
   has_open_check: boolean;
 }
 
+/* --------------------------------------------------------------- invoices -- */
+
+export interface InvoiceItem {
+  id: string;
+  item_type: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  discount_amount: number;
+  line_total: number;
+  source: string;
+  part_number: string | null;
+  part_name: string | null;
+  estimate_item_id: string | null;
+  reference: string | null;
+  notes: string | null;
+}
+
+export interface Invoice {
+  id: string;
+  invoice_number: string;
+  customer_id: string;
+  vehicle_id: string;
+  repair_order_id: string;
+  estimate_id: string | null;
+  created_by_id: string | null;
+  status: string;
+  invoice_date: string | null;
+  due_date: string | null;
+  subtotal: number;
+  discount_amount: number;
+  tax_rate: number;
+  tax_amount: number;
+  total: number;
+  amount_paid: number;
+  balance: number;
+  is_overdue: boolean;
+  days_overdue: number;
+  void_reason: string | null;
+  issued_at: string | null;
+  paid_at: string | null;
+  voided_at: string | null;
+  notes: string | null;
+  customer_notes: string | null;
+  items: InvoiceItem[];
+}
+
+export interface InvoiceSummary {
+  invoice_id: string;
+  invoice_number: string;
+  status: string;
+  invoice_date: string;
+  due_date: string | null;
+  is_overdue: boolean;
+  days_overdue: number;
+  item_count: number;
+  totals: {
+    subtotal: number;
+    discount_amount: number;
+    tax_rate: number;
+    tax_amount: number;
+    total: number;
+    amount_paid: number;
+    balance: number;
+  };
+}
+
+export interface InvoiceTotals {
+  subtotal: number;
+  discount_amount: number;
+  tax_rate: number;
+  tax_amount: number;
+  total: number;
+  amount_paid: number;
+  balance: number;
+}
+
+/* ---------------------------------------------------------------- payments -- */
+
+export interface Payment {
+  id: string;
+  invoice_id: string;
+  amount: number;
+  method: string;
+  status: string;
+  payment_date: string;
+  reference: string | null;
+  notes: string | null;
+  recorded_by_id: string | null;
+  void_reason: string | null;
+  voided_at: string | null;
+}
+
+export interface PaymentTotals {
+  total_received: number;
+  total_voided: number;
+  net_received: number;
+  payment_count: number;
+  void_count: number;
+  by_method: Record<string, number>;
+}
+
+export interface PaymentSummary {
+  start_date: string | null;
+  end_date: string | null;
+  totals: PaymentTotals;
+}
+
 /* ----------------------------------------------------------- notifications -- */
 
 export interface Notification {
