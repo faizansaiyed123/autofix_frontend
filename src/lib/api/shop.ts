@@ -14,6 +14,10 @@ import type {
   Customer,
   CustomerCreate,
   CustomerUpdate,
+  Inspection,
+  InspectionCreate,
+  InspectionItem,
+  InspectionItemUpdate,
   MileageRecord,
   Paginated,
   ServiceRequest,
@@ -97,3 +101,20 @@ export const checkInsApi = {
     api.patch<CheckIn>(`/check_ins/${id}/status`, undefined, { status }),
 };
 
+export const inspectionsApi = {
+  list: (query?: Query) => api.get<Paginated<Inspection>>("/inspections/", query),
+  get: (id: string) => api.get<Inspection>(`/inspections/${id}`),
+  create: (body: InspectionCreate) => api.post<Inspection>("/inspections/", body),
+  update: (id: string, body: Partial<InspectionCreate> & { status?: string }) =>
+    api.patch<Inspection>(`/inspections/${id}`, body),
+  remove: (id: string) => api.delete<void>(`/inspections/${id}`),
+  setStatus: (id: string, status: string) =>
+    api.patch<Inspection>(`/inspections/${id}/status`, undefined, { status }),
+  addItem: (id: string, body: InspectionItem) =>
+    api.post<InspectionItem>(`/inspections/${id}/items`, body),
+  updateItem: (id: string, itemId: string, body: InspectionItemUpdate) =>
+    api.patch<InspectionItem>(`/inspections/${id}/items/${itemId}`, body),
+  removeItem: (id: string, itemId: string) =>
+    api.delete<void>(`/inspections/${id}/items/${itemId}`),
+  report: (id: string) => api.get<Record<string, unknown>>(`/inspections/${id}/report`),
+};

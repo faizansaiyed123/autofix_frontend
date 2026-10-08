@@ -271,6 +271,62 @@ export interface CheckInCreate {
   service_advisor_id?: string | null;
 }
 
+/* ------------------------------------------------------------ inspections -- */
+
+export interface InspectionPhoto {
+  id?: string;
+  photo_url: string;
+  caption?: string | null;
+}
+
+export interface InspectionItem {
+  id?: string;
+  category: string;
+  item_name: string;
+  status: string;
+  severity_color?: string;
+  measurement: string | null;
+  notes: string | null;
+  recommendation: string | null;
+  photo_url?: string | null;
+  photo_caption?: string | null;
+  photos?: InspectionPhoto[];
+}
+
+export interface Inspection {
+  id: string;
+  vehicle_id: string;
+  customer_id: string;
+  checkin_id: string | null;
+  technician_id: string | null;
+  mileage: number | null;
+  overall_notes: string | null;
+  status: string;
+  overall_condition: string;
+  items: InspectionItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InspectionCreate {
+  vehicle_id: string;
+  customer_id: string;
+  checkin_id?: string | null;
+  technician_id?: string | null;
+  mileage?: number | null;
+  overall_notes?: string | null;
+  items?: InspectionItem[];
+}
+
+export interface InspectionItemUpdate {
+  category?: string | null;
+  item_name?: string | null;
+  status?: string | null;
+  measurement?: string | null;
+  notes?: string | null;
+  recommendation?: string | null;
+}
+
 /* ----------------------------------------------------------- notifications -- */
 
 export interface Notification {
