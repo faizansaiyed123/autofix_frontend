@@ -327,6 +327,116 @@ export interface InspectionItemUpdate {
   recommendation?: string | null;
 }
 
+/* -------------------------------------------------------------- estimates -- */
+
+export interface EstimateItem {
+  id: string;
+  item_type: string;
+  description: string;
+  labor_hours: number | null;
+  labor_rate: number | null;
+  part_number: string | null;
+  part_name: string | null;
+  quantity: number;
+  unit_price: number;
+  discount_amount: number;
+  is_optional: boolean;
+  notes: string | null;
+  status: string;
+  line_total: number;
+  customer_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EstimateItemCreate {
+  item_type?: string;
+  description: string;
+  labor_hours?: number | null;
+  labor_rate?: number | null;
+  part_number?: string | null;
+  part_name?: string | null;
+  quantity?: number;
+  unit_price?: number;
+  discount_amount?: number;
+  is_optional?: boolean;
+  notes?: string | null;
+}
+
+export type EstimateItemUpdate = Partial<EstimateItemCreate> & { sequence?: number | null };
+
+export interface EstimateUpdate {
+  valid_until?: string | null;
+  tax_rate?: number | null;
+  notes?: string | null;
+  customer_notes?: string | null;
+}
+
+export interface Estimate {
+  id: string;
+  estimate_number: string;
+  customer_id: string;
+  vehicle_id: string;
+  inspection_id: string | null;
+  service_request_id: string | null;
+  created_by_id: string | null;
+  status: string;
+  subtotal: number;
+  discount_amount: number;
+  tax_rate: number;
+  tax_amount: number;
+  total: number;
+  approved_total: number;
+  valid_until: string | null;
+  is_expired: boolean;
+  notes: string | null;
+  customer_notes: string | null;
+  decline_reason: string | null;
+  sent_at: string | null;
+  decided_at: string | null;
+  items: EstimateItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EstimateCreate {
+  customer_id: string;
+  vehicle_id: string;
+  inspection_id?: string | null;
+  service_request_id?: string | null;
+  valid_until?: string | null;
+  tax_rate?: number;
+  notes?: string | null;
+  items?: EstimateItemCreate[];
+}
+
+export interface EstimateTotals {
+  subtotal: number;
+  discount_amount: number;
+  tax_rate: number;
+  tax_amount: number;
+  total: number;
+  approved_total: number;
+}
+
+export interface EstimateItemCounts {
+  total: number;
+  pending: number;
+  approved: number;
+  declined: number;
+}
+
+export interface EstimateSummary {
+  estimate_id: string;
+  estimate_number: string;
+  status: string;
+  is_expired: boolean;
+  can_decide: boolean;
+  valid_until: string | null;
+  totals: EstimateTotals;
+  counts: EstimateItemCounts;
+}
+
 /* ----------------------------------------------------------- notifications -- */
 
 export interface Notification {
