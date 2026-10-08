@@ -1121,6 +1121,39 @@ export interface CustomerRetentionReport {
   top_customers: { customer_id: string; name: string; revenue: number; invoice_count: number }[];
 }
 
+/* ------------------------------------------------------------------ audit -- */
+
+export interface AuditLogSummary {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  entity_label: string | null;
+  actor_id: string | null;
+  actor_email: string | null;
+  actor_role: string | null;
+  actor_label: string;
+  summary: string | null;
+  changes: Record<string, { from: unknown; to: unknown }> | null;
+  created_at: string;
+}
+
+export interface AuditLog extends AuditLogSummary {
+  before_state: Record<string, unknown> | null;
+  after_state: Record<string, unknown> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+}
+
+/** Everything that has happened to one record, newest first. */
+export interface AuditEntityHistory {
+  entity_type: string;
+  entity_id: string;
+  entity_label: string | null;
+  total: number;
+  entries: AuditLogSummary[];
+}
+
 /* ------------------------------------------------------------------ users -- */
 
 export interface ShopUser {

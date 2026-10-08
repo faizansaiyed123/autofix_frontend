@@ -8,6 +8,9 @@
  */
 import { api, type Query } from "@/lib/api/client";
 import type {
+  AuditEntityHistory,
+  AuditLog,
+  AuditLogSummary,
   CustomerRetentionReport,
   DashboardReport,
   InventoryValueReport,
@@ -33,6 +36,16 @@ export const reportsApi = {
   /** Gated on `reports:analytics` — OWNER only. These two rank named people. */
   customerRetention: (query?: Query) =>
     api.get<CustomerRetentionReport>("/reports/customer-retention", query),
+};
+
+export const auditApi = {
+  list: (query?: Query) => api.get<Paginated<AuditLogSummary>>("/audit/", query),
+  get: (id: string) => api.get<AuditLog>(`/audit/${id}`),
+  /** Both vocabularies come back wrapped, so a caller reads `.actions` / `.entity_types`. */
+actions: () => api.get<{ actions: string[] }>("/audit/actions"),
+  entityTypes: () => api.get<{ entity_types: string[] }>("/audit/entity-types"),
+  entityHistory: (entityType: string, entityId: string, limit = 50) =>
+    api.get<AuditEntityHistory>(`/audit/entity/${entityType}/${entityId}`, { limit }),
 };
 
 export const usersApi = {
