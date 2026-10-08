@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/*
+  One palette, declared once. Every surface in the product reads from these
+  tokens rather than from a hex literal, so a status colour cannot be spelled
+  two ways on two screens and quietly mean something different.
+*/
+@theme {
+  --color-ink-50: #f6f7f9;
+  --color-ink-100: #eceef2;
+  --color-ink-200: #d5dae3;
+  --color-ink-300: #b0b9c9;
+  --color-ink-400: #8492aa;
+  --color-ink-500: #64748f;
+  --color-ink-600: #4d5b76;
+  --color-ink-700: #3d4860;
+  --color-ink-800: #2b3448;
+  --color-ink-900: #1c2333;
+  --color-ink-950: #12161f;
+
+  --color-brand-50: #eef6ff;
+  --color-brand-100: #d9ebff;
+  --color-brand-200: #bcdcff;
+  --color-brand-300: #8ec6ff;
+  --color-brand-400: #59a7ff;
+  --color-brand-500: #3182f6;
+  --color-brand-600: #1b62e3;
+  --color-brand-700: #164ec6;
+  --color-brand-800: #19409e;
+  --color-brand-900: #1a3a7d;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-ink-50 text-ink-900;
+}
+
+/* A focus ring that is visible on every surface, including the dark sidebar. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+/* Numeric columns line up on the decimal point, which is the entire reason a
+   bill is readable at a glance. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
