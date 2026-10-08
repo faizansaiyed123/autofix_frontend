@@ -437,6 +437,79 @@ export interface EstimateSummary {
   counts: EstimateItemCounts;
 }
 
+/* ---------------------------------------------------------- repair orders -- */
+
+export interface RepairTask {
+  id: string;
+  repair_order_id: string;
+  description: string;
+  notes: string | null;
+  status: string;
+  sequence: number;
+  assigned_to_id: string | null;
+  completed_at: string | null;
+}
+
+export interface RepairOrder {
+  id: string;
+  ro_number: string;
+  customer_id: string;
+  vehicle_id: string;
+  estimate_id: string | null;
+  appointment_id: string | null;
+  advisor_id: string | null;
+  technician_id: string | null;
+  status: string;
+  odometer_in: number | null;
+  odometer_out: number | null;
+  bay: string | null;
+  promised_at: string | null;
+  notes: string | null;
+  customer_notes: string | null;
+  cancel_reason: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  delivered_at: string | null;
+  all_tasks_done: boolean;
+  tasks: RepairTask[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RepairOrderCreate {
+  customer_id: string;
+  vehicle_id: string;
+  estimate_id?: string | null;
+  appointment_id?: string | null;
+  advisor_id?: string | null;
+  technician_id?: string | null;
+  odometer_in?: number | null;
+  odometer_out?: number | null;
+  bay?: string | null;
+  promised_at?: string | null;
+  notes?: string | null;
+  customer_notes?: string | null;
+  tasks?: { description: string; notes?: string | null; assigned_to_id?: string | null }[];
+}
+
+export interface RepairOrderTaskCounts {
+  total: number;
+  pending: number;
+  in_progress: number;
+  completed: number;
+  skipped: number;
+}
+
+export interface RepairOrderSummary {
+  repair_order_id: string;
+  ro_number: string;
+  status: string;
+  is_terminal: boolean;
+  tasks_editable: boolean;
+  all_tasks_done: boolean;
+  counts: RepairOrderTaskCounts;
+}
+
 /* ----------------------------------------------------------- notifications -- */
 
 export interface Notification {
