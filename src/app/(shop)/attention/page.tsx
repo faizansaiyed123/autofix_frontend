@@ -17,16 +17,8 @@ import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { formatRelative } from "@/lib/format";
 
 /**
- * The attention centre.
- *
- * Unread first, then newest. Pure recency buries the one item that needs action
- * under forty read ones, which is the opposite of what a screen called "attention"
- * is for. `priority` separates "something needs you" from "something happened",
- * so the first is shown as an emphasis rather than merely a sort key.
- *
- * Each notification names the record it is about, and that link is the point: a
- * notice you cannot act on from the notice is a notice you have to go and
- * re-find.
+ * Show unread notifications first, then newest. Priority separates actions needed
+ * from informational updates, and each notification links to its related record.
  */
 export default function AttentionPage() {
   const [unreadOnly, setUnreadOnly] = useState(false);
