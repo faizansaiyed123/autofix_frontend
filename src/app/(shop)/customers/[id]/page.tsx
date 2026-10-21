@@ -21,14 +21,7 @@ import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { useSession } from "@/lib/auth/AuthProvider";
 import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 
-/**
- * One customer, and everything the shop knows about them.
- *
- * The history is assembled from the shop's own records — appointments, estimates,
- * repair orders and invoices — rather than from a per-customer summary endpoint.
- * Those are four queries that already exist and are already filtered, so a
- * summary table here would be a second place for the same numbers to go stale.
- */
+/** Customer detail with history from appointments, estimates, repair orders, and invoices. */
 export default function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { can } = useSession();
