@@ -22,13 +22,7 @@ import { formatNumber, formatRelative } from "@/lib/format";
 
 const VEHICLE_STATUSES: VehicleStatus[] = ["ACTIVE", "IN_SHOP", "ARCHIVED"];
 
-/**
- * The shop's vehicle book.
- *
- * Shop-wide rather than "mine", for the same reason the customer book is: this
- * screen sits behind the staff gate and every desk needs to see every car in
- * order to recognise one at the kerb.
- */
+/** Staff can see the shop-wide vehicle list; customers use the portal for their own vehicles. */
 export default function VehiclesPage() {
   const { can } = useSession();
   const router = useRouter();
@@ -83,8 +77,7 @@ export default function VehiclesPage() {
       header: "Updated",
       numeric: true,
       render: (v) => {
-        // The vehicle payload carries no updated_at, so the newest mileage
-        // reading is the only timestamp the row actually has.
+        // The vehicle payload has no updated_at, so use the latest mileage reading timestamp.
         const latest = lastReadingAt(v);
         return (
           <span className="text-xs text-ink-500">{latest ? formatRelative(latest) : "No reading"}</span>
@@ -223,8 +216,7 @@ function NewVehicleModal({
     const missing = form.missing(["customer_id", "make", "model"]);
     if (missing.length > 0) return;
 
-    // The year range and the VIN pattern are enforced by the API, so a value
-    // either fails here in the form or is never sent at all.
+    // Mirror the API's year and VIN validation before submitting.
     if (yearRejected || vinRejected) return;
 
     const mileage = Number(form.values.mileage);
