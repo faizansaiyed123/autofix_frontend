@@ -18,14 +18,7 @@ import { useApiMutation } from "@/lib/hooks/useApiMutation";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { useSession } from "@/lib/auth/AuthProvider";
 
-/**
- * The shop's customer book.
- *
- * This is the whole shop's list, not the caller's own — it sits behind the staff
- * gate for exactly that reason. A customer reaches their own account through the
- * portal instead, where the account comes from the token and there is no id to
- * get wrong.
- */
+/** Staff-only list for the shop; customers access their own account through the portal. */
 export default function CustomersPage() {
   const { can } = useSession();
   const router = useRouter();
