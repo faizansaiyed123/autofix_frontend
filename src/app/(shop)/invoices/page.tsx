@@ -22,19 +22,7 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { formatDate, formatMoney, todayIso } from "@/lib/format";
 import { INVOICE_STATUSES } from "@/lib/status";
 
-/**
- * The shop's invoice book.
- *
- * Money on a bill is not derived here: subtotal, discount, tax and total are the
- * backend's figures, rounded to cents in the service layer, and the outstanding
- * balance is a property of the total less what has been paid. Adding the rows up
- * in the browser to double-check them would be a second answer to a question that
- * already has one.
- *
- * Overdue is not a status. A bill is late when its due date has passed and money
- * is still owed, which is what the API's `is_overdue` and `days_overdue` say, so
- * the badge column never gains an OVERDUE that the record does not carry.
- */
+/** Invoice list. Totals come from the API; overdue means a past due date with a balance still owed. */
 export default function InvoicesPage() {
   const { can } = useSession();
   const router = useRouter();
