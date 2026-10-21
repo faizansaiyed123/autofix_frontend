@@ -17,18 +17,7 @@ import type {
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 
-/**
- * One car, and everything that has happened to it.
- *
- * The history is deliberately narrower than the shop's view of the same vehicle.
- * Per-inspection measurements, the technician's name and which bay the car was in
- * are working notes, not a customer document — so they are simply not in the
- * response and cannot be shown here.
- *
- * `total_spent` counts settled invoices only. A draft or written-off bill is not
- * money that was spent, and an unpaid one is not history the customer has
- * completed.
- */
+/** Customer vehicle history excludes internal inspection details; spend counts settled invoices only. */
 export default function PortalVehicleHistoryPage() {
   const { id } = useParams<{ id: string }>();
   const history = useApiQuery(() => portalApi.vehicleHistory(id), [id]);
