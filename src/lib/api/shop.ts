@@ -1,9 +1,4 @@
-/**
- * Front-desk endpoints: the people, their cars, the diary and what happens on
- * arrival. Every one of these sits behind the backend's staff gate, so they are
- * shop-wide lists rather than "mine" views — a customer reads their own account
- * through `portal.ts` instead.
- */
+/** Staff-only, shop-wide endpoints; customer-scoped access lives in `portal.ts`. */
 import { api, type Query } from "@/lib/api/client";
 import type {
   Appointment,
