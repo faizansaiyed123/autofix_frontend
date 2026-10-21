@@ -7,15 +7,7 @@ import { useEffect, type ReactNode } from "react";
 import { Loading } from "@/components/ui/States";
 import { useSession } from "@/lib/auth/AuthProvider";
 
-/**
- * The client-side gate every authenticated screen sits behind.
- *
- * It redirects rather than renders a 403, because a customer who follows a staff
- * link has no business seeing a staff page exists — the right answer is their own
- * account, not a refusal. The server is the real boundary: these routers sit
- * behind `require_staff` and answer 403 whatever the browser believes. This
- * exists to keep people out of screens that would only show them errors.
- */
+/** Client-side navigation gate; server-side authorization remains authoritative. */
 export function ProtectedRoute({
   children,
   staffOnly = true,
@@ -43,14 +35,7 @@ export function ProtectedRoute({
   return <>{children}</>;
 }
 
-/**
- * Render something only if the signed-in user holds a permission.
- *
- * This is a usability boundary, not a security one — it keeps an action out of
- * the interface for the person who cannot use it, which stops the 403. It
- * cannot be the thing that enforces access, because anything in a browser can be
- * called directly; the permission check that matters is the one on the server.
- */
+/** Hide actions the user cannot access; the API must still enforce the permission. */
 export function Can({
   permission,
   anyOf,
