@@ -17,17 +17,7 @@ import { useApiMutation } from "@/lib/hooks/useApiMutation";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { formatDate, formatMoney } from "@/lib/format";
 
-/**
- * One estimate, and a decision per line.
- *
- * Approval is **per line**, not per estimate: the shop records which parts of
- * the work were agreed, and only what was agreed is ever billed. So the buttons
- * sit on each row rather than at the foot of the page, and a line that is
- * already decided shows its verdict instead of a button.
- *
- * An expired estimate offers nothing: the shop would refuse the decision, so
- * asking for it here would only be a dead end.
- */
+/** Customer estimate detail. Decisions are per line, and expired estimates cannot be approved. */
 export default function PortalEstimateDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
