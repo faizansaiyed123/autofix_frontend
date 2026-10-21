@@ -22,14 +22,7 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { ESTIMATE_STATUSES } from "@/lib/status";
 import { formatDate, formatDateTime, formatMoney, formatPercent } from "@/lib/format";
 
-/**
- * The quoting book.
- *
- * Two figures sit side by side on every row and they answer different questions:
- * what the work would cost if all of it were done, and what the customer has
- * actually agreed to pay for so far. Quoting only the first is how a garage
- * loses track of what it is actually doing.
- */
+/** Estimate list showing proposed totals separately from amounts the customer approved. */
 export default function EstimatesPage() {
   const { can } = useSession();
   const router = useRouter();
