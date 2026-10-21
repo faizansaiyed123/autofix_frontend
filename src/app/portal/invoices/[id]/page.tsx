@@ -18,17 +18,7 @@ import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { formatDate, formatMoney } from "@/lib/format";
 import { PAYMENT_METHODS, REFERENCE_REQUIRED_METHODS } from "@/lib/status";
 
-/**
- * One invoice, and the button that settles it.
- *
- * The totals shown here are the invoice's own. The portal never recomputes a
- * figure the backend already derived, because a second calculation in a browser
- * is a second answer to the same question.
- *
- * Payment is deliberately **partial by default** — the balance, not the total.
- * A bill can be settled over several visits and the remainder simply stays owed,
- * so the amount field starts at what is actually left and the person can lower it.
- */
+/** Customer invoice detail. Totals come from the API; payment defaults to the outstanding balance and may be partial. */
 export default function PortalInvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [paying, setPaying] = useState(false);
