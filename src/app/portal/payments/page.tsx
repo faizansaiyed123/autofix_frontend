@@ -11,14 +11,7 @@ import type { PortalPayment } from "@/lib/api/types";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { formatDate, formatMoney } from "@/lib/format";
 
-/**
- * Payments this account has made.
- *
- * A payment is an event, not a document: there is nothing here to edit, because a
- * record of what a customer handed over is a fact about the till. A payment that
- * turns out to be wrong is reversed by the shop, which writes the correction on
- * the same row rather than deleting it.
- */
+/** Immutable customer payment history; corrections are handled by the shop as reversals. */
 export default function PortalPaymentsPage() {
   const payments = useApiQuery(() => portalApi.payments());
 
