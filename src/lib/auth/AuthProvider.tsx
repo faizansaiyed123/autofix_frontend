@@ -1,20 +1,8 @@
 "use client";
 
 /**
- * Session state for the whole application.
- *
- * One provider, mounted once at the root, owns three things: who is signed in,
- * which permissions that person holds, and the act of signing out. Everything
- * else — protected routes, the navigation, every conditional button — reads from
- * here rather than decoding the token itself, so there is one answer to "may this
- * user do this" in the application.
- *
- * **Staffness is decided by roles, not by `User.is_staff`.** The backend's
- * `require_staff` gate is `any role != CUSTOMER`, and it is deliberately not the
- * `is_staff` column: that column is writable through the users API, so a flag a
- * caller can set is not something to hang "who may read the shop's books" on. A
- * technician created without the box ticked would be locked out of their own
- * shop. The UI mirrors the server's rule rather than a friendlier-looking one.
+ * Owns session state, permissions, and sign-out for the application.
+ * Staff access follows the backend's role rule, not the mutable `is_staff` flag.
  */
 import {
   createContext,
@@ -60,9 +48,7 @@ const ALL_ROLES = ["OWNER", "SERVICE_ADVISOR", "TECHNICIAN", "PARTS_STAFF", "CUS
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [status, setStatus] = useState<SessionStatus>(() =>
-    // "Is anybody signed in?" is answerable synchronously: if there is no stored
-    // token there is nothing to restore. A stored token is only a claim, so that
-    // case still starts as loading and has to be verified against the server.
+    // No stored token means anonymous; a stored token must be verified with the API.
     typeof window !== "undefined" && !hasStoredSession() ? "anonymous" : "loading",
   );
   const [user, setUser] = useState<CurrentUser | null>(null);
@@ -85,15 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("anonymous");
   }, []);
 
-  // Restore a session on first paint. A stored token is only a claim; it is
-  // verified against the server before the UI treats it as a session, so a stale
-  // or tampered token lands on the login page rather than on a broken dashboard.
-  // With no stored token there is nothing to do — the initial state is already
-  // `anonymous` — so this effect only ever runs for a session worth verifying.
-  //
-  // The state updates live in the `then` callbacks rather than in the effect
-  // body: the body subscribes to an answer that has not arrived yet, which is
-  // what an effect is for.
+  // Verify a stored token with the API before restoring the session.
   useEffect(() => {
     if (!hasStoredSession()) return;
     let cancelled = false;
