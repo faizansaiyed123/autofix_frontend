@@ -1,14 +1,6 @@
 /**
- * The customer portal.
- *
- * No function here takes a `customer_id`. That is the point of the module: the
- * account is derived from the token server-side, so there is no parameter a
- * caller can point at somebody else's record. Ids that do appear in a path are
- * checked against that derived account, and a mismatch is a 404.
- *
- * Note what is missing: there is no `getRepairOrder`, no inspection detail and
- * no per-inspection measurements. Those are shop working notes, not customer
- * documents.
+ * Customer endpoints derive ownership from the signed-in token; callers cannot
+ * choose another customer ID. Internal repair-order and inspection details stay private.
  */
 import { api, downloadDocument, type Query } from "@/lib/api/client";
 import type {
