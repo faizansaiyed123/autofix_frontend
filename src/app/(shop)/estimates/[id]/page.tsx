@@ -20,20 +20,7 @@ import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { useSession } from "@/lib/auth/AuthProvider";
 import { formatDate, formatDateTime, formatMoney, formatNumber, formatPercent } from "@/lib/format";
 
-/**
- * One quote, and the customer's decision on each of its lines.
- *
- * The important thing this page has to say out loud is that approval is per line
- * and only approved lines are billed. A customer who takes the brakes and
- * declines the polish is not a partial customer — they are a customer whose work
- * is exactly what they approved, and the estimate's `approved_total` is the
- * number that matters to both sides.
- *
- * Everything the customer-facing numbers depend on comes from the API. The
- * backend rounds every derived amount in a place the browser cannot reproduce,
- * so a total recomputed from the rows on screen would be a second, subtly
- * different answer to the same question.
- */
+/** Estimate detail. Approval is per line, and billed totals come from the API. */
 export default function EstimateDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { can } = useSession();
