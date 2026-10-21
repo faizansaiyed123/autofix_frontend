@@ -20,24 +20,7 @@ import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { useSession } from "@/lib/auth/AuthProvider";
 import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 
-/**
- * One job, from authorisation to handover.
- *
- * Three backend rules shape this page, and each is stated in the interface
- * rather than left to be discovered:
- *
- *  - The task breakdown freezes once work starts. An order that is IN_PROGRESS
- *    or later can still have a task reassigned — that is bookkeeping, not
- *    structure — but it cannot be re-described or have a job added to it.
- *  - An order cannot COMPLETE while any task is still open, and cannot start
- *    with no tasks at all.
- *  - Labour may only be logged while the order is IN_PROGRESS or ON_HOLD. Hours
- *    are evidence of work performed, so there is nothing to log before the work
- *    starts or after it has finished.
- *
- * There is deliberately no money on this page. The estimate stays the source of
- * truth for pricing; the order tracks execution.
- */
+/** Repair-order detail. Task structure freezes after work starts; completion requires finished tasks, and labour is logged only while active. */
 export default function RepairOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { can } = useSession();
