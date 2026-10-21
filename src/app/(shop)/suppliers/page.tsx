@@ -17,17 +17,7 @@ import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { useSession } from "@/lib/auth/AuthProvider";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 
-/**
- * The supplier list.
- *
- * A supplier the shop has ever ordered from cannot be deleted. The order book
- * quotes its name, the ledger quotes its deliveries, and removing the record
- * would leave every one of those documents naming a supplier that no longer
- * exists — so a supplier is deactivated instead, which takes it out of the order
- * pickers while keeping the history intact. Deletion is offered only for a
- * supplier nothing has ever been ordered from, and even then the control stays
- * dark with the reason beside it.
- */
+/** Suppliers with purchase history are deactivated instead of deleted to preserve linked records. */
 export default function SuppliersPage() {
   const { can } = useSession();
   const [search, setSearch] = useState("");
