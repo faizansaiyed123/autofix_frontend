@@ -1,10 +1,6 @@
 /**
- * Reports, the audit trail, staff accounts and the attention centre.
- *
- * The notifications router is the one API surface outside the staff gate, and
- * that is safe because every one of its queries filters on the signed-in user
- * server-side — there is no `recipient_id` parameter here to point at somebody
- * else's badge.
+ * Reports, audit, staff, and attention endpoints. Notification queries are scoped
+ * to the signed-in user server-side; callers cannot choose a recipient ID.
  */
 import { api, type Query } from "@/lib/api/client";
 import type {
