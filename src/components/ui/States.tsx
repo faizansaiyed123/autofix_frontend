@@ -31,14 +31,7 @@ export function EmptyState({
   );
 }
 
-/**
- * A failure the user can act on.
- *
- * The distinction that matters: a 403 means the person is not allowed and no
- * amount of retrying will help, so it says so. A 404 means the record is not
- * there. Anything else is very likely the network, and offers a retry. Rendering
- * all three as "Something went wrong" is how an outage gets reported as a bug.
- */
+/** Distinguish access-denied and missing-record responses from retryable failures. */
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const status = (error as { status?: number })?.status ?? 0;
   const message = (error as { messageForUser?: string })?.messageForUser ?? "Something went wrong.";
