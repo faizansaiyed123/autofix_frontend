@@ -21,13 +21,8 @@ import { formatDateTime, formatNumber, titleCase, toApiDateTime } from "@/lib/fo
 const CHECKIN_TYPES = ["DRIVE_IN", "WALK_IN", "APPOINTMENT"];
 
 /**
- * The statuses `CheckInStatus` actually holds, and where each one may go.
- *
- * The shared `CHECKIN_STATUSES` array says CHECKED_IN / IN_SERVICE /
- * READY_FOR_PICKUP / DELIVERED, none of which the API recognises — a filter built
- * from it silently matches nothing and a status control built from it is refused
- * on every press. These are the API's own values, and the table doubles as the
- * transition map, which is what makes the terminal states visible.
+ * Use API-supported statuses and transitions here. The shared status list contains
+ * values the backend rejects, so using it for filters or actions breaks requests.
  */
 const CHECKIN_TRANSITIONS: Record<string, string[]> = {
   PENDING: ["IN_PROGRESS", "CANCELLED"],
@@ -38,13 +33,7 @@ const CHECKIN_TRANSITIONS: Record<string, string[]> = {
 
 const CHECKIN_STATUSES = Object.keys(CHECKIN_TRANSITIONS);
 
-/**
- * What happens on arrival.
- *
- * The odometer is the number a customer later argues about, and the tyre, fluid
- * and light notes are the shop's record of how the car looked when it arrived —
- * which is why they are captured at the door rather than reconstructed later.
- */
+/** Capture mileage and vehicle condition at check-in, not later from memory. */
 export default function CheckInsPage() {
   const { can } = useSession();
   const { customerLabel, vehicleLabel, vehicles, customers } = useReferences();
@@ -229,8 +218,7 @@ function NewCheckInModal({
   });
   const create = useApiMutation((body: CheckInCreate) => checkInsApi.create(body));
 
-  // Narrowing happens in the browser because the list endpoint has no search
-  // parameter; the vehicle book is small enough for that to be honest.
+  // Filter locally because the list endpoint has no search parameter.
   const term = search.trim().toLowerCase();
   const choices = term
     ? vehicles.filter((vehicle) =>
@@ -250,8 +238,7 @@ function NewCheckInModal({
     if (!chosen) return;
 
     const created = await create.run({
-      // The owner comes from the vehicle rather than a second picker, because the
-      // API rejects a customer/vehicle pair that disagrees.
+      // Derive the customer from the selected vehicle so the API receives a valid pair.
       customer_id: chosen.customer_id,
       vehicle_id: chosen.id,
       odometer,
