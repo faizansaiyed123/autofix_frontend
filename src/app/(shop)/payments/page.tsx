@@ -22,16 +22,8 @@ import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { PAYMENT_METHODS, REFERENCE_REQUIRED_METHODS } from "@/lib/status";
 
 /**
- * The till.
- *
- * Voids are counted on their own line rather than netted away. A day with a bad
- * afternoon at the counter should read as a bad afternoon, not as a slightly
- * quiet one; the net figure is what the bank will agree with, but it is not what
- * happened.
- *
- * A payment is an event, not a document. There is no edit and no delete here —
- * a wrong one is voided with a reason and the row survives, because "we took
- * 400 and it should have been 40" is a fact about the day worth keeping.
+ * Keep payments as events: wrong entries are voided with a reason, not edited or deleted.
+ * Show voids separately rather than netting them out of daily totals.
  */
 export default function PaymentsPage() {
   const { can } = useSession();
@@ -69,10 +61,8 @@ export default function PaymentsPage() {
   );
 
   /**
-   * A payment record carries no customer, so the name is read off the invoice it
-   * belongs to. Fetching the distinct invoices on this page rather than every
-   * invoice keeps that to a handful of requests, and the lookup is keyed so a
-   * bill settled twice costs one request rather than two.
+   * Payments reference invoices, not customers. Fetch unique invoices for this page
+   * and use the results as a lookup to avoid duplicate requests.
    */
   const invoiceIds = useMemo(
     () => Array.from(new Set((list.data?.data ?? []).map((payment) => payment.invoice_id))),
