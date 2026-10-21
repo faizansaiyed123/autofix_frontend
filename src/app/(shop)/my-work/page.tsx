@@ -17,16 +17,8 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { formatNumber } from "@/lib/format";
 
 /**
- * One person's board.
- *
- * This screen is deliberately about a single technician rather than the shop:
- * the four numbers only mean anything as "how much is on my bench right now", and
- * a version that quietly added every technician's totals together would answer a
- * question nobody asked. The picker exists so a supervisor can stand behind
- * somebody's shoulder — it defaults to the signed-in user, not to the shop.
- *
- * "Open" is counted the way the backend counts it: a task that is neither
- * completed nor skipped, on an order that is still IN_PROGRESS or ON_HOLD.
+ * Workload counts are for the selected technician, defaulting to the signed-in user.
+ * "Open" matches backend rules: unfinished tasks on IN_PROGRESS or ON_HOLD orders.
  */
 export default function MyWorkPage() {
   const { user } = useSession();
