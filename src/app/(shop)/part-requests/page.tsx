@@ -22,16 +22,8 @@ import { PART_REQUEST_STATUSES } from "@/lib/status";
 import { formatDateTime, formatNumber } from "@/lib/format";
 
 /**
- * The parts desk queue.
- *
- * The list arrives without RO numbers — the API returns ids — so one shared
- * query loads the recent repair orders and resolves both the number in this
- * table and the picker in the "raise a request" dialog. One request instead of
- * one per row, and no id ever reaches the screen.
- *
- * A requester cannot decide their own request. That is the whole point of the
- * separation: the technician who wants a part does not get to be the one who
- * says yes to it.
+ * Resolve repair-order numbers from one shared query instead of fetching per row.
+ * Technicians can request parts but cannot approve their own requests.
  */
 export default function PartRequestsPage() {
   const { can } = useSession();
@@ -318,8 +310,7 @@ function NewPartRequestModal({
     partRequestsApi.create(body),
   );
 
-  // The backend refuses a request against an order that is DRAFT, COMPLETED,
-  // DELIVERED or CANCELLED, so only the orders it will accept are offered.
+  // Only offer repair orders the API accepts for part requests.
   const requestable = orders.filter((ro) =>
     ["APPROVED", "IN_PROGRESS", "ON_HOLD"].includes(ro.status),
   );
