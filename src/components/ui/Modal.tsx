@@ -2,15 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 
-/**
- * A dialog for a decision, not for a page.
- *
- * It closes on Escape and on a click outside, refuses to close while a write is
- * in flight, and stops background scrolling — the last one matters more than it
- * sounds: without it the page behind keeps moving under a modal on a touch
- * device, and the form appears to slide away from under the person filling it
- * in.
- */
+/** Dialog that supports Escape/outside-click dismissal and locks while a write is in flight. */
 export function Modal({
   open,
   onClose,
