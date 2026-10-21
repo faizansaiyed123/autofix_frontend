@@ -1,10 +1,4 @@
-/**
- * Stock, suppliers and the order book.
- *
- * `unit_cost` appears in these responses because the catalog is behind the staff
- * gate and the parts desk needs the margin. It is deliberately absent from the
- * portal, which never shows a customer what the shop paid.
- */
+/** Staff stock, supplier, and purchase-order endpoints; purchase costs are not exposed to the portal. */
 import { api, type Query } from "@/lib/api/client";
 import type {
   InventoryTransaction,
