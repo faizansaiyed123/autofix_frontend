@@ -11,14 +11,7 @@ import { COMPANY_NAME } from "@/lib/config";
 import { formatRelative } from "@/lib/format";
 import { useSession } from "@/lib/auth/AuthProvider";
 
-/**
- * The frame every staff screen sits in.
- *
- * The navigation is built from the same permission list the API enforces, so a
- * user is never shown a screen that will refuse them. The unread badge is
- * polled rather than pushed: this product has no websocket, and a badge that
- * needs a page reload to notice a new work request is not an attention centre.
- */
+/** Staff shell with permission-aware navigation and polled unread notifications. */
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, permissions, logout, can } = useSession();
   const pathname = usePathname();
@@ -145,12 +138,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * Where a record was last touched, for a detail page's footer.
- *
- * Derived from the row rather than fetched: it is context, not the reason the
- * page is open, and it must not be the thing that fails to load.
- */
+/** Derive the last-updated context from the record already loaded on the page. */
 export function RecordMeta({ label, at }: { label: string; at: string | null | undefined }) {
   return (
     <span className="text-xs text-ink-500">
