@@ -15,14 +15,7 @@ import { useApiMutation } from "@/lib/hooks/useApiMutation";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { formatDateTime, toApiDateTime } from "@/lib/format";
 
-/**
- * The customer's diary.
- *
- * Booking goes through the shop's own service, so a slot that clashes with work
- * already in a bay is refused here exactly as it would be at the counter. The
- * customer picks the time they want; who takes the job is the shop's business,
- * so there is no technician or bay control anywhere on this page.
- */
+/** Customer bookings are checked against existing work; customers do not choose the technician or bay. */
 export default function PortalAppointmentsPage() {
   const [upcomingOnly, setUpcomingOnly] = useState(false);
   const [booking, setBooking] = useState(false);
