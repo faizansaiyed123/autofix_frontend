@@ -19,17 +19,8 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 
 /**
- * The shop's labour records.
- *
- * Two things on this screen are worth stating plainly. First, a labour record is
- * evidence: it is the only record that anybody worked those hours, so deleting
- * one removes the fact rather than correcting it — the dialog says so before the
- * button is offered. Second, actual hours and billable hours are different
- * numbers on purpose, and the gap between them is what the shop gives away.
- *
- * The summary tiles are the current page only. They are a reading of what is on
- * screen, not a shop-wide figure, and they are labelled as such so nobody quotes
- * them as the month's labour.
+ * Labour records are retained as evidence of work performed. Actual and billable
+ * hours are separate, and the summary tiles cover only the current page.
  */
 export default function LabourPage() {
   const { can } = useSession();
@@ -48,9 +39,7 @@ export default function LabourPage() {
     [page, technicianId],
   );
 
-  // Labour rows carry RO ids. The recent orders are loaded once to put numbers and
-  // statuses on the table; without the status there is no way to warn before a
-  // write the backend will refuse.
+  // Load recent orders once to label each labour row and warn before rejected edits.
   const orders = useApiQuery(
     () => repairOrdersApi.list({ size: 100 }).then((result) => result.data),
     [],
@@ -271,9 +260,7 @@ function EditLabourModal({
   );
   const remove = useApiMutation(() => laborApi.remove(record.id));
 
-  // The backend refuses to change a labour record once its order has left
-  // IN_PROGRESS or ON_HOLD, because the record is the evidence that the work
-  // happened.
+  // Closed repair orders lock their labour records to preserve the work history.
   const locked = roStatus !== undefined && !["IN_PROGRESS", "ON_HOLD"].includes(roStatus);
   const lockReason =
     roStatus === undefined
