@@ -22,15 +22,7 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { REPAIR_ORDER_STATUSES } from "@/lib/status";
 import { formatDateTime, formatNumber } from "@/lib/format";
 
-/**
- * The floor board: every job the shop has been authorised to do.
- *
- * A repair order carries no money at all — the estimate it came from stays the
- * single source of truth for pricing — so what this list has to show instead is
- * progress. The task count comes from the tasks the API returned with the row,
- * because a list screen that fired a second request per row to learn how far
- * along each job was would be a list screen that stops working at twenty rows.
- */
+/** Repair-order list focused on work progress; pricing remains on the originating estimate. */
 export default function RepairOrdersPage() {
   const { can } = useSession();
   const router = useRouter();
