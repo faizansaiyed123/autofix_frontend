@@ -20,17 +20,7 @@ const PORTAL_LINKS = [
   { href: "/portal/payments", label: "Payments", icon: "payment" as const },
 ];
 
-/**
- * The customer's own view of the shop.
- *
- * A deliberately different frame from the staff shell: lighter, no groups, no
- * twenty items. The portal is not the shop with fewer buttons — it is a
- * different application that happens to read the same records.
- *
- * The gate here is `staffOnly={false}`. Staff are welcome: they simply have no
- * customer record behind their login, so every portal query answers 404 and the
- * pages say so rather than showing somebody else's account.
- */
+/** Customer portal shell; staff accounts without a customer record have no portal data. */
 export default function PortalLayout({ children }: { children: ReactNode }) {
   return (
     <ProtectedRoute staffOnly={false}>
