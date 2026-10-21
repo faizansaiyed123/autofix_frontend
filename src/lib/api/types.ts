@@ -1,12 +1,4 @@
-/**
- * Response and request shapes, mirroring the backend's Pydantic schemas.
- *
- * These are hand-written rather than generated so they carry no build step, but
- * they are deliberately literal: a field is optional here exactly when the
- * schema marks it optional, because the alternative — a type that claims every
- * field is always present — pushes the real problem (a null the backend can
- * return) into the page, where it becomes a crash instead of a blank.
- */
+/** Hand-written API types mirror backend Pydantic fields, including their optionality. */
 
 export interface PaginationMeta {
   page: number;
