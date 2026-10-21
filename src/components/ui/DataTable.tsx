@@ -2,15 +2,7 @@
 
 import type { ReactNode } from "react";
 
-/**
- * The list every screen is made of.
- *
- * A generic table with a `render` per column rather than a data-grid library:
- * the shop's rows are all different shapes, and a column is just a function.
- * `key` is required rather than inferred from the row, because two lines of the
- * same estimate can otherwise swap places in React's reconciliation and carry
- * their buttons with them.
- */
+/** Generic table; stable row keys keep actions attached to the correct row. */
 export interface Column<T> {
   key: string;
   header: ReactNode;
