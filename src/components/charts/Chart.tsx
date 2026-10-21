@@ -1,17 +1,6 @@
 "use client";
 
-/**
- * Charts drawn from the numbers the API returned.
- *
- * No charting library: these are two shapes over at most a few dozen points, and
- * a dependency that renders a few hundred kilobytes of JavaScript to draw a
- * polyline is a poor trade for a screen that must load on a workshop's
- * connection.
- *
- * Every chart is drawn from the series *including* its zero points. The backend
- * emits a bucket for every day in the period, zero-filled, and dropping them here
- * would make the line close the gap and show a slope that never happened.
- */
+/** Lightweight charts from API data; keep zero-filled buckets to preserve the series shape. */
 
 export interface Point {
   label: string;
