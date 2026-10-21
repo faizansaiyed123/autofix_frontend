@@ -19,14 +19,7 @@ import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { useSession } from "@/lib/auth/AuthProvider";
 import { formatRelative, titleCase, toApiDateTime } from "@/lib/format";
 
-/**
- * The statuses `ServiceRequestStatus` actually holds.
- *
- * The shared `SERVICE_REQUEST_STATUSES` array describes a longer workflow the API
- * does not have — six of its eight values would be refused. These are the API's
- * own values, and the transition map underneath is the rule it enforces, which
- * also makes the terminal states visible.
- */
+/** Use API-supported statuses and transitions; the shared status list includes unsupported values. */
 const REQUEST_STATUSES = ["NEW", "IN_REVIEW", "APPROVED", "REJECTED", "CONVERTED"];
 
 const REQUEST_TRANSITIONS: Record<string, string[]> = {
