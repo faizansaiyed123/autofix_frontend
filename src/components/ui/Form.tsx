@@ -56,14 +56,7 @@ export function Textarea({ className = "", ...rest }: TextareaHTMLAttributes<HTM
   return <textarea {...rest} className={`${controlClasses} ${className}`} />;
 }
 
-/**
- * A validation message taken from the server, attached to the form rather than
- * to a field.
- *
- * It shows the reason the write failed *and* the field it was about, because
- * `{"loc": ["body", "scheduled_start"], "msg": "must be tz-aware"}` is the whole
- * error text the API gives and a bare "Something went wrong" throws it away.
- */
+/** Display server validation details, including the affected field. */
 export function FormError({ error }: { error: ApiError | null }) {
   if (!error) return null;
   const fields = error.fieldErrors;
@@ -86,14 +79,7 @@ export function FormError({ error }: { error: ApiError | null }) {
   );
 }
 
-/**
- * A form whose values live in local state rather than in a form library.
- *
- * The dependency list in this project is deliberately small, and every write
- * here has under a dozen fields. Controlled state is what makes it possible to
- * keep a half-typed form after a rejection and to derive a live line total
- * while the user types.
- */
+/** Controlled form state preserves values after validation errors and supports live totals. */
 export function useForm<T extends Record<string, unknown>>(initial: T) {
   const [values, setValues] = useState<typeof initial>(initial);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
