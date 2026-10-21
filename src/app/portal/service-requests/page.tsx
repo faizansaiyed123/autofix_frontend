@@ -15,13 +15,7 @@ import { useApiMutation } from "@/lib/hooks/useApiMutation";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { formatDateTime } from "@/lib/format";
 
-/**
- * Requests the customer has sent.
- *
- * The write lands in the shop's own queue through the shop's own create path, so
- * a request filed here is indistinguishable from one taken over the phone — same
- * statuses, same priority, same person looking at it in the morning.
- */
+/** Customer requests enter the shop queue and follow the shared service-request workflow. */
 export default function PortalServiceRequestsPage() {
   const [creating, setCreating] = useState(false);
   const requests = useApiQuery(() => portalApi.serviceRequests());
