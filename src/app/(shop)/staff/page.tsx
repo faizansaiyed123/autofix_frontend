@@ -17,20 +17,7 @@ import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { useSession } from "@/lib/auth/AuthProvider";
 import { titleCase } from "@/lib/format";
 
-/**
- * The shop's staff accounts.
- *
- * **Roles are what make somebody staff**, and the `is_staff` column is not: the
- * server's gate is "any role other than CUSTOMER", and the column is writable
- * through this very screen, so a flag a caller can set is not something to hang
- * "who may read the shop's books" on. A technician created without the box ticked
- * is still staff, and the interface says so rather than implying otherwise.
- *
- * Every write is gated on the permission the API enforces: `users:write` to create
- * or edit, `users:manage` to deactivate. Deactivating is a soft delete — the row
- * survives with `is_active` false, which is what keeps its name on old invoices and
- * audit entries.
- */
+/** Staff access follows roles, not the mutable `is_staff` flag; deactivation preserves history. */
 const ROLES: Role[] = ["OWNER", "SERVICE_ADVISOR", "TECHNICIAN", "PARTS_STAFF", "CUSTOMER"];
 
 /** Roles are not statuses, so this is the one place a role gets its own colour. */
