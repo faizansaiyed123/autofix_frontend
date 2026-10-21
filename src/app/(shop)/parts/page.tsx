@@ -18,19 +18,7 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { formatDateTime, formatMoney, titleCase } from "@/lib/format";
 import { PART_CATEGORIES } from "@/lib/status";
 
-/**
- * The parts catalog.
- *
- * This screen sits behind the staff gate and shows what the shop paid for every
- * line. That is deliberate and it is the only place the figure appears: the
- * parts desk needs the margin to price anything, and the customer portal is a
- * separate module that never carries `unit_cost` at all.
- *
- * "On hand" is a running balance out of the ledger and nobody edits it here. A
- * part that has ever moved cannot be deleted, because its history would go with
- * it — the honest end of life for such a line is DISCONTINUED, which keeps the
- * number resolvable on every document that ever quoted it.
- */
+/** Staff parts catalog. Stock is ledger-derived, and used parts remain available for historical documents. */
 export default function PartsPage() {
   const { can } = useSession();
   const [search, setSearch] = useState("");
