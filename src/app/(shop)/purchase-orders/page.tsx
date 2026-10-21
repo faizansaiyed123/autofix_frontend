@@ -18,18 +18,7 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { PURCHASE_ORDER_STATUSES } from "@/lib/status";
 
-/**
- * The order book.
- *
- * An order walks DRAFT → SENT → (PARTIALLY_RECEIVED) → RECEIVED, and only the
- * receiving step moves it past SENT: PARTIALLY_RECEIVED and RECEIVED are facts
- * about goods that arrived, so there is no control here that names them. Sending
- * freezes the lines, because the supplier may already hold the goods and a
- * correction is then a cancellation and a new order, not an edit.
- *
- * The detail is rendered here rather than on another screen because receiving is
- * a bench job: the person holding the delivery note is standing at this list.
- */
+/** Purchase-order list. Receiving updates status from delivered quantities; sending freezes the lines. */
 export default function PurchaseOrdersPage() {
   const { can } = useSession();
   const [status, setStatus] = useState("");
