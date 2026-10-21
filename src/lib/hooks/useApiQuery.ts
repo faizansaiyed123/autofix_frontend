@@ -1,19 +1,6 @@
 "use client";
 
-/**
- * Data loading for a screen.
- *
- * Three states, not two: loading, error and loaded. A screen that treats "not
- * loaded yet" as "empty" shows an empty table for a moment and then fills it,
- * which reads as a glitch; a screen that swallows an error shows an empty table
- * forever and reads as "there is nothing here". Both are worse than saying so.
- *
- * The fetcher is held in a ref rather than in a dependency list because callers
- * pass an inline arrow, which changes identity on every render — listing it
- * would refetch forever. The ref is written from an effect declared *before* the
- * fetching effect, so the fetch always sees the fetcher belonging to the render
- * that scheduled it.
- */
+/** Track loading, error, and loaded states; keep inline fetchers in a ref to avoid repeated refetches. */
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ApiError } from "@/lib/api/client";
