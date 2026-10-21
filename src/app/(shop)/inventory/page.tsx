@@ -24,19 +24,7 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { formatDateTime, formatMoney, titleCase } from "@/lib/format";
 import { INVENTORY_TRANSACTION_TYPES } from "@/lib/status";
 
-/**
- * The inventory ledger, and the shelf beside it.
- *
- * `quantity_on_hand` is a running balance that nobody types. Every change is a
- * row here that records the balance either side of itself, which is why the
- * movements tab shows before and after: one row has to be able to explain the
- * number on the parts catalog without anybody remembering.
- *
- * Direction is the field the desk gets wrong most often. A receipt arrives and an
- * issue leaves, so those two need nothing said; an adjustment and a transfer
- * could go either way, so the form makes the direction explicit rather than
- * letting the server refuse a guess.
- */
+/** Stock balances come from the ledger; adjustments and transfers require an explicit direction. */
 export default function InventoryPage() {
   const { can } = useSession();
   const [tab, setTab] = useState<"movements" | "stock">("movements");
