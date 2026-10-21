@@ -9,14 +9,7 @@ import { portalApi } from "@/lib/api/portal";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { formatDateTime, formatMoney } from "@/lib/format";
 
-/**
- * What the customer needs to do, and what they owe.
- *
- * The summary is a **view**, not a stored copy: it is assembled from the
- * estimates, invoices, appointments and repair orders the shop already keeps, at
- * the moment it is asked for. A portal that kept its own copy of an invoice would
- * be a second invoice, and the only question is when the two would disagree.
- */
+/** Portal summary assembled from current estimates, invoices, appointments, and repair orders. */
 export default function PortalOverviewPage() {
   const summary = useApiQuery(() => portalApi.summary());
 
