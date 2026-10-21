@@ -19,15 +19,7 @@ import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { useSession } from "@/lib/auth/AuthProvider";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 
-/**
- * One purchase order, with the three things that can happen to it.
- *
- * The lines are frozen the moment the order is sent, because the supplier may
- * already hold the goods — a correction is cancelling this order and raising
- * another, not editing a document that has left the building. RECEIVED and
- * PARTIALLY_RECEIVED are not statuses anyone picks here: they mean goods arrived,
- * so they are reached only by booking a delivery in.
- */
+/** Purchase-order detail. Sending freezes the lines; receipts determine the order's received state. */
 export default function PurchaseOrderDetailPage() {
   const params = useParams<{ id: string }>();
   const orderId = params.id;
