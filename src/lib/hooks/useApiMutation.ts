@@ -1,13 +1,6 @@
 "use client";
 
-/**
- * A write, with the two states every write has: what the server said, and what
- * to show the person who pressed the button.
- *
- * The error is held rather than thrown so a form can keep what was typed and put
- * the reason next to it. A write that clears the form on failure asks the user to
- * remember everything they just entered because a validation message flashed by.
- */
+/** Keep mutation errors in state so forms can preserve input and show validation feedback. */
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ApiError } from "@/lib/api/client";
