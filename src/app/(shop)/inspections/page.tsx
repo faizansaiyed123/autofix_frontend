@@ -17,11 +17,8 @@ import { INSPECTION_STATUSES } from "@/lib/status";
 import { formatDate, formatNumber, titleCase } from "@/lib/format";
 
 /**
- * The condition inspections the shop has carried out.
- *
- * The condition column is the traffic light the customer is eventually shown —
- * GREEN, YELLOW or RED, derived by the API from the worst item on the record —
- * so it is rendered through the shared badge rather than recomputed here.
+ * The condition badge uses the API's result from the worst inspection item; don't
+ * recompute that severity in the frontend.
  */
 export default function InspectionsPage() {
   const router = useRouter();
