@@ -2,15 +2,7 @@ import type { ReactNode } from "react";
 
 import { toneClasses, toneForStatus, type Tone } from "@/lib/status";
 
-/**
- * A status, rendered the same way everywhere.
- *
- * The label is the backend's own code, not a re-invented word per screen: the
- * shop's screens, the audit trail and the API all key off it, and a UI that
- * invents its own vocabulary cannot be talked back to the record it describes.
- * Anything the vocabulary does not know is still shown — as neutral title-cased
- * text — so a status from a new module reads as itself rather than as raw caps.
- */
+/** Render API status codes consistently; unknown values use neutral title-cased labels. */
 export function StatusBadge({
   status,
   tone,
