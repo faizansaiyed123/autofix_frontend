@@ -28,17 +28,7 @@ import {
   todayIso,
 } from "@/lib/format";
 
-/**
- * The reporting screen.
- *
- * A report here is a **reading**, not a record: every figure is summed live from
- * the tables the shop already keeps. There is no summary table and nothing is
- * cached, so no number on this page can be stale and none of it is written back.
- *
- * The panels load on demand rather than on mount. Six reports fired at once would
- * sum the whole ledger six times over before anybody had chosen which one they
- * wanted, and each report is a different permission away from the next.
- */
+/** Live reports over operational records; panels load on demand and use separate permissions. */
 const TABS = [
   {
     key: "revenue",
