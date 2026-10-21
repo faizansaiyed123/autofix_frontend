@@ -1,8 +1,4 @@
-/**
- * Money. Both routers are shop-wide, so a payment listed here may be any
- * customer's — the till's book, not one account. A customer settles their own
- * bill through `portal.ts` instead, which resolves the invoice from the token.
- */
+/** Shop-wide invoice and payment endpoints; customers settle their own invoices through `portal.ts`. */
 import { api, type Query } from "@/lib/api/client";
 import type {
   Invoice,
