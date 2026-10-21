@@ -197,13 +197,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
-/**
- * Fetch a server-rendered HTML document (the printable estimate and invoice).
- *
- * It is fetched rather than linked so the browser's cookies-and-forwarded
- * headers are never in play and the download is a deliberate act: opening it in
- * a new tab would leak a bearer token into the address bar.
- */
+/** Fetch printable estimate and invoice documents without exposing bearer tokens in URLs. */
 export async function requestDocument<T = string>(path: string): Promise<T> {
   const token = getAccessToken();
   const headers: Record<string, string> = {};
