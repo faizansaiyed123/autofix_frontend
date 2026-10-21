@@ -1,12 +1,4 @@
-/**
- * Runtime configuration.
- *
- * The API base URL is a build-time variable because the browser is what has to
- * reach it: a server-side fetch in a Next.js route can talk to `localhost`, but
- * the browser on the developer's machine cannot. `NEXT_PUBLIC_API_URL` is
- * therefore inlined at build time and must be the address a *browser* can open —
- * not the address the container listens on.
- */
+/** Browser-facing configuration; `NEXT_PUBLIC_API_URL` must be reachable from the user's browser. */
 export const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
 ).replace(/\/+$/, "");
