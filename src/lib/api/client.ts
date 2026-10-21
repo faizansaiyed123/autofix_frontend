@@ -1,20 +1,7 @@
 /**
- * The API client.
- *
- * Three things live here and nowhere else:
- *
- *  1. Token custody. The access token is short-lived (30 minutes) and the refresh
- *     token long-lived. Both are held in `localStorage` because the backend is
- *     stateless JWT with no httpOnly cookie endpoint to borrow — a real
- *     deployment should add one, and this file is the single place that would
- *     have to change when it does.
- *  2. One refresh at a time. Six panels load on the dashboard and all six can
- *     come back 401 at the same moment. Without a single-flight latch that is
- *     six refresh calls, five of which race and lose, and the losers log the
- *     user out mid-session. `refreshInFlight` collapses them into one.
- *  3. Errors that carry their status. A 403 and a 404 mean different things to a
- *     caller — one is "not yours", the other is "not there" — so the status is
- *     on the exception rather than folded into a message string.
+ * Shared API client for token storage, single-flight refresh, and status-aware errors.
+ * Tokens currently use localStorage; replace this with an HttpOnly-cookie flow
+ * when the backend supports one.
  */
 import { API_BASE_URL, API_PREFIX, STORAGE_KEYS } from "@/lib/config";
 
