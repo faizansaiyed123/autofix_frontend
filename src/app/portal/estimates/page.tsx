@@ -13,13 +13,7 @@ import type { PortalEstimate } from "@/lib/api/types";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { formatDate, formatMoney } from "@/lib/format";
 
-/**
- * Estimates, and the ones waiting on the customer.
- *
- * `open_only` deliberately excludes expired estimates. Listing one as awaiting a
- * decision asks the customer to approve something that will then be refused —
- * an expired quote is not a live question.
- */
+/** List estimates awaiting customer decisions; expired estimates are excluded. */
 export default function PortalEstimatesPage() {
   const [openOnly, setOpenOnly] = useState(false);
   const estimates = useApiQuery(() => portalApi.estimates({ open_only: openOnly }), [openOnly]);
