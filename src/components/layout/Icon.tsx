@@ -1,12 +1,6 @@
 import type { IconName } from "@/lib/navigation";
 
-/**
- * Line icons at a single stroke weight.
- *
- * Inline rather than a package: twenty shapes that never change are not worth a
- * dependency, and inlining them keeps the icons on the same grid as the text
- * beside them.
- */
+/** Inline SVG icons using a consistent stroke weight. */
 const PATHS: Record<IconName, React.ReactNode> = {
   dashboard: (
     <>
