@@ -1,16 +1,8 @@
 "use client";
 
 /**
- * Reference data, loaded once and shared.
- *
- * Nearly every screen in the shop shows a customer, a vehicle or a member of
- * staff, and the API returns ids for all three. Rendering an id where a name
- * belongs is the single most common way a workshop screen becomes unusable, so
- * the lookups are resolved once at the shell and handed down.
- *
- * Each source is optional. A parts clerk may not hold `customers:read`, and a
- * 403 here must leave that one map empty rather than take the whole shell down —
- * the screen still works, it just cannot name what it is not allowed to look up.
+ * Load customer, vehicle, and staff lookups once for the shop shell. A 403 for an
+ * optional source should leave that map empty without blocking the rest of the app.
  */
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 
@@ -52,13 +44,8 @@ const ReferenceContext = createContext<References>(EMPTY);
 const MAX_PAGE_SIZE = 100;
 
 /**
- * A reference list, in full.
- *
- * The API refuses a page larger than 100 rows, so a shop with more
- * than that is walked page by page: the first answer carries the page
- * count, and the remaining pages are fetched alongside it. Stopping at
- * the first hundred would leave every row past it named as "—", which
- * reads as "we do not know this customer" at the counter.
+ * Fetch all pages of a reference list; the API caps each page at 100 rows.
+ * Stopping after the first page would leave some records without names in pickers.
  */
 async function loadAll<T>(
   list: (query: { page: number; size: number }) => Promise<Paginated<T>>,
