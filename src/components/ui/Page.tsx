@@ -36,15 +36,7 @@ export function Toolbar({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * A search box that waits before asking.
- *
- * The typed value stays here; the caller only ever receives the debounced one,
- * so it fires one request per pause rather than one per keystroke. Local state
- * is what makes that safe: the input stays responsive while the query is stale,
- * and because only the debounced value reaches the caller, intermediate
- * responses cannot race each other into the list.
- */
+/** Keep the input responsive and pass only the debounced value to the caller. */
 export function SearchInput({
   value,
   onChange,
