@@ -21,19 +21,7 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { QC_STATUSES } from "@/lib/status";
 import { formatDateTime, formatNumber } from "@/lib/format";
 
-/**
- * The last gate before a vehicle goes home.
- *
- * Two lists on one screen because they are two different questions. The queue is
- * work nobody has looked at yet; the checks are the history of what was looked
- * at, including the attempts that failed and sent a job back for rework — kept,
- * not overwritten, because a defect that is quietly erased is a defect that
- * ships twice.
- *
- * The verdicts are enforced by the backend against real data, so the two rules
- * that decide whether an inspector can act are shown rather than discovered: pass
- * is refused while a blocking check fails, and nobody may inspect their own work.
- */
+/** QC queue and inspection history; passing requires no blocking failures and an independent inspector. */
 export default function QualityControlPage() {
   const { can, user } = useSession();
   const { vehicleLabel, userName } = useReferences();
