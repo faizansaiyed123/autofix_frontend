@@ -22,19 +22,7 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { formatDate, formatMoney, formatPercent, todayIso } from "@/lib/format";
 import { PAYMENT_METHODS, REFERENCE_REQUIRED_METHODS } from "@/lib/status";
 
-/**
- * One invoice, read as a document the customer is holding.
- *
- * The lines fall into two kinds and the difference is why half of them have no
- * buttons. A line copied from the estimate is what the customer agreed to,
- * frozen the moment the invoice went out; only a shop-added `MANUAL` line is the
- * shop's own arithmetic and may still be corrected, and only while the invoice is
- * a draft.
- *
- * There is no control here for payment state. `PARTIALLY_PAID` and `PAID` are
- * reachable only by recording a payment, because an invoice must never claim
- * money that was never taken — a status picker here would be exactly that claim.
- */
+/** Invoice detail. Estimate-derived lines stay fixed; payment state changes through recorded payments. */
 export default function InvoiceDetailPage() {
   const params = useParams<{ id: string }>();
   const invoiceId = params.id;
