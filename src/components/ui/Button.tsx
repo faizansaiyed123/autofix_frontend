@@ -57,13 +57,7 @@ export function Spinner({ className = "" }: { className?: string }) {
   );
 }
 
-/**
- * A link that performs an action still looks like a link.
- *
- * The shop's screens are dense with secondary verbs — send, cancel, issue,
- * receive — and a wall of filled primary buttons makes the one thing the page is
- * for invisible.
- */
+
 export function LinkButton({
   children,
   onClick,
