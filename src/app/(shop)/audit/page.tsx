@@ -18,19 +18,8 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { formatDateTime, formatNumber, formatRelative, titleCase } from "@/lib/format";
 
 /**
- * Who did what to whose record.
- *
- * **The log is append-only.** There is no POST, no PUT and no DELETE in the audit
- * router and no role that holds one, so this screen offers no edit and no delete
- * control: an interface offering one would be offering something the server cannot
- * honour.
- *
- * Each entry stores the actor twice — the live id plus a copied email and role — so
- * an entry can still name somebody after the account is gone. The list omits the two
- * heavy state columns because a page of entries carrying two full row snapshots each
- * is a response nobody asked for; the detail shows them.
- *
- * The whole screen is `audit_logs:read`, which only the owner holds.
+ * Append-only audit history. The list shows diffs; details include full snapshots.
+ * Access is restricted to users with `audit_logs:read`.
  */
 
 /** The endpoint adds this key when a diff was too wide to list in full. */
