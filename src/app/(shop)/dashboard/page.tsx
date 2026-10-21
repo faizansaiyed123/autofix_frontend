@@ -12,19 +12,8 @@ import { formatMoney, formatNumber, formatDate } from "@/lib/format";
 import { useSession } from "@/lib/auth/AuthProvider";
 
 /**
- * The morning screen.
- *
- * Two numbers sit at the top, and they are not the same number: what the shop
- * **charged** (issued invoices) and what the till actually **took** (recorded
- * payments). The gap between them is the money that has been billed and not
- * paid, which is the one figure a garage most often talks itself out of. Showing
- * a single "revenue" tile would hide exactly the difference that matters.
- *
- * Everything below is a snapshot of *now*: how many repair orders are open, how
- * many are waiting on quality control, how many parts are below their reorder
- * point. Those are counts of things that exist, not of things that happened in
- * the window — answering "how many are sitting in QC right now" with a number
- * from a thirty-day window would report a healthy pipeline that is on fire.
+ * Keep invoices issued separate from payments received. Workload counts show the
+ * current state, not just activity within the selected date range.
  */
 export default function DashboardPage() {
   const { can } = useSession();
