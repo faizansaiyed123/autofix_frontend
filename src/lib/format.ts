@@ -1,10 +1,4 @@
-/**
- * Presentation helpers.
- *
- * Money is formatted from the number the API returned, never recomputed from
- * the lines on screen: the backend rounds to cents in the service layer, and a
- * second rounding done in the browser is a second answer to the same question.
- */
+/** Format API-provided values; money totals and rounding are owned by the backend. */
 import { CURRENCY } from "@/lib/config";
 
 const moneyFormatters = new Map<string, Intl.NumberFormat>();
@@ -49,14 +43,7 @@ export function formatPercent(value: number | null | undefined, digits = 1): str
   return `${(value * 100).toFixed(digits)}%`;
 }
 
-/**
- * Parse a backend timestamp for display.
- *
- * The API returns naive local datetimes (`2026-10-03T09:30:00`) for shop time —
- * a garage's day starts when the shop opens, not at UTC — so they are read as
- * local wall-clock time rather than converted from UTC, which would shift every
- * booking in the calendar by the viewer's offset.
- */
+/** Treat naive API datetimes as the shop's local wall-clock time, not as UTC. */
 function parseApiDate(value: string): Date {
   const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(value);
   return new Date(hasZone ? value : `${value}Z`);
