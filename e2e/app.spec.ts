@@ -49,7 +49,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await dashboardResponse;
     await expectPage(page, "Dashboard");
     await expect(page.getByText("Invoiced", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("Collected", { exact: true })).toBeVisible();
+    await expect(page.getByText("Collected", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("On the floor", { exact: true })).toBeVisible();
     await screenshot(page, "01-dashboard.png");
 
@@ -81,7 +81,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
 
     await login(customerPage, CUSTOMER, "/portal/service-requests");
     await expectPage(customerPage, "Requests");
-    await customerPage.getByRole("button", { name: /new request/i }).click();
+    await customerPage.getByRole("button", { name: "Ask for work", exact: true }).click();
     await customerPage.getByLabel("What is it for").fill("E2E brake inspection");
     await customerPage
       .getByLabel("Anything more we should know")
@@ -125,7 +125,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     const uniqueEmail = "e2e.customer@autofix.demo";
     await page.getByLabel("First name").fill("E2E");
     await page.getByLabel("Last name").fill("Customer");
-    await page.getByLabel("Email").fill(uniqueEmail);
+    await page.getByRole("dialog").getByLabel("Email", { exact: true }).fill(uniqueEmail);
     await page.getByLabel("Phone").fill("+1-503-555-0199");
 
     const createResponse = page.waitForResponse(
