@@ -90,7 +90,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     const createResponse = customerPage.waitForResponse(
       (r) =>
         r.request().method() === "POST" &&
-        r.url().includes("/api/v1/portal/service_requests") &&
+        r.url().includes("/api/v1/portal/service-requests") &&
         r.status() === 201,
     );
     await customerPage.getByRole("button", { name: "Send", exact: true }).click();
@@ -126,7 +126,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await page.getByLabel("First name").fill("E2E");
     await page.getByLabel("Last name").fill("Customer");
     await page.getByRole("dialog").getByLabel("Email", { exact: true }).fill(uniqueEmail);
-    await page.getByLabel("Phone").fill("+1-503-555-0199");
+    await page.getByRole("dialog").getByLabel("Phone", { exact: true }).fill("+1-503-555-0199");
 
     const createResponse = page.waitForResponse(
       (r) =>
