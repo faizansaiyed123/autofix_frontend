@@ -139,7 +139,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     const created = (await response.json()) as { id: string };
 
     await page.goto("/customers", { waitUntil: "networkidle" });
-    await page.getByPlaceholder(/search customers/i).fill(uniqueEmail);
+    await page.getByPlaceholder("Name, email, phone or company").fill(uniqueEmail);
     await expect(page.getByText("E2E Customer", { exact: true })).toBeVisible();
 
     await page.goto(`/customers/${created.id}`, { waitUntil: "networkidle" });
