@@ -243,17 +243,3 @@ The same principle is used throughout the product:
 | Audit | Activity history |
 | Reports | Operational and financial visibility |
 | Customer portal | Customer-facing experience |
-
-## Technology
-
-**Frontend:** Next.js, React, TypeScript
-
-**Backend:** FastAPI, Python
-
-**Database:** PostgreSQL
-
-**Data access:** SQLAlchemy async
-
-**Authentication & authorization:** authenticated sessions with backend permission checks
-
-**Browser experience:** responsive staff workspace plus a dedicated customer portal
