@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-and-e2e:
@@ -127,6 +127,27 @@ jobs:
         run: npx playwright test
         env:
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+
+      - name: Publish user-facing visual walkthrough
+        if: success()
+        run: |
+          mkdir -p docs/testing/visuals
+          cp e2e/evidence/*.png docs/testing/visuals/
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          files = sorted(p.name for p in Path("docs/testing/visuals").glob("*.png"))
+          Path("docs/testing/visuals/manifest.json").write_text(
+              json.dumps({"screenshots": files}, indent=2) + "\n"
+          )
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/testing/visuals
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: publish AutoFix visual walkthrough [skip ci]"
+            git push
+          fi
 
       - name: Upload browser evidence
         if: always()
