@@ -1,0 +1,326 @@
+name: AutoFix Frontend CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/testing/**"
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-e2e:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: autofix
+          POSTGRES_PASSWORD: autofix
+          POSTGRES_DB: autofix_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U autofix -d autofix_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Check out frontend
+        uses: actions/checkout@v4
+
+      - name: Check out backend
+        uses: actions/checkout@v4
+        with:
+          repository: faizansaiyed123/autofix_backend
+          path: autofix_backend
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend test/runtime dependencies
+        working-directory: autofix_backend
+        run: python -m pip install --upgrade pip && pip install -e '.[dev]'
+
+      - name: Apply backend schema
+        working-directory: autofix_backend
+        run: alembic upgrade head
+        env:
+          DATABASE_URL: postgresql+asyncpg://autofix:autofix@localhost:5432/autofix_test
+          SECRET_KEY: ci-only-autofix-secret
+          APP_ENV: test
+          BCRYPT_ROUNDS: "4"
+
+      - name: Seed realistic demo shop
+        working-directory: autofix_backend
+        run: python scripts/seed.py
+        env:
+          DATABASE_URL: postgresql+asyncpg://autofix:autofix@localhost:5432/autofix_test
+          SECRET_KEY: ci-only-autofix-secret
+          APP_ENV: test
+          BCRYPT_ROUNDS: "4"
+          ALLOWED_ORIGINS: '["http://127.0.0.1:3000","http://localhost:3000"]'
+
+      - name: Start API
+        working-directory: autofix_backend
+        run: |
+          nohup env             DATABASE_URL=postgresql+asyncpg://autofix:autofix@localhost:5432/autofix_test             SECRET_KEY=ci-only-autofix-secret             APP_ENV=test             BCRYPT_ROUNDS=4             ALLOWED_ORIGINS='["http://127.0.0.1:3000","http://localhost:3000"]'             uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/autofix-api.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl --fail --silent http://127.0.0.1:8000/health && exit 0
+            sleep 1
+          done
+          cat /tmp/autofix-api.log
+          exit 1
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install frontend
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
+          NEXT_PUBLIC_COMPANY_NAME: AutoFix Garage
+          NEXT_PUBLIC_CURRENCY: USD
+
+      - name: Start frontend
+        run: |
+          nohup env             NEXT_PUBLIC_API_URL=http://127.0.0.1:8000             NEXT_PUBLIC_COMPANY_NAME="AutoFix Garage"             NEXT_PUBLIC_CURRENCY=USD             npm start > /tmp/autofix-web.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl --fail --silent http://127.0.0.1:3000/ && exit 0
+            sleep 1
+          done
+          cat /tmp/autofix-web.log
+          exit 1
+
+      - name: Install Chromium for Playwright
+        run: npx --yes playwright@1.56.1 install --with-deps chromium
+
+      - name: Run browser integration tests
+        run: npx --yes playwright@1.56.1 test
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: autofix-e2e-evidence
+          path: e2e/evidence
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Build visual walkthrough
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p docs/testing/visuals
+          cp e2e/evidence/*.png docs/testing/visuals/
+
+          cat > docs/testing/README.md <<EOF
+# AutoFix testing evidence
+
+This directory contains the user-facing visual walkthrough and browser evidence produced by the full-stack CI run.
+
+The browser suite drives the real Next.js UI against the real FastAPI service and a disposable PostgreSQL database.
+
+- Frontend: Next.js / React / TypeScript
+- Backend: FastAPI / SQLAlchemy async
+- Database: PostgreSQL
+- Browser verification: Playwright / Chromium
+- CI run: ${RUN_URL}
+
+The important boundary is **UI -> API -> backend logic/auth -> PostgreSQL -> API response -> UI**.
+
+See [VISUAL-TEST-WALKTHROUGH.md](./VISUAL-TEST-WALKTHROUGH.md).
+EOF
+
+          cat > docs/testing/visuals/manifest.json <<'EOF'
+[
+  { "index": 1, "file": "01-dashboard.png", "title": "Dashboard" },
+  { "index": 2, "file": "02-attention-centre.png", "title": "Attention centre" },
+  { "index": 3, "file": "03-customers.png", "title": "Customers" },
+  { "index": 4, "file": "04-diary.png", "title": "Diary" },
+  { "index": 5, "file": "05-check-ins.png", "title": "Check-ins" },
+  { "index": 6, "file": "06-inspections.png", "title": "Inspections" },
+  { "index": 7, "file": "07-estimates.png", "title": "Estimates" },
+  { "index": 8, "file": "08-repair-orders.png", "title": "Repair orders" },
+  { "index": 9, "file": "09-quality-control.png", "title": "Quality control" },
+  { "index": 10, "file": "10-invoices.png", "title": "Invoices" },
+  { "index": 11, "file": "11-payments.png", "title": "Payments" },
+  { "index": 12, "file": "12-inventory.png", "title": "Inventory" },
+  { "index": 13, "file": "13-reports.png", "title": "Reports" },
+  { "index": 14, "file": "14-customer-portal-request-created.png", "title": "Customer portal request created" },
+  { "index": 15, "file": "15-staff-queue-received-request.png", "title": "Staff queue received request" }
+]
+EOF
+
+          cat > docs/testing/VISUAL-TEST-WALKTHROUGH.md <<EOF
+# AutoFix — Visual Product & End-to-End Workflow
+
+This is the recruiter/interviewer/user-facing walkthrough of AutoFix.
+
+It is **not a frontend-only gallery**. Every screenshot below comes from a browser run where the Next.js frontend was connected to the FastAPI service backed by PostgreSQL.
+
+## What AutoFix does
+
+AutoFix is an end-to-end auto-repair garage operations platform. It connects the customer portal, service desk, workshop floor, quality control, parts/inventory, invoicing, payments, reporting, notifications, and audit history in one system.
+
+The product flow is:
+
+**Customer / Staff -> Next.js UI -> FastAPI API -> auth + business rules -> SQLAlchemy -> PostgreSQL -> API response -> updated UI**
+
+## What was actually exercised
+
+- staff login against the real authentication endpoint
+- live dashboard/report data loaded from the backend
+- workshop screens populated from seeded PostgreSQL records
+- customer portal request creation through the UI
+- the created request appearing in the staff queue after a separate user session and reload
+- staff customer creation through the UI
+- backend response IDs and persisted data surviving navigation/reload
+- backend tests running against PostgreSQL separately in CI
+
+## Architecture
+
+```mermaid
+flowchart LR
+    U[User] --> FE[Next.js / React frontend]
+    FE -->|Bearer auth + JSON| API[FastAPI /api/v1]
+    API --> AUTH[Auth + RBAC]
+    API --> DOMAIN[Domain services]
+    DOMAIN --> ORM[SQLAlchemy async]
+    ORM --> DB[(PostgreSQL)]
+    DB --> ORM --> DOMAIN --> API --> FE
+```
+
+## Visual workflow
+
+### 1. Live dashboard
+![AutoFix dashboard](./visuals/01-dashboard.png)
+
+The dashboard is populated from report APIs, not hard-coded frontend values. The browser test waits for the real `GET /api/v1/reports/dashboard` response before accepting this evidence.
+
+### 2. Attention centre
+![AutoFix attention centre](./visuals/02-attention-centre.png)
+
+The attention queue is backed by persisted notification records.
+
+### 3. Customers
+![AutoFix customers](./visuals/03-customers.png)
+
+Customer records are read from the staff API. The integration suite also creates a customer and verifies it survives navigation and reload.
+
+### 4. Diary
+![AutoFix diary](./visuals/04-diary.png)
+
+Appointments are loaded from the scheduling API and represent the shop's live booking state.
+
+### 5. Check-ins
+![AutoFix check-ins](./visuals/05-check-ins.png)
+
+Check-ins show the workshop's intake record and visit status.
+
+### 6. Inspections
+![AutoFix inspections](./visuals/06-inspections.png)
+
+Inspection records connect a visit to the vehicle condition and workshop findings.
+
+### 7. Estimates
+![AutoFix estimates](./visuals/07-estimates.png)
+
+Estimates form the customer's approval boundary and are backed by stored line items and backend calculations.
+
+### 8. Repair orders
+![AutoFix repair orders](./visuals/08-repair-orders.png)
+
+Repair orders represent authorised workshop work, tasks, technicians, bays, and operational status.
+
+### 9. Quality control
+![AutoFix quality control](./visuals/09-quality-control.png)
+
+QC is a separate verification stage before billing; backend rules decide what may pass.
+
+### 10. Invoices
+![AutoFix invoices](./visuals/10-invoices.png)
+
+Invoice totals, status, balances, and overdue information come from persisted invoice records.
+
+### 11. Payments
+![AutoFix payments](./visuals/11-payments.png)
+
+Payments are recorded as financial events against invoices. The backend updates the invoice balance.
+
+### 12. Inventory
+![AutoFix inventory](./visuals/12-inventory.png)
+
+Inventory is a ledger-backed view of stock movements.
+
+### 13. Reports
+![AutoFix reports](./visuals/13-reports.png)
+
+Reports are calculated from operational records in the backend and PostgreSQL.
+
+### 14. Customer creates work from the portal
+![AutoFix customer portal request](./visuals/14-customer-portal-request-created.png)
+
+The customer creates a service request from the portal UI. The test waits for a real `POST /api/v1/portal/service_requests` response.
+
+### 15. Staff receives the same request
+![AutoFix staff queue](./visuals/15-staff-queue-received-request.png)
+
+A different authenticated staff session reloads the service-request page and sees the request created by the customer.
+
+That is the clearest persistence boundary:
+
+**Customer UI -> FastAPI POST -> PostgreSQL row -> FastAPI GET -> Staff UI**
+
+## How the database is part of the proof
+
+There are two complementary verification layers:
+
+1. **Browser integration:** Playwright performs real user actions in Next.js and verifies the corresponding backend requests and returned records.
+2. **Backend integration:** the backend CI suite runs domain tests against PostgreSQL, covering lifecycle, auth/RBAC, invoices/payments, portal behavior, inventory, reports, notifications, audit, and migrations.
+
+This means the screenshots are evidence of a tested application path rather than mocked frontend fixtures.
+
+## Interview takeaway
+
+> “I built and verified AutoFix as a full-stack workflow, not a collection of screens. A user action starts in Next.js, hits a FastAPI endpoint, passes authorization and domain rules, persists through SQLAlchemy into PostgreSQL, and the resulting state comes back to the UI.”
+
+## CI evidence
+
+- Frontend build + browser integration: ${RUN_URL}
+- Backend CI: https://github.com/faizansaiyed123/autofix_backend/actions
+- Screenshot manifest: [visuals/manifest.json](./visuals/manifest.json)
+- Browser evidence artifact: available from the CI run as **autofix-e2e-evidence**
+
+## Verification environment
+
+- Chromium via Playwright
+- Next.js production build
+- FastAPI / Uvicorn
+- PostgreSQL 16
+- disposable CI database
+- seeded AutoFix demo shop
+- isolated demo credentials
+EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/testing
+          git diff --cached --quiet || git commit -m "docs: publish AutoFix full-stack visual walkthrough [skip ci]"
+          git push
