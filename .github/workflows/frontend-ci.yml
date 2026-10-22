@@ -121,7 +121,7 @@ jobs:
         run: npm install --no-save --no-package-lock @playwright/test@1.56.1
 
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Run browser integration tests
         run: npx playwright test
