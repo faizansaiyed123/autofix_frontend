@@ -1,0 +1,1 @@
+# AutoFix — Visual Product & End-to-End Workflow\n\nThe first successful full-stack CI run will publish the screenshots and complete this walkthrough.\n
