@@ -128,6 +128,51 @@ jobs:
         env:
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
 
+      - name: Publish visual walkthrough images
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -e
+
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+
+            mkdir -p docs/testing/visuals
+            find docs/testing/visuals -maxdepth 1 -type f -name '*.png' -delete
+            cp e2e/evidence/*.png docs/testing/visuals/
+
+            python - <<'PY'
+            import json
+            from pathlib import Path
+
+            files = sorted(p.name for p in Path("docs/testing/visuals").glob("*.png"))
+            Path("docs/testing/visuals/manifest.json").write_text(
+                json.dumps({"screenshots": files}, indent=2) + "
+"
+            )
+            PY
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/testing/visuals
+
+            if git diff --cached --quiet; then
+              exit 0
+            fi
+
+            git commit -m "docs: publish AutoFix visual walkthrough [skip ci]"
+
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+
+            git reset --hard origin/main
+            sleep 2
+          done
+
+          echo "Unable to publish visual evidence after retries."
+          exit 1
+
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@v4
