@@ -211,13 +211,13 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await login(page, CUSTOMER);
 
     const pages: Array<[string, string, string]> = [
-      ["/portal", "Customer portal", "33-customer-portal-home.png"],
+      ["/portal", "", "33-customer-portal-home.png"],
       ["/portal/appointments", "Appointments", "34-portal-appointments.png"],
       ["/portal/estimates", "Estimates", "35-portal-estimates.png"],
       ["/portal/invoices", "Invoices", "36-portal-invoices.png"],
       ["/portal/payments", "Payments", "37-portal-payments.png"],
       ["/portal/service-requests", "Requests", "38-portal-service-requests.png"],
-      ["/portal/vehicles", "Vehicles", "39-portal-vehicles.png"],
+      ["/portal/vehicles", "My vehicles", "39-portal-vehicles.png"],
     ];
 
     for (const [route, heading, filename] of pages) {
