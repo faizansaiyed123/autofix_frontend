@@ -135,61 +135,41 @@ The customer and the staff member are not looking at two separate frontend-only 
 
 ### Audit log
 
-![AutoFix audit log](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/16-audit.png)
-
 The audit area gives the workshop a history of important actions.
 
 ### Labour
-
-![AutoFix labour](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/17-labour.png)
 
 Labour records capture the time and work performed by technicians.
 
 ### My work
 
-![AutoFix my work](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/18-my-work.png)
-
 Technicians can focus on the jobs and work assigned to them.
 
 ### Part requests
-
-![AutoFix part requests](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/19-part-requests.png)
 
 Technicians and workshop staff can raise and manage requests for parts needed on jobs.
 
 ### Parts
 
-![AutoFix parts](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/20-parts.png)
-
 The parts catalog provides the workshop with its reusable parts and pricing data.
 
 ### Purchase orders
-
-![AutoFix purchase orders](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/21-purchase-orders.png)
 
 Purchase orders connect workshop demand to supplier purchasing.
 
 ### Service requests
 
-![AutoFix service requests](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/22-service-requests.png)
-
 The service-request queue is where workshop staff handle incoming customer work.
 
 ### Staff
-
-![AutoFix staff](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/23-staff.png)
 
 Staff administration controls the people who can use the workshop system.
 
 ### Suppliers
 
-![AutoFix suppliers](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/24-suppliers.png)
-
 Supplier records keep purchasing relationships organized.
 
 ### Vehicles
-
-![AutoFix vehicles](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/25-vehicles.png)
 
 Vehicles are tracked independently so workshop work stays attached to the right car.
 
@@ -199,43 +179,29 @@ The customer portal is a separate user experience over the same backend. Custome
 
 ### Customer home
 
-![AutoFix customer portal home](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/33-customer-portal-home.png)
-
 The portal home gives the customer a simple summary of what is happening with their vehicles and work.
 
 ### Appointments
-
-![AutoFix customer appointments](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/34-portal-appointments.png)
 
 Customers can see what the shop has booked for them.
 
 ### Estimates
 
-![AutoFix customer estimates](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/35-portal-estimates.png)
-
 Customers can review estimates and understand what work has been proposed.
 
 ### Invoices
-
-![AutoFix customer invoices](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/36-portal-invoices.png)
 
 Customers can review what the shop has billed them.
 
 ### Payments
 
-![AutoFix customer payments](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/37-portal-payments.png)
-
 Customers can see their payment history and the financial state of their work.
 
 ### Service requests
 
-![AutoFix customer service requests](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/38-portal-service-requests.png)
-
 Customers can see requests they have made and follow their progress.
 
 ### Vehicles
-
-![AutoFix customer vehicles](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/39-portal-vehicles.png)
 
 Customers can see the vehicles attached to their account.
 
