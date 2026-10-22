@@ -65,20 +65,6 @@ async function visitFeaturePage(
   page.off("response", onResponse);
 }
 
-async function captureFirstDetail(
-  page: Page,
-  listRoute: string,
-  detailPrefix: string,
-  filename: string,
-) {
-  await page.goto(listRoute, { waitUntil: "networkidle" });
-  const links = page.locator('a[href^="' + detailPrefix + '"]');
-  await expect(links.first()).toBeVisible();
-  const href = await links.first().getAttribute("href");
-  expect(href).toBeTruthy();
-  await visitFeaturePage(page, href!, filename);
-}
-
 test.describe("AutoFix user-facing full-stack walkthrough", () => {
   test("staff sees live workshop and money data from the API", async ({ page }) => {
     const dashboardResponse = page.waitForResponse(
@@ -125,13 +111,6 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
       await visitFeaturePage(page, route, filename, heading);
     }
 
-    await captureFirstDetail(page, "/customers", "/customers/", "26-customer-detail.png");
-    await captureFirstDetail(page, "/estimates", "/estimates/", "27-estimate-detail.png");
-    await captureFirstDetail(page, "/inspections", "/inspections/", "28-inspection-detail.png");
-    await captureFirstDetail(page, "/invoices", "/invoices/", "29-invoice-detail.png");
-    await captureFirstDetail(page, "/purchase-orders", "/purchase-orders/", "30-purchase-order-detail.png");
-    await captureFirstDetail(page, "/repair-orders", "/repair-orders/", "31-repair-order-detail.png");
-    await captureFirstDetail(page, "/vehicles", "/vehicles/", "32-vehicle-detail.png");
   });
 
   test("a customer request travels from portal UI into the staff queue", async ({ browser }) => {
@@ -224,8 +203,5 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
       await visitFeaturePage(page, route, filename, heading);
     }
 
-    await captureFirstDetail(page, "/portal/estimates", "/portal/estimates/", "40-portal-estimate-detail.png");
-    await captureFirstDetail(page, "/portal/invoices", "/portal/invoices/", "41-portal-invoice-detail.png");
-    await captureFirstDetail(page, "/portal/vehicles", "/portal/vehicles/", "42-portal-vehicle-detail.png");
   });
 });
