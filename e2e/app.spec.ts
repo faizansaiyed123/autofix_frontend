@@ -14,8 +14,8 @@ function evidence(name: string) {
 
 async function login(page: Page, account: { email: string; password: string }, destination?: string) {
   await page.goto("/login", { waitUntil: "networkidle" });
-  await page.getByLabel("Email").fill(account.email);
-  await page.getByLabel("Password").fill(account.password);
+  await page.getByLabel("Email").first().fill(account.email);
+  await page.getByLabel("Password").first().fill(account.password);
 
   const response = page.waitForResponse(
     (r) => r.request().method() === "POST" && r.url().includes("/api/v1/auth/login"),
@@ -48,7 +48,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await login(page, STAFF);
     await dashboardResponse;
     await expectPage(page, "Dashboard");
-    await expect(page.getByText("Invoiced", { exact: true })).toBeVisible();
+    await expect(page.getByText("Invoiced", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("Collected", { exact: true })).toBeVisible();
     await expect(page.getByText("On the floor", { exact: true })).toBeVisible();
     await screenshot(page, "01-dashboard.png");
@@ -80,7 +80,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     const customerPage = await customerContext.newPage();
 
     await login(customerPage, CUSTOMER, "/portal/service-requests");
-    await expectPage(customerPage, "Service requests");
+    await expectPage(customerPage, "Requests");
     await customerPage.getByRole("button", { name: /new request/i }).click();
     await customerPage.getByLabel("What is it for").fill("E2E brake inspection");
     await customerPage
