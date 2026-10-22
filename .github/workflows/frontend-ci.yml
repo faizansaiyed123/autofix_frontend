@@ -147,8 +147,7 @@ jobs:
 
             files = sorted(p.name for p in Path("docs/testing/visuals").glob("*.png"))
             Path("docs/testing/visuals/manifest.json").write_text(
-                json.dumps({"screenshots": files}, indent=2) + "
-"
+                json.dumps({"screenshots": files}, indent=2) + "\n"
             )
             PY
 
