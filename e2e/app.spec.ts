@@ -31,9 +31,52 @@ async function screenshot(page: Page, filename: string) {
   await page.screenshot({ path: evidence(filename), fullPage: true });
 }
 
-async function expectPage(page: Page, heading: string) {
-  await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+async function expectPage(page: Page, heading?: string) {
   await expect(page).not.toHaveURL(/\/login/);
+  await expect(page.locator("body")).not.toContainText(/Application error|Unhandled Runtime Error/i);
+  if (heading) {
+    await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+  }
+}
+
+async function visitFeaturePage(
+  page: Page,
+  route: string,
+  filename: string,
+  heading?: string,
+  requireApi = true,
+) {
+  const apiResponses: number[] = [];
+  const onResponse = (response: { url(): string; status(): number }) => {
+    if (response.url().includes("/api/v1/")) {
+      apiResponses.push(response.status());
+    }
+  };
+
+  page.on("response", onResponse);
+  const response = await page.goto(route, { waitUntil: "networkidle" });
+  if (response) expect(response.status()).toBeLessThan(400);
+  await expectPage(page, heading);
+  if (requireApi) {
+    expect(apiResponses.length, "Expected " + route + " to call the backend API").toBeGreaterThan(0);
+    expect(apiResponses.some((status) => status >= 500), "Backend 5xx response on " + route).toBe(false);
+  }
+  await screenshot(page, filename);
+  page.off("response", onResponse);
+}
+
+async function captureFirstDetail(
+  page: Page,
+  listRoute: string,
+  detailPrefix: string,
+  filename: string,
+) {
+  await page.goto(listRoute, { waitUntil: "networkidle" });
+  const links = page.locator('a[href^="' + detailPrefix + '"]');
+  await expect(links.first()).toBeVisible();
+  const href = await links.first().getAttribute("href");
+  expect(href).toBeTruthy();
+  await visitFeaturePage(page, href!, filename);
 }
 
 test.describe("AutoFix user-facing full-stack walkthrough", () => {
@@ -66,13 +109,29 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
       ["/payments", "Payments", "11-payments.png"],
       ["/inventory", "Inventory", "12-inventory.png"],
       ["/reports", "Reports", "13-reports.png"],
+      ["/audit", "Audit log", "16-audit.png"],
+      ["/labour", "Labour", "17-labour.png"],
+      ["/my-work", "My work", "18-my-work.png"],
+      ["/part-requests", "Part requests", "19-part-requests.png"],
+      ["/parts", "Parts", "20-parts.png"],
+      ["/purchase-orders", "Purchase orders", "21-purchase-orders.png"],
+      ["/service-requests", "Service requests", "22-service-requests.png"],
+      ["/staff", "Staff", "23-staff.png"],
+      ["/suppliers", "Suppliers", "24-suppliers.png"],
+      ["/vehicles", "Vehicles", "25-vehicles.png"],
     ];
 
     for (const [route, heading, filename] of pages) {
-      await page.goto(route, { waitUntil: "networkidle" });
-      await expectPage(page, heading);
-      await screenshot(page, filename);
+      await visitFeaturePage(page, route, filename, heading);
     }
+
+    await captureFirstDetail(page, "/customers", "/customers/", "26-customer-detail.png");
+    await captureFirstDetail(page, "/estimates", "/estimates/", "27-estimate-detail.png");
+    await captureFirstDetail(page, "/inspections", "/inspections/", "28-inspection-detail.png");
+    await captureFirstDetail(page, "/invoices", "/invoices/", "29-invoice-detail.png");
+    await captureFirstDetail(page, "/purchase-orders", "/purchase-orders/", "30-purchase-order-detail.png");
+    await captureFirstDetail(page, "/repair-orders", "/repair-orders/", "31-repair-order-detail.png");
+    await captureFirstDetail(page, "/vehicles", "/vehicles/", "32-vehicle-detail.png");
   });
 
   test("a customer request travels from portal UI into the staff queue", async ({ browser }) => {
@@ -142,9 +201,31 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await page.getByPlaceholder("Name, email, phone or company").fill(uniqueEmail);
     await expect(page.getByText("E2E Customer", { exact: true })).toBeVisible();
 
-    await page.goto(`/customers/${created.id}`, { waitUntil: "networkidle" });
+    await page.goto("/customers/" + created.id, { waitUntil: "networkidle" });
     await expect(page.getByText("E2E Customer", { exact: true })).toBeVisible();
     await page.reload({ waitUntil: "networkidle" });
     await expect(page.getByText(uniqueEmail, { exact: true })).toBeVisible();
+  });
+
+  test("customer portal pages are all backed by their live API data", async ({ page }) => {
+    await login(page, CUSTOMER);
+
+    const pages: Array<[string, string, string]> = [
+      ["/portal", "Customer portal", "33-customer-portal-home.png"],
+      ["/portal/appointments", "Appointments", "34-portal-appointments.png"],
+      ["/portal/estimates", "Estimates", "35-portal-estimates.png"],
+      ["/portal/invoices", "Invoices", "36-portal-invoices.png"],
+      ["/portal/payments", "Payments", "37-portal-payments.png"],
+      ["/portal/service-requests", "Requests", "38-portal-service-requests.png"],
+      ["/portal/vehicles", "Vehicles", "39-portal-vehicles.png"],
+    ];
+
+    for (const [route, heading, filename] of pages) {
+      await visitFeaturePage(page, route, filename, heading);
+    }
+
+    await captureFirstDetail(page, "/portal/estimates", "/portal/estimates/", "40-portal-estimate-detail.png");
+    await captureFirstDetail(page, "/portal/invoices", "/portal/invoices/", "41-portal-invoice-detail.png");
+    await captureFirstDetail(page, "/portal/vehicles", "/portal/vehicles/", "42-portal-vehicle-detail.png");
   });
 });
