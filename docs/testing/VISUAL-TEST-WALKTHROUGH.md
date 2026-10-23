@@ -98,6 +98,14 @@ The customer book holds names, contact details, preferred contact method and sta
 
 The diary offers calendar and list views of workshop bookings. Appointment rules restrict status changes to the transitions allowed by the backend; a cancelled booking also requires a reason. Conflict checking is an API capability and should be treated as a business rule, not merely a calendar decoration.
 
+![Staff confirms a real booking](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/49-workshop-appointment-confirmed.png)
+
+A staff browser creates a booking for the customer's actual vehicle, checks a future slot through the conflict API and submits it to the backend. The create response is read and then the appointment is moved from `REQUESTED` to `CONFIRMED` through the status endpoint.
+
+![Staff cancels a booking with a reason](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/50-workshop-appointment-cancelled.png)
+
+The test tries to book the same vehicle/bay/time a second time. The conflict endpoint returns the existing collision and the UI disables booking. Cancelling the original appointment requires a reason; after the PATCH, a fresh GET confirms both `CANCELLED` status and the saved cancellation reason.
+
 ### Check-ins
 
 ![Vehicle check-ins](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/05-check-ins.png)
@@ -130,17 +138,45 @@ An estimate turns proposed labour and parts into a customer decision. The API ca
 
 Repair orders turn agreed work into assigned tasks, technicians, bays and milestones. A repair order cannot be completed while tasks remain open, and task breakdowns are frozen after work begins.
 
+![A repair order created from the approved quote](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/52-repair-order-created.png)
+
+The browser test continues the same estimate that the customer approved in a separate session. Staff chooses that quote in the **New repair order** form and the API creates a `DRAFT` repair order with its own task rows.
+
+![Labour entry and task progress](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/53-repair-order-labour-and-task.png)
+
+The test advances the order to `APPROVED` and `IN_PROGRESS`, records 1.5 hours of real labour at $95/hour, and moves a task through `IN_PROGRESS` to `COMPLETED`. The backend returns the calculated labour cost of $142.50.
+
+![Repair order completed after its tasks](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/54-repair-order-completed.png)
+
+Once the task is completed, the order can be completed. A fresh API read after reload verifies the order and task are still complete.
+
 ### Quality control
 
 ![Quality control queue](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/09-quality-control.png)
 
 Quality control independently checks finished work. The backend prevents the same technician from inspecting their own work and blocks a pass when a mandatory check fails. A failed check sends the work back for rework rather than treating the job as ready to invoice.
 
+![Independent quality control passed](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/55-repair-order-passed-quality-control.png)
+
+The browser flow opens the QC queue under a different staff role from the assigned technician, starts the check, checks the verdict state and passes it through the UI. The real response is `PASSED`; fresh API reads confirm the QC record and that the linked repair order advances to `QC_PASSED`.
+
 ### Invoices
 
 ![Invoice book](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/10-invoices.png)
 
 Invoices are raised against work that has passed quality control or has been delivered. The backend derives totals from stored line items, discounts and tax; once issued, the bill's copied approved lines are frozen.
+
+![Invoice issued after quality control](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/56-workshop-invoice-issued.png)
+
+Using the QC-passed repair order, staff creates a draft invoice, checks that its lines were copied from the approved estimate, and issues it through the actual invoice endpoint. The response confirms `ISSUED` and a positive balance due.
+
+![Invoice settled at the workshop till](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/57-workshop-invoice-settled.png)
+
+The payment modal blocks an amount above the outstanding balance. Recording the exact balance calls the real payments API and causes a subsequent invoice GET to return `PAID` with zero balance.
+
+![The customer sees the same settled invoice](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/58-customer-portal-settled-invoice.png)
+
+A separate customer session opens that same invoice in the portal. A fresh portal GET confirms `PAID` and a zero balance, demonstrating that the till and customer account read the same stored invoice.
 
 ### Payments
 
@@ -180,7 +216,13 @@ The browser test signs in as a customer, enters a request title and description,
 
 A separate browser context signs in as staff, opens the workshop service-request queue, performs a reload and reads the record back from `GET /api/v1/service_requests/`. The test checks that the exact request title is visible in the staff queue.
 
-**What this proves:** the customer and staff screens are not two copies of local state. The created record crossed the API/database boundary and was returned to a separate authenticated session.
+### Step 3 — Review, approve and convert it to an appointment
+
+![Request converted into a confirmed appointment](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/51-service-request-converted-to-appointment.png)
+
+Staff opens the same request, changes its state from `NEW` to `IN_REVIEW` and then `APPROVED`. The convert action calls `POST /api/v1/appointments/from-service-request/{request_id}`. The test checks the returned vehicle, service type and `CONFIRMED` appointment state, then uses fresh authenticated GET requests to prove the request persisted as `CONVERTED` and the appointment still links to that request.
+
+**What this proves:** a customer enquiry can become an approved, schedulable workshop job through actual user actions and the shared database—not merely by copying its title to another screen.
 
 ## 4. Other workshop tools
 
@@ -341,12 +383,16 @@ The table separates browser-driven full-stack scenarios from backend HTTP lifecy
 | Check a vehicle in | `POST /api/v1/check_ins/` | HTTP 201, associated vehicle ID and initial PENDING state | Browser end-to-end |
 | Reject an invalid odometer | Frontend validation before submit | Zero odometer prevents the form submission | Browser validation |
 | Advance check-in status | `PATCH /api/v1/check_ins/{id}/status`, followed by list GET | IN_PROGRESS state persists after navigation/reload | Browser persistence |
+| Review and convert a customer request | `PATCH /api/v1/service_requests/{id}/status`, then `POST /api/v1/appointments/from-service-request/{id}` | Request is read back as CONVERTED and its linked appointment as CONFIRMED | Cross-role browser end-to-end |
 | Book, confirm, and cancel a workshop appointment | `POST /api/v1/appointments/check-conflicts`, `POST /api/v1/appointments/`, `PATCH /api/v1/appointments/{id}/status` | Free slot allowed; overlapping booking disabled; CONFIRMED state read back; CANCELLED requires and stores a reason | Browser end-to-end |
 | Request a customer appointment | `POST /api/v1/portal/appointments`, then an authenticated GET after reload | HTTP 201, actual vehicle association and DIAGNOSTIC / REQUESTED state read back from the backend | Browser persistence |
 | Create and settle a portal invoice | `POST /api/v1/portal/invoices/{id}/payments`, then GET invoice detail | Overpayment blocked; exact balance creates payment and invoice remains PAID with zero balance after reload | Browser persistence |
 | Record stock received | `POST /api/v1/inventory/transactions`, then `GET /api/v1/inventory/stock-levels` | Zero quantity blocked; valid receipt adds one unit and the new on-hand balance survives reload | Browser persistence |
 | Create a supplier | `POST /api/v1/suppliers/`, then search and reload | HTTP 201; new supplier is still searchable after reload | Browser persistence |
 | Create and send an estimate, approve as customer | Staff `POST /api/v1/estimates/` and `/send`; customer `POST /api/v1/portal/estimates/{id}/items/{item_id}/decision`; staff GET | $142.50 quote appears in a separate customer session; approval and amount are visible after staff reload | Cross-role browser end-to-end |
+| Continue approved quote into repair work | Repair-order POST, status PATCHes, labour POST and task PATCHes | Repair order and task survive reload as COMPLETED; labour cost matches 1.5 × $95 | Browser end-to-end | 
+| Pass independent QC | `POST /api/v1/qc/`, `POST /api/v1/qc/{id}/pass`, GET QC + repair order | QC shows PASSED and linked order advances to QC_PASSED | Browser end-to-end |
+| Issue invoice and collect payment | Invoice POST/issue, `POST /api/v1/payments/`, GET invoice and customer portal invoice | Issue follows QC pass, overpayment is blocked, payment settles invoice and the customer portal sees zero balance | Cross-role browser end-to-end |
 | Confirm an invalid email-verification token is handled honestly | `POST /api/v1/auth/verify-email` | Real API rejection (400), request token and error UI | Browser negative case |
 | Confirm an invalid password-reset token is handled honestly | `POST /api/v1/auth/password-reset/confirm` | Real API rejection (400), request body and error UI | Browser negative case |
 | Register, receive verification email and verify account | `POST /api/v1/auth/register`, outbox worker, SMTP, `POST /api/v1/auth/verify-email` | Actual message and token, verified account and portal redirect | Browser end-to-end; passed in run #79 |
@@ -373,11 +419,11 @@ The table separates browser-driven full-stack scenarios from backend HTTP lifecy
 | Check-ins | [Check-ins](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/05-check-ins.png), [Status transition](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/27-checkin-status-transition.png) | Check-ins and lifecycle suites | Create, invalid odometer, status transition and persisted API read-back in browser CI |
 | Inspections and item findings | [Inspections](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/06-inspections.png) | Inspections and lifecycle suites | Live list read; complete API lifecycle |
 | Estimates and line decisions | [Estimates](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/07-estimates.png) | Estimates, portal and lifecycle suites | Live list read; line decisions verified through API lifecycle |
-| Repair orders and tasks | [Repair orders](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/08-repair-orders.png) | Repair orders and lifecycle suites | Live list read; state machine and task writes API-tested |
+| Repair orders and tasks | [Repair orders](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/08-repair-orders.png), [Created](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/52-repair-order-created.png), [Task and labour](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/53-repair-order-labour-and-task.png), [Completed](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/54-repair-order-completed.png) | Repair orders and lifecycle suites | Quote-to-order UI creation, labour, task transitions and reload read-back in browser CI |
 | Labour | [Labour](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/17-labour.png) | Labour and lifecycle suites | Live read; labour creation API-tested |
 | Part requests and fulfilment | [Part requests](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/19-part-requests.png) | Part requests and lifecycle suites | Live read; approval and fulfilment API-tested |
-| Quality control | [QC](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/09-quality-control.png) | QC and lifecycle suites, including independent inspector rule | Live read; full lifecycle through API |
-| Invoices | [Invoices](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/10-invoices.png) | Invoices and lifecycle suites | Live read; issue/create paths API-tested |
+| Quality control | [QC](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/09-quality-control.png), [Passed check](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/55-repair-order-passed-quality-control.png) | QC and lifecycle suites, including independent inspector rule | Start check, pass through UI and confirm order reaches QC_PASSED in API read-back |
+| Invoices | [Invoices](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/10-invoices.png), [Issued](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/56-workshop-invoice-issued.png), [Settled](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/57-workshop-invoice-settled.png) | Invoices and lifecycle suites | Create draft from QC-passed work, issue, record payment and verify persisted PAID balance |
 | Payments | [Payments](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/11-payments.png) | Payments, portal and lifecycle suites | Live read; paid-balance and payment transitions API-tested |
 | Parts catalogue | [Parts](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/20-parts.png) | Parts/inventory and lifecycle suites | Live read |
 | Inventory ledger | [Inventory](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/12-inventory.png), [Receipt persisted](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/45-inventory-receipt.png) | Parts/inventory and purchasing suites | Stock receipt, quantity validation and fresh stock-level GET in browser CI |
@@ -389,8 +435,9 @@ The table separates browser-driven full-stack scenarios from backend HTTP lifecy
 | Reports | [Reports](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/13-reports.png) | Reports and lifecycle suites | Live read and dashboard API check |
 | Customer portal home | [Portal home](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/33-customer-portal-home.png) | Portal and lifecycle suites | Live read |
 | Customer appointments | [Portal appointments](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/34-portal-appointments.png), [Request created](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/43-portal-appointment-booked.png), [Reload/read-back](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/44-portal-appointment-requested.png) | Portal and appointments suites | Real booking POST and authenticated GET read-back after reload |
+| Workshop appointments | [Confirmed](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/49-workshop-appointment-confirmed.png), [Cancelled with reason](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/50-workshop-appointment-cancelled.png) | Appointments suite | Create, conflict-check, confirm, refuse duplicate slot, cancel with reason, and read stored reason |
 | Customer estimates | [Portal estimates](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/35-portal-estimates.png), [Line decisions](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/42-customer-estimate-line-decisions.png), [Cross-role approval](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/48-customer-approves-created-estimate.png) | Portal and estimate suites | Staff creates/sends quote, customer approves in separate context, staff reads status back |
-| Customer invoices | [Portal invoices](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/36-portal-invoices.png), [Settled invoice](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/43-portal-invoice-settled.png) | Portal and invoice suites | Portal payment, overpayment validation and persisted PAID/zero-balance read-back |
+| Customer invoices | [Portal invoices](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/36-portal-invoices.png), [Portal payment](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/43-portal-invoice-settled.png), [Workshop payment visible to customer](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/58-customer-portal-settled-invoice.png) | Portal and invoice suites | Portal payment and independent cross-role read-back of a workshop-settled invoice |
 | Customer payments | [Portal payments](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/37-portal-payments.png), [Settled invoice](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/43-portal-invoice-settled.png) | Portal and payment suites | Payment mutation and invoice read-back verified in browser CI; void/reversal still API-layer coverage |
 | Customer service requests | [Portal requests](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/38-portal-service-requests.png) | Portal and service-request suites | Create + staff cross-account read-back |
 | Customer vehicles | [Portal vehicles](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/39-portal-vehicles.png) | Portal and vehicle suites | Live read |
@@ -433,6 +480,9 @@ Use this final list as the checklist for future regression runs:
 - [x] Inventory receipt → stock-level balance read-back
 - [x] Supplier create → search → reload
 - [x] Staff creates/sends estimate → separate customer session approves → staff confirms persisted approval
+- [x] Staff creates request → moves it through review/approval → converts it to a confirmed appointment
+- [x] Staff appointment create/confirm/conflict-reject/cancel-with-reason flow and API read-back
+- [x] Approved quote → repair order → labour/task completion → independent QC pass → invoice issue → payment → customer portal read-back
 - [x] Backend customer/vehicle/service request/appointment/check-in/inspection/estimate/repair-order/labour/part request/QC/invoice/payment lifecycle over HTTP
 - [x] Backend role and shop/customer access-boundary sweep
 - [x] Backend validation, negative cases, migrations and database constraints
@@ -440,9 +490,10 @@ Use this final list as the checklist for future regression runs:
 - [x] Browser run #74 passed 16/16 with the appointment page assertion after authenticated persistence read-back; [view run #74](https://github.com/faizansaiyed123/autofix_frontend/actions/runs/39990472993)
 - [x] Browser run #75 passed 16/16 with fresh authenticated API persistence checks; [view run #75](https://github.com/faizansaiyed123/autofix_frontend/actions/runs/39990609977)
 - [x] Browser run #78 passed 16/16 after replacing brittle vehicle/check-in response interception with fresh authenticated GETs; screenshot publishing and evidence upload succeeded; [view run #78](https://github.com/faizansaiyed123/autofix_frontend/actions/runs/39991373701)
-- [x] Browser run #79 passed 17/17 with workshop booking conflict and cancellation-reason validation; screenshot publishing and evidence upload succeeded; [view run #79](https://github.com/faizansaiyed123/autofix_frontend/actions/runs/39991375279)
+- [x] Browser run #86 passed 17/17, including the complete cross-role quote-to-paid-invoice journey; screenshot publishing and evidence upload succeeded; [view run #86](https://github.com/faizansaiyed123/autofix_frontend/actions/runs/39993073296)
+- [ ] Confirm the newest invoice-issue-guard regression test passes after its test-helper syntax correction
 - [ ] Verify Vercel production API URL and run non-destructive live smoke checks after the backend service/workspace is identified
-- [ ] Add dedicated browser mutations for the remaining inspection, repair-order/task, independent QC, invoice issue, payment void, parts catalogue, and purchase-order receipt/edit flows
+- [ ] Add dedicated browser mutations for inspection creation/items, QC fail/rework, payment void, parts catalogue edits, and purchase-order receive/edit flows
 
 ---
 
