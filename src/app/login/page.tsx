@@ -15,7 +15,7 @@ function BrandMark() {
 }
 
 export default function LoginPage() {
-  const { login, status, isCustomer } = useSession();
+  const { login, status, isCustomer, invalidateSession } = useSession();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,6 +32,12 @@ export default function LoginPage() {
   useEffect(() => {
     if (status !== "authenticated") return;
     const params = new URLSearchParams(window.location.search);
+    // A successful password reset must not be redirected back into a stale session
+    // while the backend has revoked its previous refresh-token generation.
+    if (params.get("reset") === "success") {
+      invalidateSession();
+      return;
+    }
     const requested = params.get("next");
     const safeInternalPath = Boolean(
       requested &&
@@ -43,7 +49,7 @@ export default function LoginPage() {
     const isStaffOnly = Boolean(requested && requested !== "/" && !isPortalPath);
     if (safeInternalPath && requested && !(isStaffOnly && isCustomer)) router.replace(requested);
     else router.replace(isCustomer ? "/portal" : "/dashboard");
-  }, [status, isCustomer, router]);
+  }, [status, isCustomer, router, invalidateSession]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
