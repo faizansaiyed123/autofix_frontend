@@ -22,7 +22,7 @@ import {
   onForcedLogout,
   setTokens,
 } from "@/lib/api/client";
-import type { CurrentUser } from "@/lib/api/types";
+import type { CurrentUser, TokenResponse } from "@/lib/api/types";
 
 export type SessionStatus = "loading" | "authenticated" | "anonymous";
 
@@ -37,6 +37,7 @@ export interface SessionValue {
   canAny: (...permissions: string[]) => boolean;
   hasRole: (role: string) => boolean;
   login: (email: string, password: string) => Promise<void>;
+  acceptTokens: (tokens: TokenResponse) => Promise<void>;
   logout: () => Promise<void>;
   reload: () => Promise<void>;
 }
@@ -98,13 +99,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // it is noticed.
   useEffect(() => onForcedLogout(reset), [reset]);
 
+  const acceptTokens = useCallback(
+    async (tokens: TokenResponse) => {
+      setTokens(tokens.access_token, tokens.refresh_token);
+      try {
+        await loadProfile();
+      } catch (error) {
+        // Never leave unusable tokens behind if profile/permission loading fails.
+        reset();
+        throw error;
+      }
+    },
+    [loadProfile, reset],
+  );
+
   const login = useCallback(
     async (email: string, password: string) => {
-      const tokens = await authApi.login(email, password);
-      setTokens(tokens.access_token, tokens.refresh_token);
-      await loadProfile();
+      await acceptTokens(await authApi.login(email, password));
     },
-    [loadProfile],
+    [acceptTokens],
   );
 
   const logout = useCallback(async () => {
@@ -135,10 +148,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       canAny: (...needed) => needed.some((permission) => permissions.includes(permission)),
       hasRole: (role) => roles.includes(role),
       login,
+      acceptTokens,
       logout,
       reload: loadProfile,
     };
-  }, [status, user, permissions, roles, login, logout, loadProfile]);
+  }, [status, user, permissions, roles, login, acceptTokens, logout, loadProfile]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
