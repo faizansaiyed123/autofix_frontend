@@ -367,7 +367,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
         response.url().includes("/api/v1/check_ins/" + checkIn.id + "/status") &&
         response.status() === 200,
     );
-    await detailDialog.getByRole("button", { name: "In progress", exact: true }).click();
+    await detailDialog.getByRole("button", { name: "In Progress", exact: true }).click();
     const transitioned = (await (await statusResponse).json()) as { status: string };
     expect(transitioned.status).toBe("IN_PROGRESS");
     await screenshot(page, "27-checkin-status-transition.png");
