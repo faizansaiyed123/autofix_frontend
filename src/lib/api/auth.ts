@@ -1,10 +1,36 @@
-import { api } from "@/lib/api/client";
+import { api, request } from "@/lib/api/client";
 import type { CurrentUser, PermissionBundle, TokenResponse } from "@/lib/api/types";
 
 export const authApi = {
-  /** Anonymous: a signed-out caller has no token to send. */
   login: (email: string, password: string) =>
-    api.post<TokenResponse>("/auth/login", { email, password }, undefined),
+    request<TokenResponse>("/auth/login", { method: "POST", body: { email, password }, anonymous: true }),
+
+  register: (input: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }) =>
+    request<{ message: string }>("/auth/register", {
+      method: "POST",
+      body: input,
+      anonymous: true,
+    }),
+
+  verifyEmail: (token: string) =>
+    request<TokenResponse>("/auth/verify-email", {
+      method: "POST",
+      body: { token },
+      anonymous: true,
+    }),
+
+  resendVerification: (email: string) =>
+    request<{ message: string }>("/auth/verification/resend", {
+      method: "POST",
+      body: { email },
+      anonymous: true,
+    }),
 
   logout: () => api.post<{ message: string }>("/auth/logout"),
 
@@ -13,11 +39,16 @@ export const authApi = {
   permissions: () => api.get<PermissionBundle>("/auth/permissions"),
 
   requestPasswordReset: (email: string) =>
-    api.post<{ message: string }>("/auth/password-reset/request", { email }),
+    request<{ message: string }>("/auth/password-reset/request", {
+      method: "POST",
+      body: { email },
+      anonymous: true,
+    }),
 
   confirmPasswordReset: (token: string, newPassword: string) =>
-    api.post<{ message: string }>("/auth/password-reset/confirm", {
-      token,
-      new_password: newPassword,
+    request<{ message: string }>("/auth/password-reset/confirm", {
+      method: "POST",
+      body: { token, new_password: newPassword },
+      anonymous: true,
     }),
 };

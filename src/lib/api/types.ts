@@ -36,6 +36,7 @@ export interface CurrentUser {
   phone: string | null;
   is_active: boolean;
   is_staff: boolean;
+  email_verified: boolean;
   roles: string[];
 }
 

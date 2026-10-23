@@ -66,6 +66,97 @@ async function visitFeaturePage(
 }
 
 test.describe("AutoFix user-facing full-stack walkthrough", () => {
+  test("verification link reads its token from the URL fragment", async ({ page }) => {
+    let submittedToken = "";
+    await page.route("**/api/v1/auth/verify-email", async (route) => {
+      submittedToken = route.request().postDataJSON().token;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          access_token: "test-access-token",
+          refresh_token: "test-refresh-token",
+          token_type: "bearer",
+          expires_in: 1800,
+        }),
+      });
+    });
+    await page.route("**/api/v1/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "00000000-0000-7000-8000-000000000001",
+          email: "fragment-test@example.com",
+          first_name: "Fragment",
+          last_name: "Test",
+          phone: null,
+          is_active: true,
+          is_staff: false,
+          email_verified: true,
+          roles: ["CUSTOMER"],
+        }),
+      });
+    });
+    await page.route("**/api/v1/auth/permissions", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ roles: ["CUSTOMER"], permissions: [] }),
+      });
+    });
+    await page.route("**/api/v1/portal/**", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+    });
+
+    await page.goto("/verify-email#token=fragment-only-test-token");
+    await expect.poll(() => new URL(page.url()).hash).toBe("");
+    await expect(page.getByRole("heading", { name: "Confirm your email address" })).toBeVisible();
+    expect(submittedToken).toBe("");
+    await page.getByRole("button", { name: "Verify email address" }).click();
+    await expect.poll(() => submittedToken).toBe("fragment-only-test-token");
+  });
+
+  test("password reset reads its token from the URL fragment", async ({ page }) => {
+    let submittedToken = "";
+    await page.route("**/api/v1/auth/password-reset/confirm", async (route) => {
+      submittedToken = route.request().postDataJSON().token;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ message: "Password has been reset successfully" }),
+      });
+    });
+
+    await page.goto("/reset-password#token=reset-fragment-only-token");
+    await expect.poll(() => new URL(page.url()).hash).toBe("");
+    await page.locator('input[type="password"]').nth(0).fill("test-safe-password-42");
+    await page.locator('input[type="password"]').nth(1).fill("test-safe-password-42");
+    await page.getByRole("button", { name: "Update password" }).click();
+    await expect(page.getByRole("heading", { name: "Password updated" })).toBeVisible();
+    expect(submittedToken).toBe("reset-fragment-only-token");
+  });
+
+  test("public homepage and customer signup are responsive and reachable", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: /Run the workshop/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Sign in/ }).first()).toBeVisible();
+    const homeWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(homeWidth).toBeLessThanOrEqual(390);
+    await screenshot(page, "00-homepage.png");
+
+    await page.goto("/register", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: "Start with AutoFix" })).toBeVisible();
+    await expect(page.getByLabel("First name")).toBeVisible();
+    await expect(page.getByLabel("Last name")).toBeVisible();
+    await expect(page.getByLabel("Email address")).toBeVisible();
+    await expect(page.getByLabel("Password", { exact: false }).first()).toBeVisible();
+    const signupWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(signupWidth).toBeLessThanOrEqual(390);
+    await screenshot(page, "00-signup.png");
+  });
+
   test("staff sees live workshop and money data from the API", async ({ page }) => {
     const dashboardResponse = page.waitForResponse(
       (r) =>
