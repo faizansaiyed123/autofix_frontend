@@ -113,12 +113,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const acceptTokens = useCallback(
     async (tokens: TokenResponse) => {
+      sessionGeneration.current += 1;
+      const generation = sessionGeneration.current;
       setTokens(tokens.access_token, tokens.refresh_token);
       try {
         await loadProfile();
+        if (generation !== sessionGeneration.current) {
+          throw new Error("Session changed while sign-in was completing.");
+        }
       } catch (error) {
         // Never leave unusable tokens behind if profile/permission loading fails.
-        reset();
+        if (generation === sessionGeneration.current) reset();
         throw error;
       }
     },
