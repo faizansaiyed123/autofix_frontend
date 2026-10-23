@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Field, FormError, Input } from "@/components/ui/Form";
@@ -23,12 +23,14 @@ export default function LoginPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const [resetSuccess, setResetSuccess] = useState(false);
+  const resetSuccessHandled = useRef(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const resetSucceeded = params.get("reset") === "success";
     setResetSuccess(resetSucceeded);
     if (resetSucceeded) {
+      resetSuccessHandled.current = true;
       // The reset screen revoked the previous refresh-token generation. Clear
       // stale browser auth state before the login redirect effect can use it.
       invalidateSession();
@@ -39,6 +41,7 @@ export default function LoginPage() {
   }, [invalidateSession]);
 
   useEffect(() => {
+    if (resetSuccessHandled.current) return;
     if (status !== "authenticated") return;
     const params = new URLSearchParams(window.location.search);
     const requested = params.get("next");
@@ -56,6 +59,7 @@ export default function LoginPage() {
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    resetSuccessHandled.current = false;
     setPending(true);
     setError(null);
     try {
