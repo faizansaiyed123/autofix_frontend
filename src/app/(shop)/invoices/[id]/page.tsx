@@ -50,9 +50,12 @@ export default function InvoiceDetailPage() {
   const issue = useApiMutation(() => invoicesApi.issue(invoiceId));
   const removeItem = useApiMutation((itemId: string) => invoicesApi.removeItem(invoiceId, itemId));
 
+  const repairOrderCanBeBilled =
+    repairOrder.data?.status === "QC_PASSED" || repairOrder.data?.status === "DELIVERED";
   const canIssue =
     can("invoices:manage") &&
     isDraft &&
+    repairOrderCanBeBilled &&
     (invoice?.items.length ?? 0) > 0 &&
     (invoice?.total ?? 0) > 0;
   const voidBlockedBy = voidBlockedReason(invoice);
@@ -182,7 +185,7 @@ export default function InvoiceDetailPage() {
               <Button
                 variant="primary"
                 disabled={!canIssue}
-                title={canIssue ? "Send this bill to the customer" : issueBlockedReason(invoice)}
+                title={canIssue ? "Send this bill to the customer" : issueBlockedReason(invoice, repairOrder.data)}
                 pending={issue.pending}
                 onClick={() => void issue.run().then(() => query.refetch())}
               >
@@ -387,8 +390,15 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /** Why the issue control is dead, in the words the desk would use. */
-function issueBlockedReason(invoice: Invoice): string {
+function issueBlockedReason(
+  invoice: Invoice,
+  repairOrder: RepairOrder | null | undefined,
+): string {
   if (invoice.status !== "DRAFT") return "This invoice has already been issued.";
+  if (!repairOrder) return "Checking the repair order status before issuing.";
+  if (repairOrder.status !== "QC_PASSED" && repairOrder.status !== "DELIVERED") {
+    return `The repair order is ${repairOrder.status}; quality control must pass before this invoice can be issued.`;
+  }
   if (invoice.items.length === 0) return "Add at least one charge line before issuing.";
   if (invoice.total <= 0) return "A zero invoice has nothing to charge, so it cannot be issued.";
   return "Ready to issue.";
