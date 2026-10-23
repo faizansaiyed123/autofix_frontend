@@ -388,6 +388,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
   });
 
   test("customer registration, email verification, password reset, and sign-in use real services", async ({ page }) => {
+    test.setTimeout(90_000);
     const email = "e2e.signup." + Date.now() + "@example.test";
     const originalPassword = "FirstPass-test42!";
     const newPassword = "ChangedPass-test73!";
@@ -458,22 +459,12 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     expect((await confirmResetResponse).status()).toBe(200);
     await expect(page.getByRole("heading", { name: "Password updated" })).toBeVisible();
     await screenshot(page, "31-password-reset-confirmed.png");
+    await page.getByRole("link", { name: "Continue to sign in", exact: true }).click();
+    await expect(page).toHaveURL(/\/login\?reset=success$/);
+    await expect(page.getByRole("status")).toContainText("Your password has been updated");
 
-    await page.goto("/reset-password#token=" + encodeURIComponent(resetToken), { waitUntil: "networkidle" });
-    await page.locator('input[type="password"]').nth(0).fill("another-password-42");
-    await page.locator('input[type="password"]').nth(1).fill("another-password-42");
-    const replayResponse = page.waitForResponse(
-      (response) =>
-        response.request().method() === "POST" &&
-        response.url().includes("/api/v1/auth/password-reset/confirm"),
-    );
-    await page.getByRole("button", { name: "Update password", exact: true }).click();
-    expect((await replayResponse).status()).toBe(400);
-    await expect(page.getByText(/invalid or expired reset token/i)).toBeVisible();
-
-    await page.goto("/login", { waitUntil: "networkidle" });
-    await page.getByLabel("Email").first().fill(email);
-    await page.getByLabel("Password").fill(originalPassword);
+    await page.getByLabel("Email address", { exact: true }).fill(email);
+    await page.getByLabel("Password", { exact: true }).fill(originalPassword);
     const oldPasswordLogin = page.waitForResponse(
       (response) =>
         response.request().method() === "POST" &&
@@ -483,7 +474,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     expect((await oldPasswordLogin).status()).toBe(401);
     await expect(page.getByText(/Invalid email or password/i)).toBeVisible();
 
-    await page.getByLabel("Password").fill(newPassword);
+    await page.getByLabel("Password", { exact: true }).fill(newPassword);
     const newPasswordLogin = page.waitForResponse(
       (response) =>
         response.request().method() === "POST" &&
@@ -495,6 +486,20 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await expect(page).toHaveURL(/\/portal$/);
     await expect(page.getByRole("heading").first()).toBeVisible();
     await screenshot(page, "32-password-changed-login.png");
+
+    const replayPage = await page.context().newPage();
+    await replayPage.goto("/reset-password#token=" + encodeURIComponent(resetToken), { waitUntil: "networkidle" });
+    await replayPage.locator('input[type="password"]').nth(0).fill("another-password-42");
+    await replayPage.locator('input[type="password"]').nth(1).fill("another-password-42");
+    const replayResponse = replayPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/auth/password-reset/confirm"),
+    );
+    await replayPage.getByRole("button", { name: "Update password", exact: true }).click();
+    expect((await replayResponse).status()).toBe(400);
+    await expect(replayPage.getByText(/invalid or expired reset token/i)).toBeVisible();
+    await replayPage.close();
   });
 
   test("customer portal pages are all backed by their live API data", async ({ page }) => {
