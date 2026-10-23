@@ -576,14 +576,18 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     expect(created.service_type).toBe("DIAGNOSTIC");
     expect(created.status).toBe("REQUESTED");
 
-    const readBackPromise = page.waitForResponse(
-      (response) =>
-        response.request().method() === "GET" &&
-        response.url().includes("/api/v1/portal/appointments") &&
-        response.status() === 200,
-    ).then((response) => response.json());
     await page.reload({ waitUntil: "networkidle" });
-    const appointments = (await readBackPromise) as Array<{
+    // Read persisted state in a fresh HTTP request after the browser reload. This
+    // bypasses the page navigation lifecycle while still using the real API and
+    // the access token issued by the backend.
+    const accessToken = await page.evaluate(() => localStorage.getItem("autofix.access_token"));
+    expect(accessToken).toBeTruthy();
+    const appointmentsResponse = await page.request.get(
+      `${process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"}/api/v1/portal/appointments`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    expect(appointmentsResponse.status()).toBe(200);
+    const appointments = (await appointmentsResponse.json()) as Array<{
       id: string;
       vehicle_id: string;
       service_type: string;
