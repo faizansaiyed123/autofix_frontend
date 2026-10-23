@@ -563,7 +563,8 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
         response.status() === 201,
     );
     await dialog.getByRole("button", { name: "Request this slot", exact: true }).click();
-    const created = (await createResponsePromise.json()) as {
+    const createResponse = await createResponsePromise;
+    const created = (await createResponse.json()) as {
       id: string;
       vehicle_id: string;
       service_type: string;
@@ -580,9 +581,9 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
         response.request().method() === "GET" &&
         response.url().includes("/api/v1/portal/appointments") &&
         response.status() === 200,
-    );
+    ).then((response) => response.json());
     await page.reload({ waitUntil: "networkidle" });
-    const appointments = (await (await readBackPromise).json()) as Array<{
+    const appointments = (await readBackPromise) as Array<{
       id: string;
       vehicle_id: string;
       service_type: string;
