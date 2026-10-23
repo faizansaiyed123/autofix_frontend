@@ -69,9 +69,9 @@ test.describe("Additional customer and workshop write paths", () => {
         response.request().method() === "GET" &&
         new URL(response.url()).pathname === "/api/v1/portal/appointments" &&
         response.status() === 200,
-    );
+    ).then((response) => response.json());
     await page.reload({ waitUntil: "networkidle" });
-    const persisted = (await (await listRead).json()) as Array<{ id: string; status: string }>;
+    const persisted = (await listRead) as Array<{ id: string; status: string }>;
     expect(persisted.find((record) => record.id === appointment.id)?.status).toBe("REQUESTED");
     await screenshot(page, "44-portal-appointment-requested.png");
   });
@@ -84,9 +84,9 @@ test.describe("Additional customer and workshop write paths", () => {
         response.request().method() === "GET" &&
         new URL(response.url()).pathname === "/api/v1/portal/invoices" &&
         response.status() === 200,
-    );
+    ).then((response) => response.json());
     await page.reload({ waitUntil: "networkidle" });
-    const invoices = (await (await listRead).json()) as Array<{
+    const invoices = (await listRead) as Array<{
       id: string;
       invoice_number: string;
       status: string;
@@ -131,9 +131,9 @@ test.describe("Additional customer and workshop write paths", () => {
         response.request().method() === "GET" &&
         new URL(response.url()).pathname === "/api/v1/portal/invoices/" + payable.id &&
         response.status() === 200,
-    );
+    ).then((response) => response.json());
     await page.reload({ waitUntil: "networkidle" });
-    const saved = (await (await detailRead).json()) as { status: string; balance: number };
+    const saved = (await detailRead) as { status: string; balance: number };
     expect(saved).toMatchObject({ status: "PAID", balance: 0 });
   });
 
@@ -181,9 +181,9 @@ test.describe("Additional customer and workshop write paths", () => {
         response.request().method() === "GET" &&
         new URL(response.url()).pathname === "/api/v1/inventory/stock-levels" &&
         response.status() === 200,
-    );
+    ).then((response) => response.json());
     await page.reload({ waitUntil: "networkidle" });
-    const levels = (await (await stockRead).json()) as Array<{ part_id: string; quantity_on_hand: number }>;
+    const levels = (await stockRead) as Array<{ part_id: string; quantity_on_hand: number }>;
     expect(levels.find((level) => level.part_id === partId)?.quantity_on_hand).toBe(movement.quantity_after);
     await page.getByRole("button", { name: "Stock", exact: true }).click();
     await expect(page.getByText("BRK-PAD-1042", { exact: true })).toBeVisible();
@@ -197,8 +197,8 @@ test.describe("Additional customer and workshop write paths", () => {
     const dialog = page.getByRole("dialog");
     const name = "E2E Supplier " + Date.now();
     const email = "e2e.supplier." + Date.now() + "@example.test";
-    await dialog.getByLabel("Name").fill(name);
-    await dialog.getByLabel("Email").fill(email);
+    await dialog.getByLabel("Name").first().fill(name);
+    await dialog.locator('input[type="email"]').fill(email);
 
     const createResponse = page.waitForResponse(
       (response) =>
@@ -226,13 +226,13 @@ test.describe("Additional customer and workshop write paths", () => {
 
     await staffPage.getByRole("button", { name: "New estimate", exact: true }).click();
     const dialog = staffPage.getByRole("dialog");
-    const customerSelect = dialog.getByLabel("Customer");
+    const customerSelect = dialog.locator("select").nth(0);
     const customerOption = customerSelect.locator("option").filter({ hasText: "David Wilson" }).first();
     const customerId = await customerOption.getAttribute("value");
     if (!customerId) throw new Error("The seeded portal customer was not returned by the customer API");
     await customerSelect.selectOption(customerId);
 
-    const vehicleSelect = dialog.getByLabel("Vehicle");
+    const vehicleSelect = dialog.locator("select").nth(1);
     const vehicleOption = vehicleSelect.locator("option").filter({ hasText: "Honda Accord" }).first();
     const vehicleId = await vehicleOption.getAttribute("value");
     if (!vehicleId) throw new Error("David Wilson's Honda Accord was not returned by the vehicle reference API");
@@ -311,9 +311,9 @@ test.describe("Additional customer and workshop write paths", () => {
         response.request().method() === "GET" &&
         new URL(response.url()).pathname === "/api/v1/estimates/" + created.id &&
         response.status() === 200,
-    );
+    ).then((response) => response.json());
     await staffPage.reload({ waitUntil: "networkidle" });
-    const persisted = (await (await staffReadback).json()) as {
+    const persisted = (await staffReadback) as {
       status: string;
       approved_total: number;
       items: Array<{ description: string; status: string }>;
