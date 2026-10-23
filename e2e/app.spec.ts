@@ -520,4 +520,95 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     }
 
   });
+
+  test("a customer approves and declines estimate lines in the real portal", async ({ page }) => {
+    test.setTimeout(60_000);
+    await login(page, CUSTOMER);
+
+    const listResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        response.url().includes("/api/v1/portal/estimates") &&
+        !/\/api\/v1\/portal\/estimates\/[^?]+/.test(response.url()) &&
+        response.status() === 200,
+    );
+    await page.goto("/portal/estimates", { waitUntil: "networkidle" });
+    const listResponse = await listResponsePromise;
+    const estimates = (await listResponse.json()) as Array<{
+      id: string;
+      estimate_number: string;
+      items: Array<{ id: string; description: string; can_decide: boolean; status: string }>;
+    }>;
+    const target = estimates.find((estimate) => estimate.items.filter((item) => item.can_decide).length >= 2);
+    expect(target, "Seeded portal customer should have an estimate with multiple undecided lines").toBeTruthy();
+    if (!target) throw new Error("No estimate with at least two undecided lines was returned by the API");
+
+    const detailResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        response.url().includes("/api/v1/portal/estimates/" + target.id) &&
+        response.status() === 200,
+    );
+    await page.getByRole("link", { name: target.estimate_number, exact: true }).click();
+    const detailResponse = await detailResponsePromise;
+    const detail = (await detailResponse.json()) as {
+      id: string;
+      estimate_number: string;
+      items: Array<{ id: string; description: string; can_decide: boolean; status: string }>;
+    };
+    expect(detail.id).toBe(target.id);
+    const pending = detail.items.filter((item) => item.can_decide);
+    expect(pending.length).toBeGreaterThanOrEqual(2);
+    const approveLine = pending[0];
+    const declineLine = pending[1];
+
+    const approveRow = page.getByRole("row").filter({ hasText: approveLine.description });
+    const approveResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/portal/estimates/" + target.id + "/items/" + approveLine.id + "/decision") &&
+        response.status() === 200,
+    );
+    await approveRow.getByRole("button", { name: "Approve", exact: true }).click();
+    const approveResponse = await approveResponsePromise;
+    const approved = (await approveResponse.json()) as { estimate_status: string; remaining_to_decide: number };
+    expect(approved.estimate_status).toMatch(/PARTIALLY_APPROVED|APPROVED/);
+    expect(approved.remaining_to_decide).toBe(pending.length - 1);
+    await expect(approveRow).toContainText(/Approved/i);
+
+    const declineRow = page.getByRole("row").filter({ hasText: declineLine.description });
+    await declineRow.getByRole("button", { name: "Decline", exact: true }).click();
+    const declineDialog = page.getByRole("dialog");
+    await declineDialog.getByLabel(/Reason \(optional\)/i).fill("Testing the real customer decision flow.");
+    const declineResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/portal/estimates/" + target.id + "/items/" + declineLine.id + "/decision") &&
+        response.status() === 200,
+    );
+    await declineDialog.getByRole("button", { name: "Decline this line", exact: true }).click();
+    const declineResponse = await declineResponsePromise;
+    const declined = (await declineResponse.json()) as { remaining_to_decide: number; estimate_status: string };
+    expect(declined.remaining_to_decide).toBe(pending.length - 2);
+    await expect(page.getByRole("row").filter({ hasText: declineLine.description })).toContainText(/Declined/i);
+
+    const readBackPromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        response.url().includes("/api/v1/portal/estimates/" + target.id) &&
+        response.status() === 200,
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    const readBack = (await (await readBackPromise).json()) as {
+      id: string;
+      items: Array<{ id: string; description: string; status: string; can_decide: boolean }>;
+    };
+    expect(readBack.id).toBe(target.id);
+    expect(readBack.items.find((item) => item.id === approveLine.id)?.status).toBe("APPROVED");
+    expect(readBack.items.find((item) => item.id === declineLine.id)?.status).toBe("DECLINED");
+    await expect(page.getByRole("row").filter({ hasText: approveLine.description })).toContainText(/Approved/i);
+    await expect(page.getByRole("row").filter({ hasText: declineLine.description })).toContainText(/Declined/i);
+    await screenshot(page, "42-customer-estimate-line-decisions.png");
+  });
+
 });
