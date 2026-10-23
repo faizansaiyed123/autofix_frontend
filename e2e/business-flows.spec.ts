@@ -64,14 +64,15 @@ test.describe("Additional customer and workshop write paths", () => {
     expect(appointment.service_type).toBe("DIAGNOSTIC");
     expect(appointment.status).toBe("REQUESTED");
 
-    const listRead = page.waitForResponse(
-      (response) =>
-        response.request().method() === "GET" &&
-        new URL(response.url()).pathname === "/api/v1/portal/appointments" &&
-        response.status() === 200,
-    ).then((response) => response.json());
     await page.reload({ waitUntil: "networkidle" });
-    const persisted = (await listRead) as Array<{ id: string; status: string }>;
+    const accessToken = await page.evaluate(() => localStorage.getItem("autofix.access_token"));
+    expect(accessToken).toBeTruthy();
+    const listRead = await page.request.get(
+      `${process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"}/api/v1/portal/appointments`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    expect(listRead.status()).toBe(200);
+    const persisted = (await listRead.json()) as Array<{ id: string; status: string }>;
     expect(persisted.find((record) => record.id === appointment.id)?.status).toBe("REQUESTED");
     await screenshot(page, "44-portal-appointment-requested.png");
   });
