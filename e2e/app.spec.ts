@@ -335,7 +335,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await expectPage(page, "Check-ins");
     await page.getByRole("button", { name: "Check a vehicle in", exact: true }).click();
     const checkInDialog = page.getByRole("dialog");
-    await checkInDialog.getByLabel("Vehicle").selectOption(vehicle.id);
+    await checkInDialog.locator("select").first().selectOption(vehicle.id);
     await checkInDialog.getByLabel("Odometer").fill("0");
     await expect(checkInDialog.getByText("Must be greater than zero")).toBeVisible();
     await expect(checkInDialog.getByRole("button", { name: "Check in", exact: true })).toBeDisabled();
@@ -397,8 +397,8 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await page.getByLabel("Last name").fill("Verified");
     await page.getByLabel("Email address").fill(email);
     await page.getByLabel("Phone number").fill("+1-503-555-0108");
-    await page.getByLabel("Password", { exact: true }).fill(originalPassword);
-    await page.getByLabel("Confirm password").fill(originalPassword);
+    await page.locator('input[type="password"]').nth(0).fill(originalPassword);
+    await page.locator('input[type="password"]').nth(1).fill(originalPassword);
 
     const registerResponse = page.waitForResponse(
       (response) =>
