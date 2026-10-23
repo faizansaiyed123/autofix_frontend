@@ -377,9 +377,9 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
         response.request().method() === "GET" &&
         response.url().includes("/api/v1/check_ins/") &&
         response.status() === 200,
-    );
+    ).then((response) => response.json());
     await page.goto("/check-ins", { waitUntil: "networkidle" });
-    const checkInsRead = (await (await listAfterReload).json()) as {
+    const checkInsRead = (await listAfterReload) as {
       data: Array<{ id: string; status: string; vehicle_id: string }>;
     };
     const reloaded = checkInsRead.data.find((record) => record.id === checkIn.id);
