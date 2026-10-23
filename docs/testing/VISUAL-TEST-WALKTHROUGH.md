@@ -348,8 +348,8 @@ The table separates browser-driven full-stack scenarios from backend HTTP lifecy
 | Create and send an estimate, approve as customer | Staff `POST /api/v1/estimates/` and `/send`; customer `POST /api/v1/portal/estimates/{id}/items/{item_id}/decision`; staff GET | $142.50 quote appears in a separate customer session; approval and amount are visible after staff reload | Cross-role browser end-to-end |
 | Confirm an invalid email-verification token is handled honestly | `POST /api/v1/auth/verify-email` | Real API rejection (400), request token and error UI | Browser negative case |
 | Confirm an invalid password-reset token is handled honestly | `POST /api/v1/auth/password-reset/confirm` | Real API rejection (400), request body and error UI | Browser negative case |
-| Register, receive verification email and verify account | `POST /api/v1/auth/register`, outbox worker, SMTP, `POST /api/v1/auth/verify-email` | Actual message and token, verified account and portal redirect | Browser end-to-end; see current CI result |
-| Reset password, reject token replay, sign in with new password | Reset-request and reset-confirm endpoints, then `POST /api/v1/auth/login` | Actual email link, one-time token, old password rejected and new password accepted | Browser end-to-end; see current CI result |
+| Register, receive verification email and verify account | `POST /api/v1/auth/register`, outbox worker, SMTP, `POST /api/v1/auth/verify-email` | Actual message and token, verified account and portal redirect | Browser end-to-end; passed in run #75 |
+| Reset password, reject token replay, sign in with new password | Reset-request and reset-confirm endpoints, then `POST /api/v1/auth/login` | Actual email link, one-time token, old password rejected and new password accepted | Browser end-to-end; passed in run #75 |
 | Inspect the central repair-to-payment lifecycle | Customer, vehicle, request, appointment, check-in, inspection, estimate, repair order, labour, part request, QC, invoice and payment APIs | State transitions, totals, line-level decisions, payment and read-back assertions | Backend HTTP end-to-end |
 | Verify workshop-wide access boundaries | Shop-wide API endpoints and user roles | Automated sweep confirms customer cannot read staff-only endpoints | Backend security tests |
 | Validate business rules across feature endpoints | Resource-specific API routes and PostgreSQL constraints | Validation, status transitions, conflicts, duplicate records, bad financial values and forbidden actions | Backend API test suite |
@@ -403,7 +403,7 @@ The table separates browser-driven full-stack scenarios from backend HTTP lifecy
 - Playwright/Chromium drives the actual UI. Tests wait for real HTTP responses; new records are read back through the API and after reload wherever stated above.
 - The backend test suite covers resource-level validation, permissions, state transitions, database constraints and a full HTTP-only repair lifecycle. Its lifecycle test creates and reads real database-backed records through the routes and verifies audit/notification effects.
 - The latest completed backend workflow run reported **951 passed** tests; see [backend CI run](https://github.com/faizansaiyed123/autofix_backend/actions/runs/39979742357).
-- The full browser-test result, including the newest persistence and email flows, is recorded by [frontend CI](https://github.com/faizansaiyed123/autofix_frontend/actions). Check the latest run for its pass/fail status and screenshot artifact.
+- Frontend browser run [#75](https://github.com/faizansaiyed123/autofix_frontend/actions/runs/39990609977) completed successfully: **16 passed**, including SMTP account verification/password recovery and the customer/workshop persistence flows documented above. The visual walkthrough image publishing step and browser-evidence artifact upload also succeeded; the image manifest is [`docs/testing/visuals/manifest.json`](https://github.com/faizansaiyed123/autofix_frontend/blob/main/docs/testing/visuals/manifest.json).
 
 ### Production deployment is not certified by the CI run
 
@@ -435,8 +435,9 @@ Use this final list as the checklist for future regression runs:
 - [x] Backend customer/vehicle/service request/appointment/check-in/inspection/estimate/repair-order/labour/part request/QC/invoice/payment lifecycle over HTTP
 - [x] Backend role and shop/customer access-boundary sweep
 - [x] Backend validation, negative cases, migrations and database constraints
-- [x] Latest completed full browser run #73 passed and published visual evidence; [view run #73](https://github.com/faizansaiyed123/autofix_frontend/actions/runs/39990053744)
-- [ ] Confirm the follow-up browser run passes after simplifying an order-dependent appointment row assertion
+- [x] Browser run #73 passed 16/16 after disambiguating the portal appointment assertion; [view run #73](https://github.com/faizansaiyed123/autofix_frontend/actions/runs/39990053744)
+- [x] Browser run #74 passed 16/16 with the appointment page assertion after authenticated persistence read-back; [view run #74](https://github.com/faizansaiyed123/autofix_frontend/actions/runs/39990472993)
+- [x] Browser run #75 passed 16/16 with fresh authenticated API persistence checks; screenshot publishing and evidence upload succeeded; [view run #75](https://github.com/faizansaiyed123/autofix_frontend/actions/runs/39990609977)
 - [ ] Verify Vercel production API URL and run non-destructive live smoke checks after the backend service/workspace is identified
 - [ ] Add dedicated browser mutations for the remaining workshop edit/delete/status controls and purchase-order receipt flows
 
