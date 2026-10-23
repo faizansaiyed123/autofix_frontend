@@ -8,8 +8,10 @@ import { Field, FormError, Input } from "@/components/ui/Form";
 import { ApiError } from "@/lib/api/client";
 import { authApi } from "@/lib/api/auth";
 import { COMPANY_NAME } from "@/lib/config";
+import { useSession } from "@/lib/auth/AuthProvider";
 
 export default function ResetPasswordPage() {
+  const { invalidateSession } = useSession();
   const [token, setToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,6 +39,8 @@ export default function ResetPasswordPage() {
     setPending(true);
     try {
       await authApi.confirmPasswordReset(token, newPassword);
+      // The backend revokes existing refresh tokens; clear this browser's stale session too.
+      invalidateSession();
       setToken("");
       setDone(true);
     } catch (caught) {
