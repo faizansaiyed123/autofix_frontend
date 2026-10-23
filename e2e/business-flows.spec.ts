@@ -320,4 +320,157 @@ test.describe("Additional customer and workshop write paths", () => {
     await staffContext.close();
   });
 
+
+
+  test("staff books, confirms and cancels an appointment with conflict and reason validation", async ({ page }) => {
+    test.setTimeout(90_000);
+    await login(page, OWNER, "/appointments");
+    await expect(page.getByRole("heading", { name: "Diary", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "New booking", exact: true }).click();
+
+    const booking = page.getByRole("dialog", { name: "New booking" });
+    const customerSelect = booking.locator("select").nth(0);
+    const customerOption = customerSelect.locator("option").filter({ hasText: "David Wilson" }).first();
+    const customerId = await customerOption.getAttribute("value");
+    if (!customerId) throw new Error("The seeded portal customer was not returned by the customer reference API");
+    await customerSelect.selectOption(customerId);
+
+    const vehicleSelect = booking.locator("select").nth(1);
+    const vehicleOption = vehicleSelect.locator("option").filter({ hasText: "Honda Accord" }).first();
+    const vehicleId = await vehicleOption.getAttribute("value");
+    if (!vehicleId) throw new Error("The seeded Honda Accord was not returned for David Wilson");
+    await vehicleSelect.selectOption(vehicleId);
+
+    const future = new Date();
+    future.setDate(future.getDate() + 45);
+    future.setHours(11, 0, 0, 0);
+    const localDateTime = new Date(future.getTime() - future.getTimezoneOffset() * 60_000)
+      .toISOString()
+      .slice(0, 16);
+    const bay = "E2E-" + Date.now().toString().slice(-8);
+    await booking.getByLabel("Work").selectOption("DIAGNOSTIC");
+    await booking.getByLabel("Bay").fill(bay);
+    await booking.getByLabel("What the customer said").fill("Dashboard warning light; E2E booking validation.");
+
+    const freeSlotResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/appointments/check-conflicts" &&
+        response.status() === 200,
+    );
+    await booking.getByLabel("Starts").fill(localDateTime);
+    const freeSlotResponse = await freeSlotResponsePromise;
+    const freeSlot = (await freeSlotResponse.json()) as { has_conflict: boolean };
+    expect(freeSlot.has_conflict).toBe(false);
+    await expect(booking.getByText("The slot is free.")).toBeVisible();
+
+    const createResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/appointments/" &&
+        response.status() === 201,
+    );
+    await booking.getByRole("button", { name: "Book it", exact: true }).click();
+    const created = (await (await createResponsePromise).json()) as {
+      id: string;
+      customer_id: string;
+      vehicle_id: string;
+      service_type: string;
+      status: string;
+      scheduled_start: string;
+      bay: string;
+    };
+    expect(created).toMatchObject({
+      customer_id: customerId,
+      vehicle_id: vehicleId,
+      service_type: "DIAGNOSTIC",
+      status: "REQUESTED",
+      bay,
+    });
+
+    await page.getByRole("button", { name: "List", exact: true }).click();
+    const appointmentRow = page.getByRole("row").filter({ hasText: "Honda Accord" }).filter({ hasText: "Diagnostic" });
+    await expect(appointmentRow).toBeVisible();
+    await appointmentRow.click();
+    const details = page.getByRole("dialog", { name: "Diagnostic" });
+    await expect(details.getByText("REQUESTED", { exact: true })).toBeVisible();
+
+    const confirmResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/appointments/" + created.id + "/status" &&
+        response.status() === 200,
+    );
+    await details.getByRole("button", { name: "Confirmed", exact: true }).click();
+    await details.getByRole("button", { name: "Apply", exact: true }).click();
+    const confirmed = (await (await confirmResponsePromise).json()) as { id: string; status: string };
+    expect(confirmed).toMatchObject({ id: created.id, status: "CONFIRMED" });
+    await screenshot(page, "49-workshop-appointment-confirmed.png");
+    const confirmedReadback = await readApi<{ status: string; vehicle_id: string }>(page, "/appointments/" + created.id);
+    expect(confirmedReadback).toMatchObject({ status: "CONFIRMED", vehicle_id: vehicleId });
+
+    await details.getByRole("button", { name: "Close dialog" }).click();
+    await page.getByRole("button", { name: "New booking", exact: true }).click();
+    const duplicate = page.getByRole("dialog", { name: "New booking" });
+    await duplicate.locator("select").nth(0).selectOption(customerId);
+    await duplicate.locator("select").nth(1).selectOption(vehicleId);
+    await duplicate.getByLabel("Work").selectOption("DIAGNOSTIC");
+    await duplicate.getByLabel("Bay").fill(bay);
+
+    const conflictResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/appointments/check-conflicts" &&
+        response.status() === 200,
+    );
+    await duplicate.getByLabel("Starts").fill(localDateTime);
+    const conflictResponse = await conflictResponsePromise;
+    const conflict = (await conflictResponse.json()) as {
+      has_conflict: boolean;
+      conflicts: Array<{ appointment_id: string }>;
+    };
+    expect(conflict.has_conflict).toBe(true);
+    expect(conflict.conflicts.some((item) => item.appointment_id === created.id)).toBe(true);
+    await expect(duplicate.getByText("That slot is already taken.")).toBeVisible();
+    await expect(duplicate.getByRole("button", { name: "Book it", exact: true })).toBeDisabled();
+    await duplicate.getByRole("button", { name: "Close dialog" }).click();
+
+    const cancelResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/appointments/" + created.id + "/status" &&
+        response.status() === 200,
+    );
+    await appointmentRow.click();
+    const refreshedDetails = page.getByRole("dialog", { name: "Diagnostic" });
+    await refreshedDetails.getByRole("button", { name: "Cancelled", exact: true }).click();
+    const applyCancel = refreshedDetails.getByRole("button", { name: "Apply", exact: true });
+    await expect(refreshedDetails.getByLabel("Why is it being cancelled")).toBeVisible();
+    await expect(applyCancel).toBeDisabled();
+    await refreshedDetails.getByLabel("Why is it being cancelled").fill("Customer asked to move this E2E booking.");
+    await expect(applyCancel).toBeEnabled();
+    await applyCancel.click();
+    const cancelled = (await (await cancelResponsePromise).json()) as {
+      id: string;
+      status: string;
+      cancellation_reason: string | null;
+    };
+    expect(cancelled).toMatchObject({
+      id: created.id,
+      status: "CANCELLED",
+      cancellation_reason: "Customer asked to move this E2E booking.",
+    });
+    await screenshot(page, "50-workshop-appointment-cancelled.png");
+
+    await page.reload({ waitUntil: "networkidle" });
+    const cancelledReadback = await readApi<{ status: string; cancellation_reason: string | null }>(
+      page,
+      "/appointments/" + created.id,
+    );
+    expect(cancelledReadback).toMatchObject({
+      status: "CANCELLED",
+      cancellation_reason: "Customer asked to move this E2E booking.",
+    });
+  });
+
 });
