@@ -521,6 +521,83 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
 
   });
 
+
+  test("a customer books a supported appointment type through the portal", async ({ page }) => {
+    test.setTimeout(60_000);
+    await login(page, CUSTOMER);
+
+    const vehiclesResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        response.url().includes("/api/v1/portal/vehicles") &&
+        response.status() === 200,
+    );
+    await page.goto("/portal/appointments", { waitUntil: "networkidle" });
+    const vehicles = (await (await vehiclesResponsePromise).json()) as Array<{
+      id: string;
+      make: string;
+      model: string;
+      year: number;
+    }>;
+    expect(vehicles.length).toBeGreaterThan(0);
+    const vehicle = vehicles[0];
+
+    await page.getByRole("button", { name: "Ask for a slot", exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Which car").selectOption(vehicle.id);
+    await dialog.getByLabel("Service type").selectOption("DIAGNOSTIC");
+
+    const future = new Date();
+    future.setDate(future.getDate() + 20);
+    future.setHours(11, 0, 0, 0);
+    const localDateTime = new Date(future.getTime() - future.getTimezoneOffset() * 60_000)
+      .toISOString()
+      .slice(0, 16);
+    await dialog.getByLabel("Preferred time").fill(localDateTime);
+    await dialog.getByLabel("Anything we should know").fill("E2E appointment request; diagnostic warning light.");
+
+    const createResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/portal/appointments") &&
+        response.status() === 201,
+    );
+    await dialog.getByRole("button", { name: "Request this slot", exact: true }).click();
+    const created = (await createResponsePromise.json()) as {
+      id: string;
+      vehicle_id: string;
+      service_type: string;
+      status: string;
+      scheduled_start: string;
+    };
+    expect(created.id).toBeTruthy();
+    expect(created.vehicle_id).toBe(vehicle.id);
+    expect(created.service_type).toBe("DIAGNOSTIC");
+    expect(created.status).toBe("REQUESTED");
+
+    const readBackPromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        response.url().includes("/api/v1/portal/appointments") &&
+        response.status() === 200,
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    const appointments = (await (await readBackPromise).json()) as Array<{
+      id: string;
+      vehicle_id: string;
+      service_type: string;
+      status: string;
+    }>;
+    expect(appointments.find((appointment) => appointment.id === created.id)).toMatchObject({
+      id: created.id,
+      vehicle_id: vehicle.id,
+      service_type: "DIAGNOSTIC",
+      status: "REQUESTED",
+    });
+    await expect(page.getByRole("row").filter({ hasText: "DIAGNOSTIC" })).toContainText(vehicle.model);
+    await screenshot(page, "43-portal-appointment-booked.png");
+  });
+
   test("a customer approves and declines estimate lines in the real portal", async ({ page }) => {
     test.setTimeout(60_000);
     await login(page, CUSTOMER);
