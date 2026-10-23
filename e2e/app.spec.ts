@@ -31,6 +31,17 @@ async function screenshot(page: Page, filename: string) {
   await page.screenshot({ path: evidence(filename), fullPage: true });
 }
 
+async function readAuthenticatedApi<T>(page: Page, apiPath: string): Promise<T> {
+  const token = await page.evaluate(() => localStorage.getItem("autofix.access_token"));
+  if (!token) throw new Error("No access token available for authenticated API readback");
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
+  const response = await page.request.get(apiBase + "/api/v1" + apiPath, {
+    headers: { Authorization: "Bearer " + token },
+  });
+  expect(response.status()).toBe(200);
+  return (await response.json()) as T;
+}
+
 type MailpitSummary = {
   ID: string;
   Subject: string;
@@ -319,14 +330,11 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     expect(vehicle.make).toBe("E2E");
     expect(vehicle.model).toBe("PersistenceCheck");
 
-    const readVehicleResponse = page.waitForResponse(
-      (response) =>
-        response.request().method() === "GET" &&
-        response.url().includes("/api/v1/vehicles/" + vehicle.id) &&
-        response.status() === 200,
-    ).then((response) => response.json());
     await page.goto("/vehicles/" + vehicle.id, { waitUntil: "networkidle" });
-    const persistedVehicle = (await readVehicleResponse) as { id: string; make: string; model: string };
+    const persistedVehicle = await readAuthenticatedApi<{ id: string; make: string; model: string }>(
+      page,
+      "/vehicles/" + vehicle.id,
+    );
     expect(persistedVehicle.id).toBe(vehicle.id);
     await expect(page.getByText("PersistenceCheck", { exact: true }).first()).toBeVisible();
     await screenshot(page, "26-vehicle-details.png");
@@ -372,16 +380,10 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     expect(transitioned.status).toBe("IN_PROGRESS");
     await screenshot(page, "27-checkin-status-transition.png");
 
-    const listAfterReload = page.waitForResponse(
-      (response) =>
-        response.request().method() === "GET" &&
-        response.url().includes("/api/v1/check_ins/") &&
-        response.status() === 200,
-    ).then((response) => response.json());
     await page.goto("/check-ins", { waitUntil: "networkidle" });
-    const checkInsRead = (await listAfterReload) as {
+    const checkInsRead = await readAuthenticatedApi<{
       data: Array<{ id: string; status: string; vehicle_id: string }>;
-    };
+    }>(page, "/check_ins/?page=1&size=100");
     const reloaded = checkInsRead.data.find((record) => record.id === checkIn.id);
     expect(reloaded).toMatchObject({ id: checkIn.id, vehicle_id: vehicle.id, status: "IN_PROGRESS" });
     await expect(page.getByRole("row").filter({ hasText: "PersistenceCheck" })).toContainText(/In progress|IN_PROGRESS/i);
