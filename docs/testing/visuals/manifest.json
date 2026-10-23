@@ -50,6 +50,8 @@
     "45-inventory-receipt.png",
     "46-supplier-created.png",
     "47-estimate-created-and-sent.png",
-    "48-customer-approves-created-estimate.png"
+    "48-customer-approves-created-estimate.png",
+    "49-workshop-appointment-confirmed.png",
+    "50-workshop-appointment-cancelled.png"
   ]
 }
