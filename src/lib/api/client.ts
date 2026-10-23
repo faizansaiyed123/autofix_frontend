@@ -149,6 +149,9 @@ async function refreshTokens(): Promise<boolean> {
       });
       if (!response.ok) return false;
       const tokens = (await response.json()) as { access_token: string; refresh_token: string };
+      // A logout/password reset/new login may have changed local session state
+      // while the refresh request was in flight. Never resurrect or overwrite it.
+      if (readToken(STORAGE_KEYS.refreshToken) !== refresh) return false;
       setTokens(tokens.access_token, tokens.refresh_token);
       return true;
     } catch {
