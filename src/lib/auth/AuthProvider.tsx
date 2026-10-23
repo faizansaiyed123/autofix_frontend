@@ -10,6 +10,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -57,8 +58,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [permissions, setPermissions] = useState<string[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
 
+  // Invalidates any profile request started before a logout or password reset.
+  const sessionEpoch = useRef(0);
+
   const loadProfile = useCallback(async () => {
+    const epoch = sessionEpoch.current;
     const [me, bundle] = await Promise.all([authApi.me(), authApi.permissions()]);
+    if (epoch !== sessionEpoch.current || !hasStoredSession()) {
+      throw new Error("Session changed while loading the profile");
+    }
     setUser(me);
     setRoles(bundle.roles ?? []);
     setPermissions(bundle.permissions ?? []);
@@ -66,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const reset = useCallback(() => {
+    sessionEpoch.current += 1;
     clearTokens();
     setUser(null);
     setPermissions([]);
@@ -73,21 +82,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("anonymous");
   }, []);
 
-  // Verify a stored token with the API before restoring the session.
+  // Verify a stored token with the API before restoring the session. A request
+  // that completes after reset must not resurrect the session it was checking.
   useEffect(() => {
     if (!hasStoredSession()) return;
     let cancelled = false;
+    const epoch = sessionEpoch.current;
 
     Promise.all([authApi.me(), authApi.permissions()]).then(
       ([me, bundle]) => {
-        if (cancelled) return;
+        if (cancelled || epoch !== sessionEpoch.current) return;
+        if (!hasStoredSession()) {
+          reset();
+          return;
+        }
         setUser(me);
         setRoles(bundle.roles ?? []);
         setPermissions(bundle.permissions ?? []);
         setStatus("authenticated");
       },
       () => {
-        if (!cancelled) reset();
+        if (!cancelled && epoch === sessionEpoch.current) reset();
       },
     );
 
@@ -95,10 +110,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [reset]);
-
-  // A refresh token that no longer works ends the session exactly once, wherever
-  // it is noticed.
-  useEffect(() => onForcedLogout(reset), [reset]);
 
   const acceptTokens = useCallback(
     async (tokens: TokenResponse) => {
