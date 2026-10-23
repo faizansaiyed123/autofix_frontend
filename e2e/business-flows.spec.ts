@@ -784,4 +784,57 @@ test.describe("Additional customer and workshop write paths", () => {
     });
   });
 
+
+  test("invoice issuance stays blocked until its linked repair order passes QC", async ({ page }) => {
+    await login(page, OWNER, "/invoices");
+    const list = await readApi<{
+      data: Array<{ id: string; invoice_number: string; status: string; repair_order_id: string }>;
+    }>(page, "/invoices/?page=1&size=100");
+    const draft = list.data.find((invoice) => invoice.invoice_number === "INV-2026-0003");
+    expect(draft, "The seeded in-progress repair order should have a draft invoice").toBeTruthy();
+    if (!draft) throw new Error("Expected seeded draft invoice INV-2026-0003");
+
+    await page.goto("/invoices/" + draft.id, { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: draft.invoice_number, exact: true })).toBeVisible();
+    const invoice = await readApi<{
+      id: string;
+      status: string;
+      repair_order_id: string;
+      issued_at: string | null;
+    }>(page, "/invoices/" + draft.id);
+    expect(invoice.status).toBe("DRAFT");
+    expect(invoice.issued_at).toBeNull();
+
+    const repairOrder = await readApi<{ id: string; status: string; ro_number: string }>(
+      page,
+      "/repair_orders/" + invoice.repair_order_id,
+    );
+    expect(repairOrder.status).toBe("IN_PROGRESS");
+    const issueButton = page.getByRole("button", { name: "Issue", exact: true });
+    await expect(issueButton).toBeDisabled();
+    await expect(issueButton).toHaveAttribute(
+      "title",
+      /repair order is IN_PROGRESS; quality control must pass/i,
+    );
+
+    // Exercise the server guard directly as well, so a caller cannot bypass the disabled UI.
+    const token = await page.evaluate(() => localStorage.getItem("autofix.access_token"));
+    if (!token) throw new Error("No owner session available for invoice issue guard check");
+    const base = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\\/+$/, "");
+    const attempt = await page.request.post(base + "/api/v1/invoices/" + draft.id + "/issue", {
+      headers: { Authorization: "Bearer " + token },
+    });
+    expect(attempt.status()).toBe(400);
+    const problem = (await attempt.json()) as { detail: string };
+    expect(problem.detail).toContain("IN_PROGRESS");
+    expect(problem.detail).toContain("quality control has passed");
+
+    const unchanged = await readApi<{ status: string; issued_at: string | null }>(
+      page,
+      "/invoices/" + draft.id,
+    );
+    expect(unchanged).toMatchObject({ status: "DRAFT", issued_at: null });
+    await screenshot(page, "59-invoice-issue-blocked-until-qc.png");
+  });
+
 });
