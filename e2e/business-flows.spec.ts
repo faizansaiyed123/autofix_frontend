@@ -219,6 +219,7 @@ test.describe("Additional customer and workshop write paths", () => {
     await screenshot(page, "46-supplier-created.png");
   });
   test("staff creates and sends an estimate that the customer approves in a separate session", async ({ browser }) => {
+    test.setTimeout(240_000);
     const staffContext = await browser.newContext();
     const staffPage = await staffContext.newPage();
     await login(staffPage, OWNER, "/estimates");
@@ -473,6 +474,143 @@ test.describe("Additional customer and workshop write paths", () => {
     expect(savedOrder.status).toBe("COMPLETED");
     expect(savedOrder.tasks.find((record) => record.id === task.id)?.status).toBe("COMPLETED");
     await screenshot(staffPage, "54-repair-order-completed.png");
+
+    // Independent quality control: a workshop owner must be able to verify work
+    // completed by a different technician, and the backend moves the order to QC_PASSED.
+    await staffPage.goto("/qc", { waitUntil: "networkidle" });
+    await expect(staffPage.getByRole("heading", { name: "Quality control", exact: true })).toBeVisible();
+    const queueRow = staffPage.getByRole("row").filter({ hasText: createdOrder.ro_number });
+    await expect(queueRow).toBeVisible();
+    const startQcResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/qc/" &&
+        response.status() === 201,
+    );
+    await queueRow.getByRole("button", { name: "Start check", exact: true }).click();
+    const qualityCheck = (await (await startQcResponsePromise).json()) as {
+      id: string;
+      repair_order_id: string;
+      status: string;
+      attempt_number: number;
+      checks: Array<{ check_type: string; passed: boolean; blocking: boolean }>;
+    };
+    expect(qualityCheck).toMatchObject({
+      repair_order_id: createdOrder.id,
+      status: "IN_PROGRESS",
+      attempt_number: 1,
+    });
+    await staffPage.getByRole("button", { name: "Checks", exact: true }).click();
+    const checkRow = staffPage.getByRole("row").filter({ hasText: createdOrder.ro_number });
+    await expect(checkRow).toBeVisible();
+    await checkRow.click();
+    const qcDialog = staffPage.getByRole("dialog", { name: "Inspection · attempt 1" });
+    await expect(qcDialog.getByText("No blocking check is failing, so this inspection can be passed.")).toBeVisible();
+    const passResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/qc/" + qualityCheck.id + "/pass" &&
+        response.status() === 200,
+    );
+    await qcDialog.getByRole("button", { name: "Pass", exact: true }).click();
+    const passedQc = (await (await passResponsePromise).json()) as { id: string; status: string };
+    expect(passedQc).toMatchObject({ id: qualityCheck.id, status: "PASSED" });
+    const savedQc = await readApi<{ status: string; repair_order_id: string }>(staffPage, "/qc/" + qualityCheck.id);
+    expect(savedQc).toMatchObject({ status: "PASSED", repair_order_id: createdOrder.id });
+    const qcPassedOrder = await readApi<{ status: string }>(staffPage, "/repair_orders/" + createdOrder.id);
+    expect(qcPassedOrder.status).toBe("QC_PASSED");
+    await screenshot(staffPage, "55-repair-order-passed-quality-control.png");
+
+    // Create and issue a real invoice from that QC-passed order.
+    await staffPage.goto("/invoices", { waitUntil: "networkidle" });
+    await expect(staffPage.getByRole("heading", { name: "Invoices", exact: true })).toBeVisible();
+    await staffPage.getByRole("button", { name: "Raise invoice", exact: true }).click();
+    const invoiceDialog = staffPage.getByRole("dialog", { name: "Raise an invoice" });
+    const billableOrderSelect = invoiceDialog.getByLabel("Repair order");
+    await expect(billableOrderSelect.locator("option").filter({ hasText: createdOrder.ro_number })).toHaveCount(1);
+    await billableOrderSelect.selectOption(createdOrder.id);
+    const createInvoiceResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/invoices/" &&
+        response.status() === 201,
+    );
+    await invoiceDialog.getByRole("button", { name: "Create draft", exact: true }).click();
+    const createdInvoice = (await (await createInvoiceResponsePromise).json()) as {
+      id: string;
+      invoice_number: string;
+      repair_order_id: string;
+      status: string;
+      total: number;
+      balance: number;
+      items: Array<{ description: string; source: string }>;
+    };
+    expect(createdInvoice).toMatchObject({
+      repair_order_id: createdOrder.id,
+      status: "DRAFT",
+    });
+    expect(createdInvoice.items.some((item) => item.description === description && item.source === "ESTIMATE")).toBe(true);
+    await expect(staffPage.getByRole("heading", { name: createdInvoice.invoice_number, exact: true })).toBeVisible();
+
+    const issueResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/invoices/" + createdInvoice.id + "/issue" &&
+        response.status() === 200,
+    );
+    await staffPage.getByRole("button", { name: "Issue", exact: true }).click();
+    const issuedInvoice = (await (await issueResponsePromise).json()) as { status: string; balance: number; total: number };
+    expect(issuedInvoice.status).toBe("ISSUED");
+    expect(issuedInvoice.balance).toBeGreaterThan(0);
+    await screenshot(staffPage, "56-workshop-invoice-issued.png");
+
+    await staffPage.getByRole("button", { name: "Record payment", exact: true }).click();
+    const payDialog = staffPage.getByRole("dialog", { name: "Record a payment" });
+    const payAmount = payDialog.getByLabel("Amount");
+    await payAmount.fill((issuedInvoice.balance + 1).toFixed(2));
+    await expect(payDialog.getByText(/More than the balance/)).toBeVisible();
+    await expect(payDialog.getByRole("button", { name: "Record payment", exact: true })).toBeDisabled();
+
+    await payAmount.fill(issuedInvoice.balance.toFixed(2));
+    const paymentResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/payments/" &&
+        response.status() === 201,
+    );
+    await payDialog.getByRole("button", { name: "Record payment", exact: true }).click();
+    const recordedPayment = (await (await paymentResponsePromise).json()) as {
+      id: string;
+      invoice_id: string;
+      amount: number;
+      status: string;
+    };
+    expect(recordedPayment).toMatchObject({
+      invoice_id: createdInvoice.id,
+      amount: issuedInvoice.balance,
+      status: "RECORDED",
+    });
+    const settledInvoice = await readApi<{ status: string; amount_paid: number; balance: number; total: number }>(
+      staffPage,
+      "/invoices/" + createdInvoice.id,
+    );
+    expect(settledInvoice).toMatchObject({
+      status: "PAID",
+      amount_paid: issuedInvoice.balance,
+      balance: 0,
+    });
+    await screenshot(staffPage, "57-workshop-invoice-settled.png");
+
+    // Read the same invoice from the customer account after the payment is settled.
+    await customerPage.goto("/portal/invoices/" + createdInvoice.id, { waitUntil: "networkidle" });
+    await expect(customerPage.getByRole("heading", { name: createdInvoice.invoice_number, exact: true })).toBeVisible();
+    await expect(customerPage.getByText(/settled|paid/i).first()).toBeVisible();
+    const portalInvoice = await readApi<{ status: string; balance: number }>(
+      customerPage,
+      "/portal/invoices/" + createdInvoice.id,
+    );
+    expect(portalInvoice).toMatchObject({ status: "PAID", balance: 0 });
+    await screenshot(customerPage, "58-customer-portal-settled-invoice.png");
 
     await customerContext.close();
     await staffContext.close();
