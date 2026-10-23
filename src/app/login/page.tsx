@@ -15,7 +15,7 @@ function BrandMark() {
 }
 
 export default function LoginPage() {
-  const { login, status, isCustomer } = useSession();
+  const { login, status, isCustomer, invalidateSession } = useSession();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,8 +26,17 @@ export default function LoginPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setResetSuccess(params.get("reset") === "success");
-  }, []);
+    const resetSucceeded = params.get("reset") === "success";
+    setResetSuccess(resetSucceeded);
+    if (resetSucceeded) {
+      // The reset screen revoked the previous refresh-token generation. Clear
+      // stale browser auth state before the login redirect effect can use it.
+      invalidateSession();
+      // Keep the success notice in component state, but remove the one-shot
+      // flag so a subsequent successful sign-in is not invalidated as well.
+      window.history.replaceState(window.history.state, "", "/login");
+    }
+  }, [invalidateSession]);
 
   useEffect(() => {
     if (status !== "authenticated") return;
