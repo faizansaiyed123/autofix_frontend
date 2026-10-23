@@ -66,6 +66,31 @@ jobs:
           BCRYPT_ROUNDS: "4"
           ALLOWED_ORIGINS: '["http://127.0.0.1:3000","http://localhost:3000"]'
 
+      - name: Start local SMTP inbox for account-flow tests
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/autofix-mailpit
+          openssl req -x509 -newkey rsa:2048 -nodes -days 2 \
+            -keyout /tmp/autofix-mailpit/key.pem \
+            -out /tmp/autofix-mailpit/cert.pem \
+            -subj "/CN=127.0.0.1" \
+            -addext "subjectAltName=IP:127.0.0.1,DNS:localhost"
+          docker run --detach --name autofix-mailpit \
+            --publish 1025:1025 --publish 8025:8025 \
+            --volume /tmp/autofix-mailpit:/tls:ro \
+            --env MP_SMTP_TLS_CERT=/tls/cert.pem \
+            --env MP_SMTP_TLS_KEY=/tls/key.pem \
+            --env MP_SMTP_REQUIRE_STARTTLS=true \
+            axllent/mailpit:v1.27.4
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8025/api/v1/messages > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs autofix-mailpit
+          exit 1
+
       - name: Start backend API
         working-directory: autofix_backend
         env:
@@ -74,6 +99,14 @@ jobs:
           APP_ENV: test
           BCRYPT_ROUNDS: "4"
           ALLOWED_ORIGINS: '["http://127.0.0.1:3000","http://localhost:3000"]'
+          SMTP_HOST: 127.0.0.1
+          SMTP_PORT: "1025"
+          SMTP_FROM_EMAIL: no-reply@autofix.test
+          SMTP_USE_STARTTLS: "true"
+          SMTP_USE_SSL: "false"
+          PUBLIC_APP_URL: http://127.0.0.1:3000
+          EMAIL_OUTBOX_POLL_SECONDS: "1"
+          SSL_CERT_FILE: /tmp/autofix-mailpit/cert.pem
         run: |
           nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/autofix-api.log 2>&1 &
           for i in $(seq 1 60); do
