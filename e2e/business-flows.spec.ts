@@ -396,9 +396,10 @@ test.describe("Additional customer and workshop write paths", () => {
     await labourDialogOpen.click();
     const labourDialog = staffPage.getByRole("dialog", { name: "Log labour" });
     await labourDialog.getByLabel("Work done").fill("E2E diagnostic work performed");
-    await labourDialog.getByLabel("Actual hours").fill("1.5");
-    await labourDialog.getByLabel("Billable hours").fill("1.5");
-    await labourDialog.getByLabel("Hourly rate").fill("95");
+    const labourNumbers = labourDialog.locator('input[type="number"]');
+    await labourNumbers.nth(0).fill("1.5");
+    await labourNumbers.nth(1).fill("1.5");
+    await labourNumbers.nth(2).fill("95");
     await labourDialog.getByLabel("Task").selectOption(task.id);
 
     const labourResponsePromise = staffPage.waitForResponse(
