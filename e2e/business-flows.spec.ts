@@ -218,4 +218,112 @@ test.describe("Additional customer and workshop write paths", () => {
     await expect(page.getByText(name, { exact: true })).toBeVisible();
     await screenshot(page, "46-supplier-created.png");
   });
+  test("staff creates and sends an estimate that the customer approves in a separate session", async ({ browser }) => {
+    const staffContext = await browser.newContext();
+    const staffPage = await staffContext.newPage();
+    await login(staffPage, OWNER, "/estimates");
+    await expect(staffPage.getByRole("heading", { name: "Estimates", exact: true })).toBeVisible();
+
+    await staffPage.getByRole("button", { name: "New estimate", exact: true }).click();
+    const dialog = staffPage.getByRole("dialog");
+    const customerSelect = dialog.getByLabel("Customer");
+    const customerOption = customerSelect.locator("option").filter({ hasText: "David Wilson" }).first();
+    const customerId = await customerOption.getAttribute("value");
+    if (!customerId) throw new Error("The seeded portal customer was not returned by the customer API");
+    await customerSelect.selectOption(customerId);
+
+    const vehicleSelect = dialog.getByLabel("Vehicle");
+    const vehicleOption = vehicleSelect.locator("option").filter({ hasText: "Honda Accord" }).first();
+    const vehicleId = await vehicleOption.getAttribute("value");
+    if (!vehicleId) throw new Error("David Wilson's Honda Accord was not returned by the vehicle reference API");
+    await vehicleSelect.selectOption(vehicleId);
+
+    const description = "E2E diagnostic " + Date.now();
+    await dialog.getByLabel("Description").fill(description);
+    await dialog.getByLabel("Hours").fill("1.5");
+    await dialog.getByLabel("Hourly rate").fill("95");
+
+    const createResponse = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/estimates/" &&
+        response.status() === 201,
+    );
+    await dialog.getByRole("button", { name: "Create draft", exact: true }).click();
+    const created = (await (await createResponse).json()) as {
+      id: string;
+      estimate_number: string;
+      status: string;
+      total: number;
+      items: Array<{ id: string; description: string; line_total: number }>;
+    };
+    expect(created.status).toBe("DRAFT");
+    expect(created.total).toBe(142.5);
+    expect(created.items.some((item) => item.description === description && item.line_total === 142.5)).toBe(true);
+    await expect(staffPage.getByRole("heading", { name: created.estimate_number, exact: true })).toBeVisible();
+
+    const sendResponse = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/estimates/" + created.id + "/send" &&
+        response.status() === 200,
+    );
+    await staffPage.getByRole("button", { name: "Send to customer", exact: true }).click();
+    const sent = (await (await sendResponse).json()) as { status: string; sent_at: string | null };
+    expect(sent.status).toBe("SENT");
+    expect(sent.sent_at).toBeTruthy();
+    await screenshot(staffPage, "47-estimate-created-and-sent.png");
+
+    const customerContext = await browser.newContext();
+    const customerPage = await customerContext.newPage();
+    await login(customerPage, CUSTOMER, "/portal/estimates");
+    const estimateLink = customerPage.getByRole("link", { name: created.estimate_number, exact: true });
+    await expect(estimateLink).toBeVisible();
+    await estimateLink.click();
+    await expect(customerPage.getByRole("heading", { name: created.estimate_number, exact: true })).toBeVisible();
+
+    const line = customerPage.getByRole("row").filter({ hasText: description });
+    await expect(line).toBeVisible();
+    const item = created.items.find((entry) => entry.description === description);
+    if (!item) throw new Error("The created estimate line was missing from the create response");
+    const decisionResponse = customerPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/portal/estimates/" + created.id +
+          "/items/" + item.id + "/decision" &&
+        response.status() === 200,
+    );
+    await line.getByRole("button", { name: "Approve", exact: true }).click();
+    const decision = (await (await decisionResponse).json()) as {
+      item_status: string;
+      estimate_status: string;
+      approved_total: number;
+      remaining_to_decide: number;
+    };
+    expect(decision.item_status).toBe("APPROVED");
+    expect(decision.estimate_status).toBe("APPROVED");
+    expect(decision.approved_total).toBe(142.5);
+    expect(decision.remaining_to_decide).toBe(0);
+    await screenshot(customerPage, "48-customer-approves-created-estimate.png");
+
+    const staffReadback = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        new URL(response.url()).pathname === "/api/v1/estimates/" + created.id &&
+        response.status() === 200,
+    );
+    await staffPage.reload({ waitUntil: "networkidle" });
+    const persisted = (await (await staffReadback).json()) as {
+      status: string;
+      approved_total: number;
+      items: Array<{ description: string; status: string }>;
+    };
+    expect(persisted.status).toBe("APPROVED");
+    expect(persisted.approved_total).toBe(142.5);
+    expect(persisted.items.find((entry) => entry.description === description)?.status).toBe("APPROVED");
+
+    await customerContext.close();
+    await staffContext.close();
+  });
+
 });
