@@ -1,5 +1,7 @@
 {
   "screenshots": [
+    "00-homepage.png",
+    "00-signup.png",
     "01-dashboard.png",
     "02-attention-centre.png",
     "03-customers.png",
@@ -14,6 +16,23 @@
     "12-inventory.png",
     "13-reports.png",
     "14-customer-portal-request-created.png",
-    "15-staff-queue-received-request.png"
+    "15-staff-queue-received-request.png",
+    "16-audit.png",
+    "17-labour.png",
+    "18-my-work.png",
+    "19-part-requests.png",
+    "20-parts.png",
+    "21-purchase-orders.png",
+    "22-service-requests.png",
+    "23-staff.png",
+    "24-suppliers.png",
+    "25-vehicles.png",
+    "33-customer-portal-home.png",
+    "34-portal-appointments.png",
+    "35-portal-estimates.png",
+    "36-portal-invoices.png",
+    "37-portal-payments.png",
+    "38-portal-service-requests.png",
+    "39-portal-vehicles.png"
   ]
 }
