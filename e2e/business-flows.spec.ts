@@ -821,7 +821,8 @@ test.describe("Additional customer and workshop write paths", () => {
     // Exercise the server guard directly as well, so a caller cannot bypass the disabled UI.
     const token = await page.evaluate(() => localStorage.getItem("autofix.access_token"));
     if (!token) throw new Error("No owner session available for invoice issue guard check");
-    const base = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\\/+$/, "");
+    const baseRaw = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+    const base = baseRaw.endsWith("/") ? baseRaw.slice(0, -1) : baseRaw;
     const attempt = await page.request.post(base + "/api/v1/invoices/" + draft.id + "/issue", {
       headers: { Authorization: "Bearer " + token },
     });
