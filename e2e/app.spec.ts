@@ -31,6 +31,48 @@ async function screenshot(page: Page, filename: string) {
   await page.screenshot({ path: evidence(filename), fullPage: true });
 }
 
+type MailpitSummary = {
+  ID: string;
+  Subject: string;
+  To: Array<{ Address: string }>;
+};
+
+type MailpitMessage = MailpitSummary & {
+  Text: string;
+  HTML: string;
+};
+
+async function waitForMail(page: Page, recipient: string, subject: string): Promise<MailpitMessage> {
+  let found: MailpitSummary | undefined;
+  await expect.poll(async () => {
+    const response = await page.request.get("http://127.0.0.1:8025/api/v1/messages?limit=50");
+    if (!response.ok()) return false;
+    const mailbox = (await response.json()) as { messages?: MailpitSummary[] };
+    found = mailbox.messages?.find(
+      (message) =>
+        message.Subject === subject &&
+        message.To?.some((to) => to.Address.toLowerCase() === recipient.toLowerCase()),
+    );
+    return Boolean(found);
+  }, { timeout: 30_000, intervals: [250, 500, 1000, 2000] }).toBe(true);
+
+  if (!found) throw new Error("Mailpit did not receive " + subject + " for " + recipient);
+  const detailResponse = await page.request.get(
+    "http://127.0.0.1:8025/api/v1/message/" + encodeURIComponent(found.ID),
+  );
+  expect(detailResponse.status()).toBe(200);
+  return (await detailResponse.json()) as MailpitMessage;
+}
+
+function tokenFromEmail(message: MailpitMessage, path: "verify-email" | "reset-password"): string {
+  const link = message.Text.match(new RegExp("https?://[^\\s<]+/" + path + "#token=[^\\s<]+"));
+  if (!link) throw new Error("The real email did not contain a " + path + " token link");
+  const token = new URL(link[0]).hash.slice(1);
+  const value = new URLSearchParams(token).get("token");
+  if (!value) throw new Error("Could not extract the one-time token from the email");
+  return value;
+}
+
 async function expectPage(page: Page, heading?: string) {
   await expect(page).not.toHaveURL(/\/login/);
   await expect(page.locator("body")).not.toContainText(/Application error|Unhandled Runtime Error/i);
@@ -59,6 +101,7 @@ async function visitFeaturePage(
   await expectPage(page, heading);
   if (requireApi) {
     expect(apiResponses.length, "Expected " + route + " to call the backend API").toBeGreaterThan(0);
+    expect(apiResponses.some((status) => status >= 200 && status < 300), "Expected a successful backend read on " + route).toBe(true);
     expect(apiResponses.some((status) => status >= 500), "Backend 5xx response on " + route).toBe(false);
   }
   await screenshot(page, filename);
@@ -82,6 +125,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     expect(response.request().postDataJSON()).toEqual({ token: "fragment-only-test-token" });
     await expect(page.getByRole("heading", { name: "This link needs attention" })).toBeVisible();
     await expect(page.getByText(/may have expired or already been used/i)).toBeVisible();
+    await screenshot(page, "40-invalid-verification-link.png");
   });
 
   test("password-reset fragment is stripped and the real API rejects an invalid token", async ({ page }) => {
@@ -104,6 +148,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     });
     await expect(page.getByText(/invalid or expired reset token/i)).toBeVisible();
     await expect(page.getByRole("heading", { name: "Choose a new password" })).toBeVisible();
+    await screenshot(page, "41-invalid-password-reset.png");
   });
 
   test("public homepage and customer signup are responsive and reachable", async ({ page }) => {
@@ -244,6 +289,212 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await expect(page.getByText("E2E Customer", { exact: true })).toBeVisible();
     await page.reload({ waitUntil: "networkidle" });
     await expect(page.getByText(uniqueEmail, { exact: true })).toBeVisible();
+  });
+
+  test("vehicle and check-in writes persist through the real API and PostgreSQL", async ({ page }) => {
+    await login(page, STAFF, "/vehicles");
+    await expectPage(page, "Vehicles");
+    await page.getByRole("button", { name: "Add vehicle", exact: true }).click();
+    const vehicleDialog = page.getByRole("dialog");
+    await vehicleDialog.getByLabel("Owner").selectOption({ label: "David Wilson" });
+    await vehicleDialog.getByLabel("Make").fill("E2E");
+    await vehicleDialog.getByLabel("Model").fill("PersistenceCheck");
+    await vehicleDialog.getByLabel("Year").fill("1800");
+    await vehicleDialog.getByLabel("VIN").fill("I12345678901");
+    await expect(vehicleDialog.getByText("Outside 1900 to 2030")).toBeVisible();
+    await expect(vehicleDialog.getByText("Not a valid VIN")).toBeVisible();
+    await expect(vehicleDialog.getByRole("button", { name: "Add vehicle", exact: true })).toBeDisabled();
+
+    await vehicleDialog.getByLabel("Year").fill("2022");
+    await vehicleDialog.getByLabel("VIN").fill("1E2EABC1234567890");
+    const createVehicleResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/vehicles/") &&
+        response.status() === 201,
+    );
+    await vehicleDialog.getByRole("button", { name: "Add vehicle", exact: true }).click();
+    const vehicleResponse = await createVehicleResponse;
+    const vehicle = (await vehicleResponse.json()) as { id: string; make: string; model: string };
+    expect(vehicle.make).toBe("E2E");
+    expect(vehicle.model).toBe("PersistenceCheck");
+
+    const readVehicleResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        response.url().includes("/api/v1/vehicles/" + vehicle.id) &&
+        response.status() === 200,
+    );
+    await page.goto("/vehicles/" + vehicle.id, { waitUntil: "networkidle" });
+    const persistedVehicle = await readVehicleResponse;
+    expect((await persistedVehicle.json()).id).toBe(vehicle.id);
+    await expect(page.getByText("PersistenceCheck", { exact: true }).first()).toBeVisible();
+    await screenshot(page, "26-vehicle-details.png");
+
+    await page.goto("/check-ins", { waitUntil: "networkidle" });
+    await expectPage(page, "Check-ins");
+    await page.getByRole("button", { name: "Check a vehicle in", exact: true }).click();
+    const checkInDialog = page.getByRole("dialog");
+    await checkInDialog.getByLabel("Vehicle").selectOption(vehicle.id);
+    await checkInDialog.getByLabel("Odometer").fill("0");
+    await expect(checkInDialog.getByText("Must be greater than zero")).toBeVisible();
+    await expect(checkInDialog.getByRole("button", { name: "Check in", exact: true })).toBeDisabled();
+    await checkInDialog.getByLabel("Odometer").fill("12345");
+
+    const createCheckInResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/check_ins/") &&
+        response.status() === 201,
+    );
+    await checkInDialog.getByRole("button", { name: "Check in", exact: true }).click();
+    const checkIn = (await (await createCheckInResponse).json()) as {
+      id: string;
+      status: string;
+      vehicle_id: string;
+    };
+    expect(checkIn.vehicle_id).toBe(vehicle.id);
+    expect(checkIn.status).toBe("PENDING");
+
+    const row = page.getByRole("row").filter({ hasText: "PersistenceCheck" });
+    await expect(row).toBeVisible();
+    await row.click();
+    const detailDialog = page.getByRole("dialog");
+    await expect(detailDialog.getByText("PENDING", { exact: true })).toBeVisible();
+    const statusResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        response.url().includes("/api/v1/check_ins/" + checkIn.id + "/status") &&
+        response.status() === 200,
+    );
+    await detailDialog.getByRole("button", { name: "In progress", exact: true }).click();
+    const transitioned = (await (await statusResponse).json()) as { status: string };
+    expect(transitioned.status).toBe("IN_PROGRESS");
+    await screenshot(page, "27-checkin-status-transition.png");
+
+    const listAfterReload = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        response.url().includes("/api/v1/check_ins/") &&
+        response.status() === 200,
+    );
+    await page.goto("/check-ins", { waitUntil: "networkidle" });
+    const checkInsRead = (await (await listAfterReload).json()) as {
+      data: Array<{ id: string; status: string; vehicle_id: string }>;
+    };
+    const reloaded = checkInsRead.data.find((record) => record.id === checkIn.id);
+    expect(reloaded).toMatchObject({ id: checkIn.id, vehicle_id: vehicle.id, status: "IN_PROGRESS" });
+    await expect(page.getByRole("row").filter({ hasText: "PersistenceCheck" })).toContainText(/In progress|IN_PROGRESS/i);
+  });
+
+  test("customer registration, email verification, password reset, and sign-in use real services", async ({ page }) => {
+    const email = "e2e.signup." + Date.now() + "@example.test";
+    const originalPassword = "FirstPass-test42!";
+    const newPassword = "ChangedPass-test73!";
+
+    await page.goto("/register", { waitUntil: "networkidle" });
+    await page.getByLabel("First name").fill("E2E");
+    await page.getByLabel("Last name").fill("Verified");
+    await page.getByLabel("Email address").fill(email);
+    await page.getByLabel("Phone number").fill("+1-503-555-0108");
+    await page.getByLabel("Password", { exact: true }).fill(originalPassword);
+    await page.getByLabel("Confirm password").fill(originalPassword);
+
+    const registerResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/auth/register"),
+    );
+    await page.getByRole("button", { name: "Create account", exact: true }).click();
+    const registered = await registerResponse;
+    expect(registered.status()).toBe(202);
+    await expect(page.getByRole("heading", { name: "Check your inbox" })).toBeVisible();
+    await screenshot(page, "28-registration-submitted.png");
+
+    const verificationMessage = await waitForMail(page, email, "Verify your AutoFix account");
+    const verificationToken = tokenFromEmail(verificationMessage, "verify-email");
+    expect(verificationMessage.Text).toContain("Verify your email address within 24 hours");
+
+    await page.goto("/verify-email#token=" + encodeURIComponent(verificationToken), { waitUntil: "networkidle" });
+    await expect.poll(() => new URL(page.url()).hash).toBe("");
+    await expect(page.getByRole("heading", { name: "Confirm your email address" })).toBeVisible();
+    const verificationResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/auth/verify-email"),
+    );
+    await page.getByRole("button", { name: "Verify email address", exact: true }).click();
+    const verified = await verificationResponse;
+    expect(verified.status()).toBe(200);
+    await expect(page).toHaveURL(/\/portal$/);
+    await expect(page.getByRole("heading").first()).toBeVisible();
+    await screenshot(page, "29-verified-customer-portal.png");
+
+    await page.goto("/forgot-password", { waitUntil: "networkidle" });
+    await page.getByLabel("Email address").fill(email);
+    const resetRequestResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/auth/password-reset/request"),
+    );
+    await page.getByRole("button", { name: "Send reset link", exact: true }).click();
+    expect((await resetRequestResponse).status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
+    await screenshot(page, "30-password-reset-requested.png");
+
+    const resetMessage = await waitForMail(page, email, "Reset your AutoFix password");
+    const resetToken = tokenFromEmail(resetMessage, "reset-password");
+    expect(resetMessage.Text).toContain("Reset your password within 60 minutes");
+
+    await page.goto("/reset-password#token=" + encodeURIComponent(resetToken), { waitUntil: "networkidle" });
+    await page.getByLabel("New password").fill(newPassword);
+    await page.getByLabel("Confirm new password").fill(newPassword);
+    const confirmResetResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/auth/password-reset/confirm"),
+    );
+    await page.getByRole("button", { name: "Update password", exact: true }).click();
+    expect((await confirmResetResponse).status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "Password updated" })).toBeVisible();
+    await screenshot(page, "31-password-reset-confirmed.png");
+
+    await page.goto("/reset-password#token=" + encodeURIComponent(resetToken), { waitUntil: "networkidle" });
+    await page.getByLabel("New password").fill("another-password-42");
+    await page.getByLabel("Confirm new password").fill("another-password-42");
+    const replayResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/auth/password-reset/confirm"),
+    );
+    await page.getByRole("button", { name: "Update password", exact: true }).click();
+    expect((await replayResponse).status()).toBe(400);
+    await expect(page.getByText(/invalid or expired reset token/i)).toBeVisible();
+
+    await page.goto("/login", { waitUntil: "networkidle" });
+    await page.getByLabel("Email").first().fill(email);
+    await page.getByLabel("Password").fill(originalPassword);
+    const oldPasswordLogin = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/auth/login"),
+    );
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    expect((await oldPasswordLogin).status()).toBe(401);
+    await expect(page.getByText(/Invalid email or password/i)).toBeVisible();
+
+    await page.getByLabel("Password").fill(newPassword);
+    const newPasswordLogin = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/auth/login") &&
+        response.status() === 200,
+    );
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await newPasswordLogin;
+    await expect(page).toHaveURL(/\/portal$/);
+    await expect(page.getByRole("heading").first()).toBeVisible();
+    await screenshot(page, "32-password-changed-login.png");
   });
 
   test("customer portal pages are all backed by their live API data", async ({ page }) => {
