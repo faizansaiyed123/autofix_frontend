@@ -13,7 +13,8 @@ import { portalApi } from "@/lib/api/portal";
 import type { PortalAppointment, PortalVehicle } from "@/lib/api/types";
 import { useApiMutation } from "@/lib/hooks/useApiMutation";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
-import { formatDateTime, toApiDateTime } from "@/lib/format";
+import { formatDateTime, titleCase, toApiDateTime } from "@/lib/format";
+import { SERVICE_TYPES } from "@/lib/status";
 
 /** Customer bookings are checked against existing work; customers do not choose the technician or bay. */
 export default function PortalAppointmentsPage() {
@@ -141,7 +142,7 @@ function BookModal({
 }) {
   const form = useForm({
     vehicle_id: "",
-    service_type: "",
+    service_type: "OTHER",
     scheduled_start: "",
     duration_minutes: "60",
     customer_concern: "",
@@ -149,7 +150,7 @@ function BookModal({
   const book = useApiMutation(() =>
     portalApi.bookAppointment({
       vehicle_id: form.values.vehicle_id,
-      service_type: form.values.service_type || undefined,
+      service_type: form.values.service_type,
       scheduled_start: toApiDateTime(new Date(form.values.scheduled_start)),
       duration_minutes: Number(form.values.duration_minutes) || 60,
       customer_concern: form.values.customer_concern || null,
@@ -205,12 +206,17 @@ function BookModal({
             ))}
           </Select>
         </Field>
-        <Field label="What is it for" hint="Leave blank and the shop will ask you what it is.">
-          <Input
+        <Field label="Service type" required>
+          <Select
             value={form.values.service_type}
             onChange={(event) => form.set("service_type", event.target.value)}
-            placeholder="Brake noise, service, warning light…"
-          />
+          >
+            {SERVICE_TYPES.map((serviceType) => (
+              <option key={serviceType} value={serviceType}>
+                {titleCase(serviceType)}
+              </option>
+            ))}
+          </Select>
         </Field>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Preferred time" required>
