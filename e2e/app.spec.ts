@@ -337,7 +337,8 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
 
     const accessToken = await staffPage.evaluate(() => localStorage.getItem("autofix.access_token"));
     expect(accessToken).toBeTruthy();
-    const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\\/+$/, "");
+    const apiBaseRaw = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+    const apiBase = apiBaseRaw.endsWith("/") ? apiBaseRaw.slice(0, -1) : apiBaseRaw;
     const [requestRead, appointmentRead] = await Promise.all([
       staffPage.request.get(apiBase + "/api/v1/service_requests/" + requestRecord.id, {
         headers: { Authorization: `Bearer ${accessToken}` },
