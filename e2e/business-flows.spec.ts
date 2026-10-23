@@ -913,4 +913,176 @@ test.describe("Additional customer and workshop write paths", () => {
     await screenshot(page, "59-invoice-issue-blocked-until-qc.png");
   });
 
+  test("parts staff sends a purchase order and books in the delivery through the UI", async ({ page }) => {
+    test.setTimeout(90_000);
+    await login(page, OWNER, "/purchase-orders");
+
+    const suppliers = await readApi<Array<{ id: string; name: string }>>(page, "/suppliers/active");
+    expect(suppliers.length).toBeGreaterThan(0);
+    const parts = await readApi<{ data: Array<{
+      id: string;
+      part_number: string;
+      name: string;
+      unit_cost: number;
+      status: string;
+    }> }>(page, "/parts/?page=1&size=100");
+    const part = parts.data.find(
+      (candidate) =>
+        candidate.status === "ACTIVE" &&
+        candidate.unit_cost > 0 &&
+        candidate.part_number !== "BRK-PAD-1042",
+    );
+    if (!part) throw new Error("No active part with a positive catalog cost was available for the PO test");
+    const beforeLevels = await readApi<Array<{ part_id: string; quantity_on_hand: number }>>(
+      page,
+      "/inventory/stock-levels",
+    );
+    const before = beforeLevels.find((level) => level.part_id === part.id);
+    if (!before) throw new Error("The selected part has no stock-level record");
+
+    // The current screen has no New order control, so create only the draft as test
+    // setup; sending and receiving are exercised through the real purchase-order UI.
+    const token = await page.evaluate(() => localStorage.getItem("autofix.access_token"));
+    if (!token) throw new Error("No authenticated owner token available for purchase-order setup");
+    const baseRaw = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+    const apiBase = baseRaw.endsWith("/") ? baseRaw.slice(0, -1) : baseRaw;
+    const orderCreateResponse = await page.request.post(apiBase + "/api/v1/purchase_orders/", {
+      headers: { Authorization: "Bearer " + token },
+      data: {
+        supplier_id: suppliers[0].id,
+        expected_delivery_date: "2035-06-12",
+        currency: "USD",
+        notes: "E2E PO receipt workflow",
+        items: [
+          {
+            part_id: part.id,
+            quantity_ordered: 2,
+            unit_cost: part.unit_cost,
+            notes: "E2E single-line delivery",
+          },
+        ],
+      },
+    });
+    expect(orderCreateResponse.status()).toBe(201);
+    const order = (await orderCreateResponse.json()) as {
+      id: string;
+      po_number: string;
+      status: string;
+      items: Array<{
+        id: string;
+        part_id: string;
+        quantity_ordered: number;
+        quantity_received: number;
+        quantity_outstanding: number;
+      }>;
+    };
+    expect(order.status).toBe("DRAFT");
+    expect(order.items).toHaveLength(1);
+
+    await page.reload({ waitUntil: "networkidle" });
+    await page.getByRole("button", { name: order.po_number, exact: true }).click();
+    const orderDialog = page.getByRole("dialog", { name: order.po_number });
+    await expect(orderDialog.getByText(/DRAFT/i)).toBeVisible();
+    await expect(orderDialog.getByRole("button", { name: "Receive", exact: true })).toBeDisabled();
+
+    const sendPromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/purchase_orders/" + order.id + "/send" &&
+        response.status() === 200,
+    );
+    await orderDialog.getByRole("button", { name: "Send", exact: true }).click();
+    const sendResponse = await sendPromise;
+    const sent = (await sendResponse.json()) as { id: string; status: string; sent_at: string | null };
+    expect(sent).toMatchObject({ id: order.id, status: "SENT" });
+    expect(sent.sent_at).toBeTruthy();
+    await expect(orderDialog.getByRole("button", { name: "Receive", exact: true })).toBeEnabled();
+    await screenshot(page, "61-purchase-order-sent.png");
+
+    await orderDialog.getByRole("button", { name: "Receive", exact: true }).click();
+    const receiveDialog = page.getByRole("dialog", { name: "Book a delivery in" });
+    const line = receiveDialog.locator("li").filter({ hasText: part.part_number }).first();
+    const quantity = line.getByLabel("Received now");
+    const orderedCost = part.unit_cost;
+    const receiptCost = Math.round((orderedCost + 1.25) * 100) / 100;
+
+    await quantity.fill("3");
+    await expect(line.getByText("More than was ordered.")).toBeVisible();
+    await expect(receiveDialog.getByRole("button", { name: "Receive", exact: true })).toBeDisabled();
+
+    await quantity.fill("0");
+    await expect(receiveDialog.getByRole("button", { name: "Receive", exact: true })).toBeDisabled();
+
+    await quantity.fill("2");
+    await line.getByLabel("Unit cost on this receipt").fill(receiptCost.toFixed(2));
+    await receiveDialog.getByLabel("Notes").fill("E2E delivery note " + Date.now());
+
+    const receivePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/purchase_orders/" + order.id + "/receive" &&
+        response.status() === 200,
+    );
+    await receiveDialog.getByRole("button", { name: "Receive", exact: true }).click();
+    const receiveResponse = await receivePromise;
+    const result = (await receiveResponse.json()) as {
+      purchase_order: {
+        id: string;
+        status: string;
+        total_units_received: number;
+        items: Array<{ id: string; part_id: string; quantity_received: number; quantity_outstanding: number }>;
+      };
+      received_units: number;
+      receipts: Array<{ item_id: string; part_id: string; quantity: number; unit_cost: number; transaction_id: string }>;
+    };
+    expect(result.purchase_order.id).toBe(order.id);
+    expect(result.purchase_order.status).toBe("RECEIVED");
+    expect(result.purchase_order.total_units_received).toBe(2);
+    expect(result.received_units).toBe(2);
+    expect(result.receipts).toHaveLength(1);
+    expect(result.receipts[0]).toMatchObject({
+      item_id: order.items[0].id,
+      part_id: part.id,
+      quantity: 2,
+      unit_cost: receiptCost,
+    });
+
+    const savedOrder = await readApi<typeof result.purchase_order>(page, "/purchase_orders/" + order.id);
+    expect(savedOrder.status).toBe("RECEIVED");
+    expect(savedOrder.items[0]).toMatchObject({
+      quantity_ordered: 2,
+      quantity_received: 2,
+      quantity_outstanding: 0,
+    });
+    const afterLevels = await readApi<Array<{ part_id: string; quantity_on_hand: number }>>(
+      page,
+      "/inventory/stock-levels",
+    );
+    expect(afterLevels.find((level) => level.part_id === part.id)?.quantity_on_hand)
+      .toBe(before.quantity_on_hand + 2);
+    const ledgerReceipt = await readApi<{
+      id: string;
+      transaction_type: string;
+      quantity_before: number;
+      quantity_after: number;
+      unit_cost: number;
+    }>(page, "/inventory/transactions/" + result.receipts[0].transaction_id);
+    expect(ledgerReceipt).toMatchObject({
+      id: result.receipts[0].transaction_id,
+      transaction_type: "RECEIPT",
+      quantity_before: before.quantity_on_hand,
+      quantity_after: before.quantity_on_hand + 2,
+      unit_cost: receiptCost,
+    });
+
+    await page.reload({ waitUntil: "networkidle" });
+    const receivedRow = page.getByRole("row").filter({ hasText: order.po_number });
+    await expect(receivedRow).toContainText(/RECEIVED/i);
+    await page.getByRole("button", { name: order.po_number, exact: true }).click();
+    const receivedDialog = page.getByRole("dialog", { name: order.po_number });
+    await expect(receivedDialog.getByText(/RECEIVED/i)).toBeVisible();
+    await screenshot(page, "62-purchase-order-received.png");
+  });
+
+
 });
