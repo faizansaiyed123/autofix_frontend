@@ -48,6 +48,26 @@ An actual invalid verification link is submitted to the API and rejected. The UI
 
 Password recovery uses a one-time link. In a successful flow, the reset token is carried in the email fragment, the backend checks it, updates the password hash, and invalidates the old authentication generation. The test suite also checks that reusing an already-consumed reset token is rejected.
 
+### Successful verification and password recovery
+
+![Registration submitted to the real API](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/28-registration-submitted.png)
+
+The form submits to `POST /api/v1/auth/register` and expects HTTP 202. The next step reads the email actually delivered by the backend outbox worker; the verification token is extracted from that message, not invented by the browser test.
+
+![Email verified and customer portal opened](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/29-verified-customer-portal.png)
+
+The test follows the message link and submits the one-time token to `POST /api/v1/auth/verify-email`. HTTP 200 establishes the customer's session and the UI reaches the customer portal.
+
+![Password reset request submitted](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/30-password-reset-requested.png)
+
+The forgot-password page submits the email to `POST /api/v1/auth/password-reset/request`. The actual reset email is read from the test SMTP inbox, and its token is used in the next step.
+
+![Password has been updated](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/31-password-reset-confirmed.png)
+
+The reset confirmation endpoint changes the password and invalidates the previous authentication generation. The test then confirms the old password receives HTTP 401, the new password receives HTTP 200, and the customer can sign in again.
+
+![Customer signed in with the new password](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/32-password-changed-login.png)
+
 ### Live service-flow data versus UI-only behavior
 
 Registration, verification and recovery are tested against the actual backend API. In CI, a local SMTP inbox receives mail via SMTP with STARTTLS so the backend's email outbox worker and PostgreSQL token lifecycle are exercised. It is a controlled test inbox, not a fake browser response or a test of delivery to a real customer's mailbox.
