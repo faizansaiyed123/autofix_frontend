@@ -141,15 +141,7 @@ jobs:
             find docs/testing/visuals -maxdepth 1 -type f -name '*.png' -delete
             cp e2e/evidence/*.png docs/testing/visuals/
 
-            python - <<'PY'
-            import json
-            from pathlib import Path
-
-            files = sorted(p.name for p in Path("docs/testing/visuals").glob("*.png"))
-            Path("docs/testing/visuals/manifest.json").write_text(
-                json.dumps({"screenshots": files}, indent=2) + "\n"
-            )
-            PY
+          python -c 'import json; from pathlib import Path; files = sorted(p.name for p in Path("docs/testing/visuals").glob("*.png")); Path("docs/testing/visuals/manifest.json").write_text(json.dumps({"screenshots": files}, indent=2) + "\n")'
 
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
