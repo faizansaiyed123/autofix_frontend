@@ -460,7 +460,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await expect(page.getByRole("heading", { name: "Password updated" })).toBeVisible();
     await screenshot(page, "31-password-reset-confirmed.png");
     await page.getByRole("link", { name: "Continue to sign in", exact: true }).click();
-    await expect(page).toHaveURL(/\/login\?reset=success$/);
+    await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole("status")).toContainText("Your password has been updated");
 
     await page.locator('input[type="email"]').fill(email);
