@@ -52,6 +52,14 @@
     "47-estimate-created-and-sent.png",
     "48-customer-approves-created-estimate.png",
     "49-workshop-appointment-confirmed.png",
-    "50-workshop-appointment-cancelled.png"
+    "50-workshop-appointment-cancelled.png",
+    "51-service-request-converted-to-appointment.png",
+    "52-repair-order-created.png",
+    "53-repair-order-labour-and-task.png",
+    "54-repair-order-completed.png",
+    "55-repair-order-passed-quality-control.png",
+    "56-workshop-invoice-issued.png",
+    "57-workshop-invoice-settled.png",
+    "58-customer-portal-settled-invoice.png"
   ]
 }
