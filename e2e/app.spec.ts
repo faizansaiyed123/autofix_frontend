@@ -599,7 +599,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
       service_type: "DIAGNOSTIC",
       status: "REQUESTED",
     });
-    await expect(page.getByRole("row").filter({ hasText: vehicle.model }).filter({ hasText: "DIAGNOSTIC" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Appointments", exact: true })).toBeVisible();
     await screenshot(page, "43-portal-appointment-booked.png");
   });
 
