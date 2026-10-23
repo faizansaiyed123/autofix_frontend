@@ -16,6 +16,17 @@ async function screenshot(page: Page, filename: string) {
   await page.screenshot({ path: evidence(filename), fullPage: true });
 }
 
+async function readApi<T>(page: Page, apiPath: string): Promise<T> {
+  const token = await page.evaluate(() => localStorage.getItem("autofix.access_token"));
+  if (!token) throw new Error("No access token available for authenticated API readback");
+  const base = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
+  const response = await page.request.get(base + "/api/v1" + apiPath, {
+    headers: { Authorization: "Bearer " + token },
+  });
+  expect(response.status()).toBe(200);
+  return (await response.json()) as T;
+}
+
 async function login(page: Page, account: { email: string; password: string }, destination: string) {
   await page.goto("/login", { waitUntil: "networkidle" });
   await page.locator('input[type="email"]').fill(account.email);
@@ -80,19 +91,13 @@ test.describe("Additional customer and workshop write paths", () => {
   test("customer invoice overpayment is blocked and a real portal payment settles the balance", async ({ page }) => {
     await login(page, CUSTOMER, "/portal/invoices");
 
-    const listRead = page.waitForResponse(
-      (response) =>
-        response.request().method() === "GET" &&
-        new URL(response.url()).pathname === "/api/v1/portal/invoices" &&
-        response.status() === 200,
-    ).then((response) => response.json());
     await page.reload({ waitUntil: "networkidle" });
-    const invoices = (await listRead) as Array<{
+    const invoices = await readApi<Array<{
       id: string;
       invoice_number: string;
       status: string;
       balance: number;
-    }>;
+    }>>(page, "/portal/invoices");
     const payable = invoices.find(
       (invoice) => invoice.balance > 0 && invoice.status !== "DRAFT" && invoice.status !== "VOID",
     );
@@ -127,14 +132,11 @@ test.describe("Additional customer and workshop write paths", () => {
     await expect(page.getByRole("button", { name: "Settled", exact: true })).toBeVisible();
     await screenshot(page, "43-portal-invoice-settled.png");
 
-    const detailRead = page.waitForResponse(
-      (response) =>
-        response.request().method() === "GET" &&
-        new URL(response.url()).pathname === "/api/v1/portal/invoices/" + payable.id &&
-        response.status() === 200,
-    ).then((response) => response.json());
     await page.reload({ waitUntil: "networkidle" });
-    const saved = (await detailRead) as { status: string; balance: number };
+    const saved = await readApi<{ status: string; balance: number }>(
+      page,
+      "/portal/invoices/" + payable.id,
+    );
     expect(saved).toMatchObject({ status: "PAID", balance: 0 });
   });
 
@@ -177,14 +179,11 @@ test.describe("Additional customer and workshop write paths", () => {
     expect(movement.reference).toBe(reference);
     await expect(page.getByText(reference, { exact: true })).toBeVisible();
 
-    const stockRead = page.waitForResponse(
-      (response) =>
-        response.request().method() === "GET" &&
-        new URL(response.url()).pathname === "/api/v1/inventory/stock-levels" &&
-        response.status() === 200,
-    ).then((response) => response.json());
     await page.reload({ waitUntil: "networkidle" });
-    const levels = (await stockRead) as Array<{ part_id: string; quantity_on_hand: number }>;
+    const levels = await readApi<Array<{ part_id: string; quantity_on_hand: number }>>(
+      page,
+      "/inventory/stock-levels",
+    );
     expect(levels.find((level) => level.part_id === partId)?.quantity_on_hand).toBe(movement.quantity_after);
     await page.getByRole("button", { name: "Stock", exact: true }).click();
     await expect(page.getByText("BRK-PAD-1042", { exact: true })).toBeVisible();
@@ -307,18 +306,12 @@ test.describe("Additional customer and workshop write paths", () => {
     expect(decision.remaining_to_decide).toBe(0);
     await screenshot(customerPage, "48-customer-approves-created-estimate.png");
 
-    const staffReadback = staffPage.waitForResponse(
-      (response) =>
-        response.request().method() === "GET" &&
-        new URL(response.url()).pathname === "/api/v1/estimates/" + created.id &&
-        response.status() === 200,
-    ).then((response) => response.json());
     await staffPage.reload({ waitUntil: "networkidle" });
-    const persisted = (await staffReadback) as {
+    const persisted = await readApi<{
       status: string;
       approved_total: number;
       items: Array<{ description: string; status: string }>;
-    };
+    }>(staffPage, "/estimates/" + created.id);
     expect(persisted.status).toBe("APPROVED");
     expect(persisted.approved_total).toBe(142.5);
     expect(persisted.items.find((entry) => entry.description === description)?.status).toBe("APPROVED");
