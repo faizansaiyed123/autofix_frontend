@@ -614,6 +614,79 @@ test.describe("Additional customer and workshop write paths", () => {
     expect(portalInvoice).toMatchObject({ status: "PAID", balance: 0 });
     await screenshot(customerPage, "58-customer-portal-settled-invoice.png");
 
+    // Reverse the recorded payment from the workshop UI, retaining the original
+    // event and putting the exact balance back on the still-issued invoice.
+    await staffPage.goto("/payments", { waitUntil: "networkidle" });
+    await expect(staffPage.getByRole("heading", { name: "Payments", exact: true })).toBeVisible();
+    const recordedRow = staffPage.getByRole("row").filter({ hasText: createdInvoice.invoice_number });
+    await expect(recordedRow).toHaveCount(1);
+    await recordedRow.getByRole("cell").nth(6).click();
+
+    const paymentDetail = staffPage.getByRole("dialog", { name: "Payment" });
+    await expect(paymentDetail.getByText("RECORDED", { exact: true })).toBeVisible();
+    await paymentDetail.getByRole("button", { name: "Void payment", exact: true }).click();
+
+    const voidDialog = staffPage.getByRole("dialog", { name: "Void this payment" });
+    const voidReason = "E2E reversal: duplicate till entry";
+    await voidDialog.getByLabel("Reason").fill(voidReason);
+    const voidResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/payments/" + recordedPayment.id + "/void" &&
+        response.status() === 200,
+    );
+    await voidDialog.getByRole("button", { name: "Void payment", exact: true }).click();
+    const voidedResponse = (await voidResponsePromise.json()) as {
+      id: string;
+      invoice_id: string;
+      amount: number;
+      status: string;
+      void_reason: string | null;
+      voided_at: string | null;
+    };
+    expect(voidedResponse).toMatchObject({
+      id: recordedPayment.id,
+      invoice_id: createdInvoice.id,
+      amount: issuedInvoice.balance,
+      status: "VOID",
+      void_reason: voidReason,
+    });
+    expect(voidedResponse.voided_at).toBeTruthy();
+
+    const voidedRow = staffPage.getByRole("row").filter({ hasText: createdInvoice.invoice_number });
+    await expect(voidedRow).toContainText("VOID");
+    const savedPayment = await readApi<{
+      id: string;
+      status: string;
+      amount: number;
+      void_reason: string | null;
+      voided_at: string | null;
+    }>(staffPage, "/payments/" + recordedPayment.id);
+    expect(savedPayment).toMatchObject({
+      id: recordedPayment.id,
+      status: "VOID",
+      amount: issuedInvoice.balance,
+      void_reason: voidReason,
+    });
+    expect(savedPayment.voided_at).toBeTruthy();
+
+    const reopenedInvoice = await readApi<{
+      status: string;
+      amount_paid: number;
+      balance: number;
+      total: number;
+    }>(staffPage, "/invoices/" + createdInvoice.id);
+    expect(reopenedInvoice.status).toBe("ISSUED");
+    expect(reopenedInvoice.amount_paid).toBe(0);
+    expect(reopenedInvoice.balance).toBe(reopenedInvoice.total);
+
+    // The voided entry remains visible, with no way to void it a second time.
+    await voidedRow.getByRole("cell").nth(6).click();
+    const voidedDetail = staffPage.getByRole("dialog", { name: "Payment" });
+    await expect(voidedDetail.getByText(/already been voided/i)).toBeVisible();
+    await expect(voidedDetail.getByRole("button", { name: "Void payment", exact: true })).toHaveCount(0);
+    await screenshot(staffPage, "60-payment-voided-and-balance-restored.png");
+
     await customerContext.close();
     await staffContext.close();
   });
