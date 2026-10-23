@@ -40,6 +40,7 @@ export interface SessionValue {
   acceptTokens: (tokens: TokenResponse) => Promise<void>;
   logout: () => Promise<void>;
   reload: () => Promise<void>;
+  invalidateSession: () => void;
 }
 
 const SessionContext = createContext<SessionValue | null>(null);
@@ -151,8 +152,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       acceptTokens,
       logout,
       reload: loadProfile,
+      invalidateSession: reset,
     };
-  }, [status, user, permissions, roles, login, acceptTokens, logout, loadProfile]);
+  }, [status, user, permissions, roles, login, acceptTokens, logout, loadProfile, reset]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
