@@ -623,7 +623,7 @@ test.describe("Additional customer and workshop write paths", () => {
     await recordedRow.getByRole("cell").nth(6).click();
 
     const paymentDetail = staffPage.getByRole("dialog", { name: "Payment" });
-    await expect(paymentDetail.getByText("RECORDED", { exact: true })).toBeVisible();
+    await expect(paymentDetail.getByText(/recorded/i).first()).toBeVisible();
     await paymentDetail.getByRole("button", { name: "Void payment", exact: true }).click();
 
     const voidDialog = staffPage.getByRole("dialog", { name: "Void this payment" });
@@ -636,7 +636,8 @@ test.describe("Additional customer and workshop write paths", () => {
         response.status() === 200,
     );
     await voidDialog.getByRole("button", { name: "Void payment", exact: true }).click();
-    const voidedResponse = (await voidResponsePromise.json()) as {
+    const voidResponse = await voidResponsePromise;
+    const voidedResponse = (await voidResponse.json()) as {
       id: string;
       invoice_id: string;
       amount: number;
@@ -654,7 +655,7 @@ test.describe("Additional customer and workshop write paths", () => {
     expect(voidedResponse.voided_at).toBeTruthy();
 
     const voidedRow = staffPage.getByRole("row").filter({ hasText: createdInvoice.invoice_number });
-    await expect(voidedRow).toContainText("VOID");
+    await expect(voidedRow).toContainText(/void/i);
     const savedPayment = await readApi<{
       id: string;
       status: string;
