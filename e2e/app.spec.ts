@@ -324,10 +324,10 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
         response.request().method() === "GET" &&
         response.url().includes("/api/v1/vehicles/" + vehicle.id) &&
         response.status() === 200,
-    );
+    ).then((response) => response.json());
     await page.goto("/vehicles/" + vehicle.id, { waitUntil: "networkidle" });
-    const persistedVehicle = await readVehicleResponse;
-    expect((await persistedVehicle.json()).id).toBe(vehicle.id);
+    const persistedVehicle = (await readVehicleResponse) as { id: string; make: string; model: string };
+    expect(persistedVehicle.id).toBe(vehicle.id);
     await expect(page.getByText("PersistenceCheck", { exact: true }).first()).toBeVisible();
     await screenshot(page, "26-vehicle-details.png");
 
