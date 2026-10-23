@@ -316,6 +316,164 @@ test.describe("Additional customer and workshop write paths", () => {
     expect(persisted.approved_total).toBe(142.5);
     expect(persisted.items.find((entry) => entry.description === description)?.status).toBe("APPROVED");
 
+    // Continue the same approved quote into an operational repair order using the UI.
+    await staffPage.goto("/repair-orders", { waitUntil: "networkidle" });
+    await expect(staffPage.getByRole("heading", { name: "Repair orders", exact: true })).toBeVisible();
+    await staffPage.getByRole("button", { name: "New repair order", exact: true }).click();
+    const orderDialog = staffPage.getByRole("dialog", { name: "New repair order" });
+    const orderCustomer = orderDialog.locator("select").nth(0);
+    await orderCustomer.selectOption(customerId);
+    const orderVehicle = orderDialog.locator("select").nth(1);
+    await orderVehicle.selectOption(vehicleId);
+    const orderEstimate = orderDialog.locator("select").nth(2);
+    await expect(orderEstimate.locator("option").filter({ hasText: created.estimate_number })).toHaveCount(1);
+    await orderEstimate.selectOption(created.id);
+    const orderTechnician = orderDialog.locator("select").nth(5);
+    const technicianOption = orderTechnician.locator("option").filter({ hasText: "Mike Rodriguez" }).first();
+    const technicianId = await technicianOption.getAttribute("value");
+    if (!technicianId) throw new Error("The seeded technician was not returned by the staff reference API");
+    await orderTechnician.selectOption(technicianId);
+    await orderDialog.getByLabel("Odometer in").fill("74210");
+    const bay = "E2E-RO-" + Date.now().toString().slice(-7);
+    await orderDialog.getByLabel("Bay").fill(bay);
+
+    const createOrderResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/repair_orders/" &&
+        response.status() === 201,
+    );
+    await orderDialog.getByRole("button", { name: "Create repair order", exact: true }).click();
+    const createdOrder = (await (await createOrderResponsePromise).json()) as {
+      id: string;
+      ro_number: string;
+      customer_id: string;
+      vehicle_id: string;
+      estimate_id: string | null;
+      status: string;
+      tasks: Array<{ id: string; description: string; status: string }>;
+    };
+    expect(createdOrder).toMatchObject({
+      customer_id: customerId,
+      vehicle_id: vehicleId,
+      estimate_id: created.id,
+      status: "DRAFT",
+    });
+    expect(createdOrder.tasks.length).toBeGreaterThan(0);
+    await expect(staffPage).toHaveURL(new RegExp("/repair-orders/" + createdOrder.id + "$"));
+    await expect(staffPage.getByRole("heading", { name: createdOrder.ro_number, exact: true })).toBeVisible();
+    await screenshot(staffPage, "52-repair-order-created.png");
+
+    const statusSelect = staffPage.getByLabel("New status");
+    const approveOrderPromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/repair_orders/" + createdOrder.id + "/status" &&
+        new URL(response.url()).searchParams.get("status") === "APPROVED" &&
+        response.status() === 200,
+    );
+    await statusSelect.selectOption("APPROVED");
+    await staffPage.getByRole("button", { name: "Apply", exact: true }).click();
+    const approvedOrder = (await (await approveOrderPromise).json()) as { status: string };
+    expect(approvedOrder.status).toBe("APPROVED");
+
+    await expect(statusSelect.locator('option[value="IN_PROGRESS"]')).toBeAttached();
+    const startOrderPromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/repair_orders/" + createdOrder.id + "/status" &&
+        new URL(response.url()).searchParams.get("status") === "IN_PROGRESS" &&
+        response.status() === 200,
+    );
+    await statusSelect.selectOption("IN_PROGRESS");
+    await staffPage.getByRole("button", { name: "Apply", exact: true }).click();
+    const startedOrder = (await (await startOrderPromise).json()) as { status: string };
+    expect(startedOrder.status).toBe("IN_PROGRESS");
+
+    const task = createdOrder.tasks[0];
+    const labourDialogOpen = staffPage.getByRole("button", { name: "Log labour", exact: true });
+    await labourDialogOpen.click();
+    const labourDialog = staffPage.getByRole("dialog", { name: "Log labour" });
+    await labourDialog.getByLabel("Work done").fill("E2E diagnostic work performed");
+    await labourDialog.getByLabel("Actual hours").fill("1.5");
+    await labourDialog.getByLabel("Billable hours").fill("1.5");
+    await labourDialog.getByLabel("Hourly rate").fill("95");
+    await labourDialog.getByLabel("Task").selectOption(task.id);
+
+    const labourResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/labor/" &&
+        response.status() === 201,
+    );
+    await labourDialog.getByRole("button", { name: "Record", exact: true }).click();
+    const labourRecord = (await (await labourResponsePromise).json()) as {
+      id: string;
+      repair_order_id: string;
+      repair_task_id: string | null;
+      actual_hours: number;
+      labor_cost: number;
+    };
+    expect(labourRecord).toMatchObject({
+      repair_order_id: createdOrder.id,
+      repair_task_id: task.id,
+      actual_hours: 1.5,
+      labor_cost: 142.5,
+    });
+
+    const taskStatusSelect = staffPage.getByLabel("Status for " + task.description);
+    const taskStartPromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/repair_orders/" +
+          createdOrder.id + "/tasks/" + task.id + "/status" &&
+        new URL(response.url()).searchParams.get("status") === "IN_PROGRESS" &&
+        response.status() === 200,
+    );
+    await taskStatusSelect.selectOption("IN_PROGRESS");
+    const taskStartedOrder = (await (await taskStartPromise).json()) as {
+      tasks: Array<{ id: string; status: string }>;
+    };
+    expect(taskStartedOrder.tasks.find((record) => record.id === task.id)?.status).toBe("IN_PROGRESS");
+
+    const taskCompletePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/repair_orders/" +
+          createdOrder.id + "/tasks/" + task.id + "/status" &&
+        new URL(response.url()).searchParams.get("status") === "COMPLETED" &&
+        response.status() === 200,
+    );
+    await taskStatusSelect.selectOption("COMPLETED");
+    const taskCompletedOrder = (await (await taskCompletePromise).json()) as {
+      tasks: Array<{ id: string; status: string }>;
+      all_tasks_done: boolean;
+    };
+    expect(taskCompletedOrder.tasks.find((record) => record.id === task.id)?.status).toBe("COMPLETED");
+    expect(taskCompletedOrder.all_tasks_done).toBe(true);
+    await screenshot(staffPage, "53-repair-order-labour-and-task.png");
+
+    const completeOrderPromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/repair_orders/" + createdOrder.id + "/status" &&
+        new URL(response.url()).searchParams.get("status") === "COMPLETED" &&
+        response.status() === 200,
+    );
+    await statusSelect.selectOption("COMPLETED");
+    await staffPage.getByRole("button", { name: "Apply", exact: true }).click();
+    const completedOrder = (await (await completeOrderPromise).json()) as { id: string; status: string };
+    expect(completedOrder).toMatchObject({ id: createdOrder.id, status: "COMPLETED" });
+
+    await staffPage.reload({ waitUntil: "networkidle" });
+    const savedOrder = await readApi<{
+      status: string;
+      tasks: Array<{ id: string; status: string }>;
+    }>(staffPage, "/repair_orders/" + createdOrder.id);
+    expect(savedOrder.status).toBe("COMPLETED");
+    expect(savedOrder.tasks.find((record) => record.id === task.id)?.status).toBe("COMPLETED");
+    await screenshot(staffPage, "54-repair-order-completed.png");
+
     await customerContext.close();
     await staffContext.close();
   });
