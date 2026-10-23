@@ -66,75 +66,44 @@ async function visitFeaturePage(
 }
 
 test.describe("AutoFix user-facing full-stack walkthrough", () => {
-  test("verification link reads its token from the URL fragment", async ({ page }) => {
-    let submittedToken = "";
-    await page.route("**/api/v1/auth/verify-email", async (route) => {
-      submittedToken = route.request().postDataJSON().token;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          access_token: "test-access-token",
-          refresh_token: "test-refresh-token",
-          token_type: "bearer",
-          expires_in: 1800,
-        }),
-      });
-    });
-    await page.route("**/api/v1/auth/me", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          id: "00000000-0000-7000-8000-000000000001",
-          email: "fragment-test@example.com",
-          first_name: "Fragment",
-          last_name: "Test",
-          phone: null,
-          is_active: true,
-          is_staff: false,
-          email_verified: true,
-          roles: ["CUSTOMER"],
-        }),
-      });
-    });
-    await page.route("**/api/v1/auth/permissions", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ roles: ["CUSTOMER"], permissions: [] }),
-      });
-    });
-    await page.route("**/api/v1/portal/**", async (route) => {
-      await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
-    });
-
+  test("verification fragment is stripped and the real API rejects an invalid token", async ({ page }) => {
     await page.goto("/verify-email#token=fragment-only-test-token");
     await expect.poll(() => new URL(page.url()).hash).toBe("");
     await expect(page.getByRole("heading", { name: "Confirm your email address" })).toBeVisible();
-    expect(submittedToken).toBe("");
+
+    const responsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/auth/verify-email"),
+    );
     await page.getByRole("button", { name: "Verify email address" }).click();
-    await expect.poll(() => submittedToken).toBe("fragment-only-test-token");
+    const response = await responsePromise;
+    expect(response.status()).toBe(400);
+    expect(response.request().postDataJSON()).toEqual({ token: "fragment-only-test-token" });
+    await expect(page.getByRole("heading", { name: "This link needs attention" })).toBeVisible();
+    await expect(page.getByText(/may have expired or already been used/i)).toBeVisible();
   });
 
-  test("password reset reads its token from the URL fragment", async ({ page }) => {
-    let submittedToken = "";
-    await page.route("**/api/v1/auth/password-reset/confirm", async (route) => {
-      submittedToken = route.request().postDataJSON().token;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ message: "Password has been reset successfully" }),
-      });
-    });
-
+  test("password-reset fragment is stripped and the real API rejects an invalid token", async ({ page }) => {
     await page.goto("/reset-password#token=reset-fragment-only-token");
     await expect.poll(() => new URL(page.url()).hash).toBe("");
     await page.locator('input[type="password"]').nth(0).fill("test-safe-password-42");
     await page.locator('input[type="password"]').nth(1).fill("test-safe-password-42");
+
+    const responsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes("/api/v1/auth/password-reset/confirm"),
+    );
     await page.getByRole("button", { name: "Update password" }).click();
-    await expect(page.getByRole("heading", { name: "Password updated" })).toBeVisible();
-    expect(submittedToken).toBe("reset-fragment-only-token");
+    const response = await responsePromise;
+    expect(response.status()).toBe(400);
+    expect(response.request().postDataJSON()).toEqual({
+      token: "reset-fragment-only-token",
+      new_password: "test-safe-password-42",
+    });
+    await expect(page.getByText(/invalid or expired reset token/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Choose a new password" })).toBeVisible();
   });
 
   test("public homepage and customer signup are responsive and reachable", async ({ page }) => {
