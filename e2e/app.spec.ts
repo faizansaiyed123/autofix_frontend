@@ -447,8 +447,8 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     expect(resetMessage.Text).toContain("Reset your password within 60 minutes");
 
     await page.goto("/reset-password#token=" + encodeURIComponent(resetToken), { waitUntil: "networkidle" });
-    await page.getByLabel("New password").fill(newPassword);
-    await page.getByLabel("Confirm new password").fill(newPassword);
+    await page.locator('input[type="password"]').nth(0).fill(newPassword);
+    await page.locator('input[type="password"]').nth(1).fill(newPassword);
     const confirmResetResponse = page.waitForResponse(
       (response) =>
         response.request().method() === "POST" &&
@@ -460,8 +460,8 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await screenshot(page, "31-password-reset-confirmed.png");
 
     await page.goto("/reset-password#token=" + encodeURIComponent(resetToken), { waitUntil: "networkidle" });
-    await page.getByLabel("New password").fill("another-password-42");
-    await page.getByLabel("Confirm new password").fill("another-password-42");
+    await page.locator('input[type="password"]').nth(0).fill("another-password-42");
+    await page.locator('input[type="password"]').nth(1).fill("another-password-42");
     const replayResponse = page.waitForResponse(
       (response) =>
         response.request().method() === "POST" &&
