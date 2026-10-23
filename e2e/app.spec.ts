@@ -248,7 +248,10 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
         r.status() === 201,
     );
     await customerPage.getByRole("button", { name: "Send", exact: true }).click();
-    await createResponse;
+    const requestResponse = await createResponse;
+    expect(requestResponse.status()).toBe(201);
+    const requestRecord = (await requestResponse.json()) as { id: string; status: string };
+    expect(requestRecord.status).toBe("NEW");
     await expect(customerPage.getByText("E2E brake inspection", { exact: true })).toBeVisible();
     await screenshot(customerPage, "14-customer-portal-request-created.png");
     await customerContext.close();
@@ -268,6 +271,98 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await serviceRequestsResponse;
     await expect(staffPage.getByText("E2E brake inspection", { exact: true })).toBeVisible();
     await screenshot(staffPage, "15-staff-queue-received-request.png");
+
+    await staffPage.getByText("E2E brake inspection", { exact: true }).click();
+    const requestDialog = staffPage.getByRole("dialog", { name: "E2E brake inspection" });
+    await expect(requestDialog.getByText("NEW", { exact: true })).toBeVisible();
+
+    const inReviewResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/service_requests/" + requestRecord.id + "/status" &&
+        new URL(response.url()).searchParams.get("status") === "IN_REVIEW" &&
+        response.status() === 200,
+    );
+    await requestDialog.getByRole("button", { name: "In Review", exact: true }).click();
+    const inReview = (await (await inReviewResponsePromise).json()) as { status: string };
+    expect(inReview.status).toBe("IN_REVIEW");
+    await expect(requestDialog.getByText("IN_REVIEW", { exact: true })).toBeVisible();
+
+    const approveResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/service_requests/" + requestRecord.id + "/status" &&
+        new URL(response.url()).searchParams.get("status") === "APPROVED" &&
+        response.status() === 200,
+    );
+    await requestDialog.getByRole("button", { name: "Approved", exact: true }).click();
+    const approved = (await (await approveResponsePromise).json()) as { status: string };
+    expect(approved.status).toBe("APPROVED");
+    await expect(requestDialog.getByText("APPROVED", { exact: true })).toBeVisible();
+
+    await requestDialog.getByRole("button", { name: "Convert to appointment", exact: true }).click();
+    const convertDialog = staffPage.getByRole("dialog", { name: "Convert to an appointment" });
+    const vehicleSelect = convertDialog.getByLabel("Which vehicle");
+    const vehicleOption = vehicleSelect.locator("option").filter({ hasText: "Honda Accord" }).first();
+    const vehicleId = await vehicleOption.getAttribute("value");
+    if (!vehicleId) throw new Error("A vehicle owned by the portal customer was not available for conversion");
+    await vehicleSelect.selectOption(vehicleId);
+    await convertDialog.getByLabel("Work").selectOption("DIAGNOSTIC");
+
+    const future = new Date();
+    future.setDate(future.getDate() + 35);
+    future.setHours(10, 0, 0, 0);
+    const localDateTime = new Date(future.getTime() - future.getTimezoneOffset() * 60_000)
+      .toISOString()
+      .slice(0, 16);
+    await convertDialog.getByLabel("Starts").fill(localDateTime);
+
+    const convertResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/appointments/from-service-request/" + requestRecord.id &&
+        response.status() === 201,
+    );
+    await convertDialog.getByRole("button", { name: "Convert", exact: true }).click();
+    const appointment = (await (await convertResponsePromise).json()) as {
+      id: string;
+      service_request_id: string | null;
+      vehicle_id: string;
+      service_type: string;
+      status: string;
+    };
+    expect(appointment.vehicle_id).toBe(vehicleId);
+    expect(appointment.service_type).toBe("DIAGNOSTIC");
+    expect(appointment.status).toBe("CONFIRMED");
+
+    const accessToken = await staffPage.evaluate(() => localStorage.getItem("autofix.access_token"));
+    expect(accessToken).toBeTruthy();
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\\/+$/, "");
+    const [requestRead, appointmentRead] = await Promise.all([
+      staffPage.request.get(apiBase + "/api/v1/service_requests/" + requestRecord.id, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }),
+      staffPage.request.get(apiBase + "/api/v1/appointments/" + appointment.id, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }),
+    ]);
+    expect(requestRead.status()).toBe(200);
+    expect(appointmentRead.status()).toBe(200);
+    const savedRequest = (await requestRead.json()) as { id: string; status: string };
+    const savedAppointment = (await appointmentRead.json()) as {
+      id: string;
+      service_request_id: string | null;
+      status: string;
+      vehicle_id: string;
+    };
+    expect(savedRequest).toMatchObject({ id: requestRecord.id, status: "CONVERTED" });
+    expect(savedAppointment).toMatchObject({
+      id: appointment.id,
+      service_request_id: requestRecord.id,
+      status: "CONFIRMED",
+      vehicle_id: vehicleId,
+    });
+    await screenshot(staffPage, "51-service-request-converted-to-appointment.png");
     await staffContext.close();
   });
 
