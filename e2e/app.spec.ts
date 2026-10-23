@@ -463,8 +463,8 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await expect(page).toHaveURL(/\/login\?reset=success$/);
     await expect(page.getByRole("status")).toContainText("Your password has been updated");
 
-    await page.getByLabel("Email address", { exact: true }).fill(email);
-    await page.getByLabel("Password", { exact: true }).fill(originalPassword);
+    await page.locator('input[type="email"]').fill(email);
+    await page.locator('input[type="password"]').fill(originalPassword);
     const oldPasswordLogin = page.waitForResponse(
       (response) =>
         response.request().method() === "POST" &&
@@ -474,7 +474,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     expect((await oldPasswordLogin).status()).toBe(401);
     await expect(page.getByText(/Invalid email or password/i)).toBeVisible();
 
-    await page.getByLabel("Password", { exact: true }).fill(newPassword);
+    await page.locator('input[type="password"]').fill(newPassword);
     const newPasswordLogin = page.waitForResponse(
       (response) =>
         response.request().method() === "POST" &&
