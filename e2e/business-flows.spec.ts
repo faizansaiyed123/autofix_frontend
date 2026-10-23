@@ -19,7 +19,8 @@ async function screenshot(page: Page, filename: string) {
 async function readApi<T>(page: Page, apiPath: string): Promise<T> {
   const token = await page.evaluate(() => localStorage.getItem("autofix.access_token"));
   if (!token) throw new Error("No access token available for authenticated API readback");
-    const base = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
+    const baseRaw = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+    const base = baseRaw.endsWith("/") ? baseRaw.slice(0, -1) : baseRaw;
   const response = await page.request.get(base + "/api/v1" + apiPath, {
     headers: { Authorization: "Bearer " + token },
   });
