@@ -18,8 +18,8 @@ async function screenshot(page: Page, filename: string) {
 
 async function login(page: Page, account: { email: string; password: string }, destination: string) {
   await page.goto("/login", { waitUntil: "networkidle" });
-  await page.getByLabel("Email address", { exact: true }).fill(account.email);
-  await page.getByLabel("Password", { exact: true }).fill(account.password);
+  await page.locator('input[type="email"]').fill(account.email);
+  await page.locator('input[type="password"]').fill(account.password);
 
   const responsePromise = page.waitForResponse(
     (response) =>
