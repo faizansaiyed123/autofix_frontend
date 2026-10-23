@@ -685,7 +685,21 @@ test.describe("Additional customer and workshop write paths", () => {
     });
 
     await page.getByRole("button", { name: "List", exact: true }).click();
-    const appointmentRow = page.getByRole("row").filter({ hasText: "Honda Accord" }).filter({ hasText: "Diagnostic" });
+    const bookingDate = new Date(created.scheduled_start);
+    const renderedDate = bookingDate.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    });
+    const renderedTime = bookingDate.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    // Multiple legitimate bookings can share a vehicle and service type, so tie
+    // subsequent status transitions to the exact slot returned by the create API.
+    const appointmentRow = page.getByRole("row")
+      .filter({ hasText: renderedDate })
+      .filter({ hasText: renderedTime });
     await expect(appointmentRow).toBeVisible();
     await appointmentRow.click();
     const details = page.getByRole("dialog", { name: "Diagnostic" });
