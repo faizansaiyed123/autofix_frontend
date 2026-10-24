@@ -323,6 +323,21 @@ test.describe("Inspection and parts catalogue mutations", () => {
     });
     await screenshot(page, "65-part-catalogue-updated.png");
 
+    // Active catalog rows are deliberately not deletable. Retire this unused row
+    // first, then delete it because no inventory movements or stock exist.
+    await expect(editDialog.getByText(/retire it \(DISCONTINUED\) before it can be deleted/i)).toBeVisible();
+    await editDialog.getByLabel("Trading status").selectOption("DISCONTINUED");
+    const retirePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/parts/" + createdPart.id &&
+        response.status() === 200,
+    );
+    await editDialog.getByRole("button", { name: "Save changes", exact: true }).click();
+    const retiredPart = (await (await retirePromise).json()) as { id: string; status: string; quantity_on_hand: number };
+    expect(retiredPart).toMatchObject({ id: createdPart.id, status: "DISCONTINUED", quantity_on_hand: 0 });
+    await expect(editDialog.getByRole("button", { name: "Delete line", exact: true })).toBeVisible();
+
     const deletePartPromise = page.waitForResponse(
       (response) =>
         response.request().method() === "DELETE" &&
