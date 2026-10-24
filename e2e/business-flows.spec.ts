@@ -1057,6 +1057,14 @@ test.describe("Additional customer and workshop write paths", () => {
         candidate.part_number !== "BRK-PAD-1042",
     );
     if (!part) throw new Error("No active part with a positive catalog cost was available for the PO test");
+    const secondPart = parts.data.find(
+      (candidate) =>
+        candidate.id !== part.id &&
+        candidate.status === "ACTIVE" &&
+        candidate.unit_cost > 0 &&
+        candidate.part_number !== "BRK-PAD-1042",
+    );
+    if (!secondPart) throw new Error("A second active catalog part is required to test draft line editing");
     const beforeLevels = await readApi<Array<{ part_id: string; quantity_on_hand: number }>>(
       page,
       "/inventory/stock-levels",
@@ -1108,6 +1116,57 @@ test.describe("Additional customer and workshop write paths", () => {
     const orderDialog = page.getByRole("dialog", { name: order.po_number });
     await expect(orderDialog.getByText("DRAFT", { exact: true })).toBeVisible();
     await expect(orderDialog.getByRole("button", { name: "Receive", exact: true })).toBeDisabled();
+
+    // Draft purchase-order lines can be added and removed; once the order is sent,
+    // those lines become frozen. Exercise the editing controls before sending.
+    await orderDialog.getByRole("button", { name: "Add a line", exact: true }).click();
+    const addLineDialog = page.getByRole("dialog", { name: "Add a line" });
+    const extraPartSelect = addLineDialog.getByLabel("Part");
+    const extraOption = extraPartSelect.locator("option").filter({ hasText: secondPart.part_number }).first();
+    const extraPartId = await extraOption.getAttribute("value");
+    expect(extraPartId).toBe(secondPart.id);
+    await extraPartSelect.selectOption(extraPartId!);
+    await addLineDialog.getByLabel("Quantity").fill("0");
+    await expect(addLineDialog.getByRole("button", { name: "Add line", exact: true })).toBeDisabled();
+    await addLineDialog.getByLabel("Quantity").fill("1");
+    await addLineDialog.getByLabel("Unit cost").fill(secondPart.unit_cost.toFixed(2));
+    await addLineDialog.getByLabel("Notes").fill("Temporary line used to verify draft editing");
+
+    const addLinePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/purchase_orders/" + order.id + "/items" &&
+        response.status() === 201,
+    );
+    await addLineDialog.getByRole("button", { name: "Add line", exact: true }).click();
+    const orderWithExtraLine = (await (await addLinePromise).json()) as {
+      id: string;
+      items: Array<{ id: string; part_id: string; part_number: string }>;
+    };
+    const extraLine = orderWithExtraLine.items.find((item) => item.part_id === secondPart.id);
+    expect(extraLine).toBeTruthy();
+    if (!extraLine) throw new Error("The newly added purchase-order line was not returned");
+
+    const extraLineRow = orderDialog.getByRole("row").filter({ hasText: secondPart.part_number });
+    await expect(extraLineRow).toBeVisible();
+    const removeLinePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "DELETE" &&
+        new URL(response.url()).pathname === "/api/v1/purchase_orders/" +
+          order.id + "/items/" + extraLine.id &&
+        response.status() < 400,
+    );
+    await extraLineRow.getByRole("button", { name: "Remove", exact: true }).click();
+    await removeLinePromise;
+    const draftAfterEdit = await readApi<{
+      status: string;
+      items: Array<{ part_id: string; part_number: string }>;
+    }>(page, "/purchase_orders/" + order.id);
+    expect(draftAfterEdit.status).toBe("DRAFT");
+    expect(draftAfterEdit.items).toHaveLength(1);
+    expect(draftAfterEdit.items[0].part_id).toBe(part.id);
+    expect(draftAfterEdit.items.some((item) => item.part_id === secondPart.id)).toBe(false);
+    await screenshot(page, "68-purchase-order-draft-edited.png");
 
     const sendPromise = page.waitForResponse(
       (response) =>
