@@ -203,3 +203,73 @@ test("part request flows from requester UI through server-side self-decision gua
   await partsContext.close();
   await requesterContext.close();
 });
+
+
+test("parts staff must provide a reason before rejecting a part request", async ({ browser }) => {
+  test.setTimeout(90_000);
+  const requesterContext = await browser.newContext();
+  const requesterPage = await requesterContext.newPage();
+  await login(requesterPage, OWNER, "/part-requests");
+  const repairOrders = await readApi<{
+    data: Array<{ id: string; ro_number: string; status: string }>;
+  }>(requesterPage, "/repair_orders/?page=1&size=100");
+  const order = repairOrders.data.find((record) =>
+    ["APPROVED", "IN_PROGRESS", "ON_HOLD"].includes(record.status),
+  );
+  if (!order) throw new Error("No requestable repair order was returned for the rejection test");
+
+  await requesterPage.getByRole("button", { name: "Raise a request", exact: true }).click();
+  const createDialog = requesterPage.getByRole("dialog", { name: "Raise a part request" });
+  const partName = "E2E rejection reason " + Date.now();
+  await createDialog.getByLabel("Repair order").selectOption(order.id);
+  await createDialog.getByLabel("Part name").fill(partName);
+  await createDialog.getByLabel("Quantity").fill("1");
+  await createDialog.getByLabel("Why it is needed").fill("The test must verify a rejection reason is saved");
+  const createPromise = requesterPage.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/part_requests/" &&
+      response.status() === 201,
+  );
+  await createDialog.getByRole("button", { name: "Send to parts", exact: true }).click();
+  const created = (await (await createPromise).json()) as { id: string; status: string };
+  expect(created.status).toBe("PENDING");
+
+  const partsContext = await browser.newContext();
+  const partsPage = await partsContext.newPage();
+  await login(partsPage, PARTS, "/part-requests");
+  const row = partsPage.getByRole("row").filter({ hasText: partName });
+  await expect(row).toBeVisible();
+  await row.getByRole("button", { name: "Reject", exact: true }).click();
+  const rejectDialog = partsPage.getByRole("dialog", { name: "Reject this request" });
+  await rejectDialog.getByRole("button", { name: "Reject request", exact: true }).click();
+  await expect(rejectDialog.getByRole("alert")).toHaveText("A reason is required to reject this request.");
+
+  const reason = "Supplier cannot source this component at the required lead time";
+  await rejectDialog.getByLabel("Reason").fill(reason);
+  const rejectPromise = partsPage.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/part_requests/" + created.id + "/decision" &&
+      response.status() === 200,
+  );
+  await rejectDialog.getByRole("button", { name: "Reject request", exact: true }).click();
+  const rejected = (await (await rejectPromise).json()) as {
+    id: string;
+    status: string;
+    decision_reason: string | null;
+  };
+  expect(rejected).toMatchObject({
+    id: created.id,
+    status: "REJECTED",
+    decision_reason: reason,
+  });
+  const saved = await readApi<{ id: string; status: string; decision_reason: string | null }>(
+    partsPage,
+    "/part_requests/" + created.id,
+  );
+  expect(saved).toMatchObject({ id: created.id, status: "REJECTED", decision_reason: reason });
+  await screenshot(partsPage, "75-part-request-rejected-with-reason.png");
+  await partsContext.close();
+  await requesterContext.close();
+});
