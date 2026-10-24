@@ -124,7 +124,19 @@ The check-in's status update is an actual PATCH request. A subsequent GET after 
 
 ![Inspection records](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/06-inspections.png)
 
-Inspections connect findings to the relevant vehicle and customer. Each item can capture a condition, measurement, notes and a recommendation. The backend freezes completed inspection findings and refuses completion if the inspection has no items.
+Inspections connect findings to the relevant vehicle and customer. The screen now includes a **New inspection** action. The browser flow creates an inspection with a real customer and vehicle, then confirms that completion is blocked while the record is empty.
+
+![Inspection finding created, edited and photo attached](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/63-inspection-item-created-and-edited.png)
+
+A finding is created and edited through the UI, including category, severity, measurement, recommendation, notes and photo URL/caption. A fresh API GET confirms the changes and photo metadata persisted.
+
+![Inspection after removing its only finding](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/64-inspection-empty-after-remove.png)
+
+Removing the finding updates the real record and restores the empty-inspection completion guard.
+
+![Completed inspection report](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/71-inspection-completed-report.png)
+
+After adding a valid GOOD finding again, the inspector completes the record. The test reads the completed report back and verifies that its finding remains stored and the completed record can no longer be edited.
 
 ### Estimates
 
@@ -158,7 +170,17 @@ Quality control independently checks finished work. The backend prevents the sam
 
 ![Independent quality control passed](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/55-repair-order-passed-quality-control.png)
 
-The browser flow opens the QC queue under a different staff role from the assigned technician, starts the check, checks the verdict state and passes it through the UI. The real response is `PASSED`; fresh API reads confirm the QC record and that the linked repair order advances to `QC_PASSED`.
+The browser flow opens the QC queue under a different staff role from the assigned technician. It attaches a photo and confirms the URL/caption are saved before applying a failure verdict with a required reason.
+
+![QC photo evidence attached](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/66-qc-photo-attached.png)
+
+![QC failed and repair returned for rework](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/67-qc-failed-and-sent-for-rework.png)
+
+The failed attempt persists its failure reason and returns the repair order to `IN_PROGRESS`. The UI then opens attempt two and records a manual verdict override; after re-verification, the overridden verdict and notes remain intact.
+
+![Manual QC override survives re-verification](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/70-qc-manual-override-survives-reverification.png)
+
+The second attempt is passed through the UI. The API returns `PASSED` and fresh reads confirm that the linked repair order advances to `QC_PASSED`.
 
 ### Invoices
 
@@ -248,25 +270,55 @@ Technicians have a focused view of their assigned work rather than needing the b
 
 ![Part requests](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/19-part-requests.png)
 
-A technician can request a part for a repair task. The backend workflow distinguishes requesting, approving or rejecting and fulfilling the request, and tests the approval boundary between the requesting technician and parts staff.
+A technician can request a part for a repair task. The requester cannot approve or reject their own request—even if their account has owner-level permissions. That rule is enforced by the backend and the row UI, not just by hiding a button.
+
+![Part request awaiting another staff member](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/73-part-request-awaiting-other-staff.png)
+
+Parts staff can approve the request and then mark it fulfilled. A separate authenticated read confirms the requester and decider are different users and the final state is stored.
+
+![Part request approved and fulfilled](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/74-part-request-approved-and-fulfilled.png)
+
+Rejection is also a tested branch: a blank reason is blocked in the UI and rejected by the API if a caller tries to bypass the form.
+
+![Part request rejected with a persisted reason](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/75-part-request-rejected-with-reason.png)
 
 ### Parts catalog
 
 ![Parts catalog](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/20-parts.png)
 
-The parts catalogue holds reusable stock and pricing data and includes low-stock views to make shortages visible before they interrupt a job.
+The parts catalogue holds reusable stock and pricing data and includes low-stock views to make shortages visible before they interrupt a job. A browser mutation test creates a catalogue item, changes the price/reorder fields and verifies on-hand stock stays at zero because catalogue edits must not impersonate inventory movements.
+
+![Updated catalogue item](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/65-part-catalogue-updated.png)
+
+The test retires the unused, zero-stock item before deleting it; a subsequent API read returns 404.
 
 ### Purchase orders
 
 ![Purchase orders](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/21-purchase-orders.png)
 
-Purchase orders connect demand to suppliers. Receiving an order creates inventory receipts as part of one transaction, so a bad line cannot partially apply the good lines.
+Purchase orders connect demand to suppliers. The browser flow creates an order from the UI with a supplier, expected date, tax/shipping values and an item line. Header fields are edited while the order is still a draft; a second draft edit adds and removes a line before sending.
+
+![Purchase-order header details edited](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/68-purchase-order-header-edited.png)
+
+![Draft purchase-order lines edited](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/69-purchase-order-draft-lines-edited.png)
+
+Sending freezes the draft lines. Receiving the sent order creates inventory receipts and the test confirms the stock change through a fresh read.
+
+![Purchase order received into inventory](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/62-purchase-order-received.png)
+
+A separate draft order is cancelled with a required reason; its terminal `CANCELLED` state and reason persist without receiving any stock.
+
+![Purchase order cancelled with reason](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/72-purchase-order-cancelled.png)
 
 ### Service requests
 
 ![Workshop service-request queue](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/22-service-requests.png)
 
-Staff triage new requests, review them, approve or reject them, and convert approved work into appointments.
+Staff triage new requests, review them, approve or reject them, and convert approved work into appointments. The browser test also rejects a customer request through the staff UI, reads the saved `REJECTED` state through the API, and checks the same outcome from the original customer account.
+
+![Service request rejected by workshop staff](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/76-service-request-rejected.png)
+
+![Customer portal displays the rejected request](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/77-customer-portal-shows-rejected-request.png)
 
 ### Staff
 
