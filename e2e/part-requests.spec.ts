@@ -242,6 +242,25 @@ test("parts staff must provide a reason before rejecting a part request", async 
   await expect(row).toBeVisible();
   await row.getByRole("button", { name: "Reject", exact: true }).click();
   const rejectDialog = partsPage.getByRole("dialog", { name: "Reject this request" });
+
+  // Bypass the form deliberately to prove the server rejects a blank reason too.
+  const partsToken = await accessToken(partsPage);
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
+  const apiBypass = await partsPage.request.post(
+    apiBase + "/api/v1/part_requests/" + created.id + "/decision",
+    {
+      headers: { Authorization: "Bearer " + partsToken },
+      data: { decision: "REJECTED", decision_reason: "   " },
+    },
+  );
+  expect(apiBypass.status()).toBe(422);
+  expect((await apiBypass.json()).detail.join(" ")).toMatch(/decision_reason is required/i);
+  const remainsPending = await readApi<{ status: string; decision_reason: string | null }>(
+    partsPage,
+    "/part_requests/" + created.id,
+  );
+  expect(remainsPending).toMatchObject({ status: "PENDING", decision_reason: null });
+
   await rejectDialog.getByRole("button", { name: "Reject request", exact: true }).click();
   await expect(rejectDialog.getByRole("alert")).toHaveText("A reason is required to reject this request.");
 
