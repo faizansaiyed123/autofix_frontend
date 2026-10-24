@@ -96,7 +96,8 @@ test.describe("Inspection and parts catalogue mutations", () => {
         response.status() === 200,
     );
     await page.getByRole("button", { name: "In Progress", exact: true }).click();
-    expect(((await statusResponsePromise).json) ? true : false).toBe(true);
+    const inspectionStatus = (await (await statusResponsePromise).json()) as { status: string };
+    expect(inspectionStatus.status).toBe("IN_PROGRESS");
     await expect(page.getByRole("button", { name: "Completed", exact: true })).toBeDisabled();
     await expect(page.getByText("Record at least one item before completing", { exact: false })).toBeVisible();
 
