@@ -635,6 +635,66 @@ test.describe("Additional customer and workshop write paths", () => {
     await retryRow.click();
     const retryDialog = staffPage.getByRole("dialog", { name: "Inspection · attempt 2" });
     await expect(retryDialog.getByText("No blocking check is failing, so this inspection can be passed.")).toBeVisible();
+
+    // A manual verdict replaces the automatic result and survives a fresh
+    // backend re-verification. Keep it non-blocking so the clean repair can pass.
+    const qcBeforeOverride = await readApi<{
+      checks: Array<{ id: string; check_type: string; passed: boolean; blocking: boolean; auto_verified: boolean; notes: string | null }>;
+    }>(staffPage, "/qc/" + retryCheck.id);
+    const checkToOverride = qcBeforeOverride.checks.find((item) => item.auto_verified) ?? qcBeforeOverride.checks[0];
+    if (!checkToOverride) throw new Error("The second QC attempt has no verification checks to override");
+    const checkCard = retryDialog.locator("li").filter({ hasText: checkToOverride.check_type });
+    await checkCard.getByRole("button", { name: "Override", exact: true }).click();
+    const overrideDialog = staffPage.getByRole("dialog", { name: "Override " + checkToOverride.check_type });
+    await overrideDialog.getByLabel("Verdict").selectOption("fail");
+    await overrideDialog.getByLabel("Blocking").selectOption("no");
+    await overrideDialog.getByLabel("Why").fill("E2E manual override must survive re-verification");
+    const overrideResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname ===
+          "/api/v1/qc/" + retryCheck.id + "/checks/" + encodeURIComponent(checkToOverride.check_type) &&
+        response.status() === 200,
+    );
+    await overrideDialog.getByRole("button", { name: "Record verdict", exact: true }).click();
+    const overridden = (await (await overrideResponsePromise).json()) as {
+      checks: Array<{ check_type: string; passed: boolean; blocking: boolean; auto_verified: boolean; notes: string | null }>;
+    };
+    expect(overridden.checks.find((item) => item.check_type === checkToOverride.check_type)).toMatchObject({
+      passed: false,
+      blocking: false,
+      auto_verified: false,
+      notes: "E2E manual override must survive re-verification",
+    });
+
+    const reverifyPromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/qc/" + retryCheck.id + "/reverify" &&
+        response.status() === 200,
+    );
+    await retryDialog.getByRole("button", { name: "Re-verify", exact: true }).click();
+    const reverified = (await (await reverifyPromise).json()) as {
+      checks: Array<{ check_type: string; passed: boolean; blocking: boolean; auto_verified: boolean; notes: string | null }>;
+    };
+    expect(reverified.checks.find((item) => item.check_type === checkToOverride.check_type)).toMatchObject({
+      passed: false,
+      blocking: false,
+      auto_verified: false,
+      notes: "E2E manual override must survive re-verification",
+    });
+    const persistedOverride = await readApi<{
+      checks: Array<{ check_type: string; passed: boolean; blocking: boolean; auto_verified: boolean; notes: string | null }>;
+    }>(staffPage, "/qc/" + retryCheck.id);
+    expect(persistedOverride.checks.find((item) => item.check_type === checkToOverride.check_type)).toMatchObject({
+      passed: false,
+      blocking: false,
+      auto_verified: false,
+      notes: "E2E manual override must survive re-verification",
+    });
+    await screenshot(staffPage, "70-qc-manual-override-survives-reverification.png");
+    await expect(retryDialog.getByText("No blocking check is failing, so this inspection can be passed.")).toBeVisible();
+
     const passResponsePromise = staffPage.waitForResponse(
       (response) =>
         response.request().method() === "POST" &&
