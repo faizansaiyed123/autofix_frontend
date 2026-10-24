@@ -1143,7 +1143,7 @@ test.describe("Additional customer and workshop write paths", () => {
     await page.getByRole("button", { name: "New order", exact: true }).click();
     const createDialog = page.getByRole("dialog", { name: "New purchase order" });
     await expect(createDialog.getByRole("button", { name: "Create draft order", exact: true })).toBeDisabled();
-    await createDialog.getByLabel("Supplier").selectOption(suppliers[0].id);
+    await createDialog.locator("select").first().selectOption(suppliers[0].id);
     const firstLinePart = createDialog.getByLabel("Part 1");
     await expect(firstLinePart.locator(`option[value="${part.id}"]`)).toHaveCount(1);
     await firstLinePart.selectOption(part.id);
