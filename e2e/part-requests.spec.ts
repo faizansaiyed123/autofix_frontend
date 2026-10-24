@@ -254,7 +254,7 @@ test("parts staff must provide a reason before rejecting a part request", async 
     },
   );
   expect(apiBypass.status()).toBe(422);
-  expect((await apiBypass.json()).detail.join(" ")).toMatch(/decision_reason is required/i);
+  expect(JSON.stringify((await apiBypass.json()).detail)).toMatch(/decision_reason is required/i);
   const remainsPending = await readApi<{ status: string; decision_reason: string | null }>(
     partsPage,
     "/part_requests/" + created.id,
