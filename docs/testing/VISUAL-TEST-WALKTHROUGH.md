@@ -277,7 +277,7 @@ Parts staff can approve the request and then mark it fulfilled. A separate authe
 
 ![Part request approved and fulfilled](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/74-part-request-approved-and-fulfilled.png)
 
-Rejection is also a tested branch: a blank reason is blocked in the UI and rejected by the API if a caller tries to bypass the form.
+A rejection must include a reason. The form prevents staff from submitting a blank reason, and the server enforces the same rule.
 
 ![Part request rejected with a reason](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/75-part-request-rejected-with-reason.png)
 
@@ -471,4 +471,4 @@ Customer and staff screens present the same connected workflow with permissions 
 | Customer payments | [Portal payments](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/37-portal-payments.png), [Settled invoice](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/43-portal-invoice-settled.png), [Workshop void/reversal](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/60-payment-voided-and-balance-restored.png) | Shows the signed-in customer's payment history. |
 | Customer service requests | [Portal requests](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/38-portal-service-requests.png) | Lets customers submit service requests and follow their status. |
 | Customer vehicles | [Portal vehicles](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/39-portal-vehicles.png) | Shows each customer's own vehicles and available service history. |
-| Database migrations and constraints | N/A | Keeps linked workshop records consistent as the application's data model evolves. |
+| Data integrity and linked records | N/A | Keeps linked customer, vehicle, workshop, and financial records consistent across the service journey. |
