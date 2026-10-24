@@ -61,31 +61,40 @@ test.describe("Inspection and parts catalogue mutations", () => {
     const vehicle = vehicles.data.find((record) => record.customer_id === customer.id);
     if (!vehicle) throw new Error("No vehicle belonging to the seeded customer was returned by the vehicles API");
 
-    // Create a real empty inspection through FastAPI as precondition setup; all
-    // finding mutations below are made through the actual inspection UI.
-    const token = await page.evaluate(() => localStorage.getItem("autofix.access_token"));
-    if (!token) throw new Error("No authenticated owner token is available");
-    const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
-    const createInspectionResponse = await page.request.post(apiBase + "/api/v1/inspections/", {
-      headers: { Authorization: "Bearer " + token },
-      data: {
-        customer_id: customer.id,
-        vehicle_id: vehicle.id,
-        mileage: 18300,
-        overall_notes: "Created by E2E setup for inspection item lifecycle verification.",
-        items: [],
-      },
-    });
-    expect(createInspectionResponse.status()).toBe(201);
-    const createdInspection = (await createInspectionResponse.json()) as {
+    // Create from the browser now that the inspection list exposes the
+    // previously-missing entry point. Verify both its HTTP response and that
+    // the UI follows the returned database ID into the details editor.
+    await page.getByRole("button", { name: "New inspection", exact: true }).click();
+    const createDialog = page.getByRole("dialog", { name: "New inspection" });
+    await expect(createDialog.getByRole("button", { name: "Create inspection", exact: true })).toBeDisabled();
+    await createDialog.getByLabel("Customer").selectOption(customer.id);
+    await createDialog.getByLabel("Vehicle").selectOption(vehicle.id);
+    await createDialog.getByLabel("Mileage").fill("18300");
+    await createDialog.getByLabel("Overall notes").fill("Created from the UI for inspection item lifecycle verification.");
+
+    const createInspectionPromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/inspections/" &&
+        response.status() === 201,
+    );
+    await createDialog.getByRole("button", { name: "Create inspection", exact: true }).click();
+    const createdInspection = (await (await createInspectionPromise).json()) as {
       id: string;
       status: string;
+      customer_id: string;
+      vehicle_id: string;
+      mileage: number;
       items: Array<{ id: string }>;
     };
-    expect(createdInspection.status).toBe("DRAFT");
-    expect(createdInspection.items).toHaveLength(0);
-
-    await page.goto("/inspections/" + createdInspection.id, { waitUntil: "networkidle" });
+    expect(createdInspection).toMatchObject({
+      status: "DRAFT",
+      customer_id: customer.id,
+      vehicle_id: vehicle.id,
+      mileage: 18300,
+      items: [],
+    });
+    await expect(page).toHaveURL(new RegExp("/inspections/" + createdInspection.id + "$"));
     await expect(page.getByRole("button", { name: "Add item", exact: true })).toBeVisible();
 
     const statusResponsePromise = page.waitForResponse(
