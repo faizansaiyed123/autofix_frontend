@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
 
-const OWNER = { email: "owner@autofix.demo", password: "demo1234" };
+const PARTS = { email: "parts@autofix.demo", password: "demo1234" };
 const SCREENSHOT_DIR = path.join(process.cwd(), "e2e", "evidence");
 
 function evidence(name: string) {
@@ -40,7 +40,7 @@ async function readApi<T>(page: Page, apiPath: string): Promise<T> {
 
 test("a draft purchase order is cancelled through the UI and remains closed in the API", async ({ page }) => {
   test.setTimeout(90_000);
-  await login(page, OWNER, "/purchase-orders");
+  await login(page, PARTS, "/purchase-orders");
 
   const suppliers = await readApi<Array<{ id: string; name: string }>>(page, "/suppliers/active");
   expect(suppliers.length).toBeGreaterThan(0);
