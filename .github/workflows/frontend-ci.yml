@@ -55,8 +55,6 @@ jobs:
           SECRET_KEY: ci-only-autofix-secret
           APP_ENV: test
           BCRYPT_ROUNDS: "4"
-          AUTH_LOGIN_IP_RATE_LIMIT: "1000"
-          AUTH_LOGIN_EMAIL_RATE_LIMIT: "1000"
 
       - name: Seed demo data
         working-directory: autofix_backend
@@ -100,6 +98,8 @@ jobs:
           SECRET_KEY: ci-only-autofix-secret
           APP_ENV: test
           BCRYPT_ROUNDS: "4"
+          AUTH_LOGIN_IP_RATE_LIMIT: "1000"
+          AUTH_LOGIN_EMAIL_RATE_LIMIT: "1000"
           ALLOWED_ORIGINS: '["http://127.0.0.1:3000","http://localhost:3000"]'
           SMTP_HOST: 127.0.0.1
           SMTP_PORT: "1025"
