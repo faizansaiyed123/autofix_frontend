@@ -55,6 +55,8 @@ jobs:
           SECRET_KEY: ci-only-autofix-secret
           APP_ENV: test
           BCRYPT_ROUNDS: "4"
+          AUTH_LOGIN_IP_RATE_LIMIT: "1000"
+          AUTH_LOGIN_EMAIL_RATE_LIMIT: "1000"
 
       - name: Seed demo data
         working-directory: autofix_backend
