@@ -1075,34 +1075,38 @@ test.describe("Additional customer and workshop write paths", () => {
     const before = beforeLevels.find((level) => level.part_id === part.id);
     if (!before) throw new Error("The selected part has no stock-level record");
 
-    // The current screen has no New order control, so create only the draft as test
-    // setup; sending and receiving are exercised through the real purchase-order UI.
-    const token = await page.evaluate(() => localStorage.getItem("autofix.access_token"));
-    if (!token) throw new Error("No authenticated owner token available for purchase-order setup");
-    const baseRaw = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
-    const apiBase = baseRaw.endsWith("/") ? baseRaw.slice(0, -1) : baseRaw;
-    const orderCreateResponse = await page.request.post(apiBase + "/api/v1/purchase_orders/", {
-      headers: { Authorization: "Bearer " + token },
-      data: {
-        supplier_id: suppliers[0].id,
-        expected_delivery_date: "2035-06-12",
-        currency: "USD",
-        notes: "E2E PO receipt workflow",
-        items: [
-          {
-            part_id: part.id,
-            quantity_ordered: 2,
-            unit_cost: part.unit_cost,
-            notes: "E2E single-line delivery",
-          },
-        ],
-      },
-    });
-    expect(orderCreateResponse.status()).toBe(201);
-    const order = (await orderCreateResponse.json()) as {
+    // Create the purchase order from the frontend form rather than setting up
+    // the draft via a direct request. The send, edit, and receipt below all use UI actions.
+    await page.getByRole("button", { name: "New order", exact: true }).click();
+    const createDialog = page.getByRole("dialog", { name: "New purchase order" });
+    await expect(createDialog.getByRole("button", { name: "Create draft order", exact: true })).toBeDisabled();
+    await createDialog.getByLabel("Supplier").selectOption(suppliers[0].id);
+    const firstLinePart = createDialog.getByLabel("Part 1");
+    await expect(firstLinePart.locator(`option[value="${part.id}"]`)).toHaveCount(1);
+    await firstLinePart.selectOption(part.id);
+    await createDialog.getByLabel("Expected delivery date").fill("2035-06-12");
+    await createDialog.getByLabel("Tax amount").fill("1.50");
+    await createDialog.getByLabel("Shipping amount").fill("2.00");
+    await createDialog.getByLabel("Supplier-facing notes").fill("E2E PO receipt workflow");
+    await createDialog.getByLabel("Internal notes").fill("Created through the PO UI");
+    await createDialog.getByLabel("Quantity").fill("2");
+    await createDialog.getByLabel("Unit cost").fill(part.unit_cost.toFixed(2));
+    await createDialog.getByLabel("Line notes").fill("E2E single-line delivery");
+
+    const orderCreateResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/purchase_orders/" &&
+        response.status() === 201,
+    );
+    await createDialog.getByRole("button", { name: "Create draft order", exact: true }).click();
+    const order = (await (await orderCreateResponsePromise).json()) as {
       id: string;
       po_number: string;
       status: string;
+      expected_delivery_date: string | null;
+      tax_amount: number;
+      shipping_amount: number;
       items: Array<{
         id: string;
         part_id: string;
@@ -1112,13 +1116,76 @@ test.describe("Additional customer and workshop write paths", () => {
       }>;
     };
     expect(order.status).toBe("DRAFT");
+    expect(order.expected_delivery_date?.slice(0, 10)).toBe("2035-06-12");
+    expect(order.tax_amount).toBe(1.5);
+    expect(order.shipping_amount).toBe(2);
     expect(order.items).toHaveLength(1);
-
-    await page.reload({ waitUntil: "networkidle" });
-    await page.getByRole("button", { name: order.po_number, exact: true }).click();
+    expect(order.items[0]).toMatchObject({ part_id: part.id, quantity_ordered: 2 });
+    const createdOrderReadback = await readApi<{ id: string; status: string; items: Array<{ part_id: string; quantity_ordered: number }> }>(
+      page,
+      "/purchase_orders/" + order.id,
+    );
+    expect(createdOrderReadback).toMatchObject({
+      id: order.id,
+      status: "DRAFT",
+      items: [{ part_id: part.id, quantity_ordered: 2 }],
+    });
     const orderDialog = page.getByRole("dialog", { name: order.po_number });
     await expect(orderDialog.getByText("DRAFT", { exact: true })).toBeVisible();
     await expect(orderDialog.getByRole("button", { name: "Receive", exact: true })).toBeDisabled();
+
+    await orderDialog.getByRole("button", { name: "Edit details", exact: true }).click();
+    const headerDialog = page.getByRole("dialog", { name: "Edit order details" });
+    await headerDialog.getByLabel("Expected delivery date").fill("2035-06-19");
+    await headerDialog.getByLabel("Tax amount").fill("3.50");
+    await headerDialog.getByLabel("Shipping amount").fill("4.25");
+    await headerDialog.getByLabel("Supplier-facing notes").fill("Updated by buyer through the UI");
+    await headerDialog.getByLabel("Internal notes").fill("Header edit regression check");
+
+    const updateHeaderPromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/purchase_orders/" + order.id &&
+        response.status() === 200,
+    );
+    await headerDialog.getByRole("button", { name: "Save details", exact: true }).click();
+    const updatedHeader = (await (await updateHeaderPromise).json()) as {
+      id: string;
+      status: string;
+      expected_delivery_date: string | null;
+      tax_amount: number;
+      shipping_amount: number;
+      notes: string | null;
+      internal_notes: string | null;
+    };
+    expect(updatedHeader).toMatchObject({
+      id: order.id,
+      status: "DRAFT",
+      expected_delivery_date: expect.stringContaining("2035-06-19"),
+      tax_amount: 3.5,
+      shipping_amount: 4.25,
+      notes: "Updated by buyer through the UI",
+      internal_notes: "Header edit regression check",
+    });
+    const persistedHeader = await readApi<{
+      id: string;
+      status: string;
+      expected_delivery_date: string | null;
+      tax_amount: number;
+      shipping_amount: number;
+      notes: string | null;
+      internal_notes: string | null;
+    }>(page, "/purchase_orders/" + order.id);
+    expect(persistedHeader).toMatchObject({
+      id: order.id,
+      status: "DRAFT",
+      expected_delivery_date: expect.stringContaining("2035-06-19"),
+      tax_amount: 3.5,
+      shipping_amount: 4.25,
+      notes: "Updated by buyer through the UI",
+      internal_notes: "Header edit regression check",
+    });
+    await screenshot(page, "68-purchase-order-header-edited.png");
 
     // Draft purchase-order lines can be added and removed; once the order is sent,
     // those lines become frozen. Exercise the editing controls before sending.
@@ -1169,7 +1236,7 @@ test.describe("Additional customer and workshop write paths", () => {
     expect(draftAfterEdit.items).toHaveLength(1);
     expect(draftAfterEdit.items[0].part_id).toBe(part.id);
     expect(draftAfterEdit.items.some((item) => item.part_id === secondPart.id)).toBe(false);
-    await screenshot(page, "68-purchase-order-draft-edited.png");
+    await screenshot(page, "69-purchase-order-draft-lines-edited.png");
 
     const sendPromise = page.waitForResponse(
       (response) =>
