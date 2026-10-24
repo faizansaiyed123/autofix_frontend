@@ -624,7 +624,10 @@ test.describe("Additional customer and workshop write paths", () => {
       attempt_number: 2,
     });
     await staffPage.getByRole("button", { name: "Checks", exact: true }).click();
-    const retryRow = staffPage.getByRole("row").filter({ hasText: createdOrder.ro_number });
+    const retryRow = staffPage
+      .getByRole("row")
+      .filter({ hasText: createdOrder.ro_number })
+      .filter({ hasText: "#2" });
     await expect(retryRow).toBeVisible();
     await retryRow.click();
     const retryDialog = staffPage.getByRole("dialog", { name: "Inspection · attempt 2" });
