@@ -462,6 +462,7 @@ function RejectRequestModal({
   onRejected: () => void;
 }) {
   const [reason, setReason] = useState("");
+  const [reasonMissing, setReasonMissing] = useState(false);
   const reject = useApiMutation((id: string, why: string) =>
     partRequestsApi.decide(id, "REJECTED", why),
   );
@@ -469,9 +470,14 @@ function RejectRequestModal({
 
   async function submit() {
     if (!request) return;
+    if (!reason.trim()) {
+      setReasonMissing(true);
+      return;
+    }
     const rejected = await reject.run(request.id, reason.trim());
     if (rejected) {
       setReason("");
+      setReasonMissing(false);
       onRejected();
     }
   }
@@ -510,8 +516,18 @@ function RejectRequestModal({
           </div>
         ) : null}
         <Field label="Reason" required>
-          <Textarea rows={3} value={reason} onChange={(event) => setReason(event.target.value)} />
+          <Textarea
+            rows={3}
+            value={reason}
+            onChange={(event) => {
+              setReason(event.target.value);
+              if (event.target.value.trim()) setReasonMissing(false);
+            }}
+          />
         </Field>
+        {reasonMissing ? (
+          <p role="alert" className="text-sm text-rose-700">A reason is required to reject this request.</p>
+        ) : null}
       </form>
     </Modal>
   );
