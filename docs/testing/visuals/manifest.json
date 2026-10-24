@@ -62,6 +62,8 @@
     "57-workshop-invoice-settled.png",
     "58-customer-portal-settled-invoice.png",
     "59-invoice-issue-blocked-until-qc.png",
-    "60-payment-voided-and-balance-restored.png"
+    "60-payment-voided-and-balance-restored.png",
+    "61-purchase-order-sent.png",
+    "62-purchase-order-received.png"
   ]
 }
