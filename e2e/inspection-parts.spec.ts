@@ -224,7 +224,9 @@ test.describe("Inspection and parts catalogue mutations", () => {
     const originalName = "E2E catalogue item " + Date.now();
     await createDialog.getByLabel("Part number").fill(partNumber);
     await createDialog.getByLabel("Name").fill(originalName);
-    await createDialog.getByLabel("Category").selectOption("OTHER");
+    // Use a category returned by the live reference API; shops may not have
+    // every built-in category in use yet, so "OTHER" is not guaranteed present.
+    await createDialog.getByLabel("Category").selectOption({ index: 0 });
     await createDialog.getByLabel("Unit cost").fill("4.25");
     await createDialog.getByLabel("Unit price").fill("9.95");
     await createDialog.getByLabel("Reorder at").fill("2");
