@@ -508,17 +508,141 @@ test.describe("Additional customer and workshop write paths", () => {
     await checkRow.click();
     const qcDialog = staffPage.getByRole("dialog", { name: "Inspection · attempt 1" });
     await expect(qcDialog.getByText("No blocking check is failing, so this inspection can be passed.")).toBeVisible();
+
+    // Add a real evidence photo through the QC UI. This also reruns the backend
+    // photo-verification check and persists the caption against this attempt.
+    const photoUrl = "https://example.test/qc-evidence-" + Date.now() + ".jpg";
+    await qcDialog.getByRole("button", { name: "Add a photo by URL", exact: true }).click();
+    await qcDialog.getByLabel("Photo URL").fill(photoUrl);
+    await qcDialog.getByLabel("Caption").fill("E2E repair-finish evidence");
+    const photoResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/qc/" + qualityCheck.id + "/photos" &&
+        response.status() === 200,
+    );
+    await qcDialog.getByRole("button", { name: "Attach", exact: true }).click();
+    const photoResponse = (await (await photoResponsePromise).json()) as {
+      id: string;
+      status: string;
+      photos: Array<{ photo_url: string; caption: string }>;
+    };
+    expect(photoResponse.id).toBe(qualityCheck.id);
+    expect(photoResponse.status).toBe("IN_PROGRESS");
+    expect(photoResponse.photos).toContainEqual(expect.objectContaining({
+      photo_url: photoUrl,
+      caption: "E2E repair-finish evidence",
+    }));
+    const photoSavedQc = await readApi<{
+      photos: Array<{ photo_url: string; caption: string }>;
+    }>(staffPage, "/qc/" + qualityCheck.id);
+    expect(photoSavedQc.photos).toContainEqual(expect.objectContaining({
+      photo_url: photoUrl,
+      caption: "E2E repair-finish evidence",
+    }));
+    await screenshot(staffPage, "66-qc-photo-attached.png");
+
+    // A failure reason is mandatory; leave it blank first to verify the UI guard,
+    // then fail from the real UI and assert the order is returned for rework.
+    await qcDialog.getByRole("button", { name: "Fail and send back…", exact: true }).click();
+    const failDialog = staffPage.getByRole("dialog", { name: "Fail this inspection" });
+    const failButton = failDialog.getByRole("button", { name: "Fail and send back", exact: true });
+    await expect(failButton).toBeDisabled();
+    const failureReason = "E2E rework: brake noise remains after repair";
+    await failDialog.getByLabel("What is wrong").fill(failureReason);
+    await expect(failButton).toBeEnabled();
+    const failResponsePromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/qc/" + qualityCheck.id + "/fail" &&
+        response.status() === 200,
+    );
+    await failButton.click();
+    const failedQc = (await (await failResponsePromise).json()) as {
+      id: string;
+      status: string;
+      failure_reason: string;
+      attempt_number: number;
+    };
+    expect(failedQc).toMatchObject({
+      id: qualityCheck.id,
+      status: "FAILED",
+      failure_reason: failureReason,
+      attempt_number: 1,
+    });
+    const savedFailedQc = await readApi<{
+      status: string;
+      failure_reason: string;
+      photos: Array<{ photo_url: string; caption: string }>;
+    }>(staffPage, "/qc/" + qualityCheck.id);
+    expect(savedFailedQc).toMatchObject({
+      status: "FAILED",
+      failure_reason: failureReason,
+    });
+    expect(savedFailedQc.photos).toContainEqual(expect.objectContaining({
+      photo_url: photoUrl,
+      caption: "E2E repair-finish evidence",
+    }));
+    const reworkOrder = await readApi<{ status: string }>(staffPage, "/repair_orders/" + createdOrder.id);
+    expect(reworkOrder.status).toBe("IN_PROGRESS");
+    await expect(staffPage.getByRole("row").filter({ hasText: createdOrder.ro_number })).toContainText(/FAILED/i);
+    await screenshot(staffPage, "67-qc-failed-and-sent-for-rework.png");
+
+    // Complete the task work again in the workshop screen, then open attempt two.
+    await staffPage.goto("/repair-orders/" + createdOrder.id, { waitUntil: "networkidle" });
+    await staffPage.getByLabel("New status").selectOption("COMPLETED");
+    const recommitOrderPromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/repair_orders/" + createdOrder.id + "/status" &&
+        new URL(response.url()).searchParams.get("status") === "COMPLETED" &&
+        response.status() === 200,
+    );
+    await staffPage.getByRole("button", { name: "Apply", exact: true }).click();
+    const recommittedOrder = (await (await recommitOrderPromise).json()) as { status: string };
+    expect(recommittedOrder.status).toBe("COMPLETED");
+
+    await staffPage.goto("/qc", { waitUntil: "networkidle" });
+    const returnedQueueRow = staffPage.getByRole("row").filter({ hasText: createdOrder.ro_number });
+    await expect(returnedQueueRow).toBeVisible();
+    const retryCheckPromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/qc/" &&
+        response.status() === 201,
+    );
+    await returnedQueueRow.getByRole("button", { name: "Start check", exact: true }).click();
+    const retryCheck = (await (await retryCheckPromise).json()) as {
+      id: string;
+      repair_order_id: string;
+      status: string;
+      attempt_number: number;
+    };
+    expect(retryCheck).toMatchObject({
+      repair_order_id: createdOrder.id,
+      status: "IN_PROGRESS",
+      attempt_number: 2,
+    });
+    await staffPage.getByRole("button", { name: "Checks", exact: true }).click();
+    const retryRow = staffPage.getByRole("row").filter({ hasText: createdOrder.ro_number });
+    await expect(retryRow).toBeVisible();
+    await retryRow.click();
+    const retryDialog = staffPage.getByRole("dialog", { name: "Inspection · attempt 2" });
+    await expect(retryDialog.getByText("No blocking check is failing, so this inspection can be passed.")).toBeVisible();
     const passResponsePromise = staffPage.waitForResponse(
       (response) =>
         response.request().method() === "POST" &&
-        new URL(response.url()).pathname === "/api/v1/qc/" + qualityCheck.id + "/pass" &&
+        new URL(response.url()).pathname === "/api/v1/qc/" + retryCheck.id + "/pass" &&
         response.status() === 200,
     );
-    await qcDialog.getByRole("button", { name: "Pass", exact: true }).click();
-    const passedQc = (await (await passResponsePromise).json()) as { id: string; status: string };
-    expect(passedQc).toMatchObject({ id: qualityCheck.id, status: "PASSED" });
-    const savedQc = await readApi<{ status: string; repair_order_id: string }>(staffPage, "/qc/" + qualityCheck.id);
-    expect(savedQc).toMatchObject({ status: "PASSED", repair_order_id: createdOrder.id });
+    await retryDialog.getByRole("button", { name: "Pass", exact: true }).click();
+    const passedQc = (await (await passResponsePromise).json()) as { id: string; status: string; attempt_number: number };
+    expect(passedQc).toMatchObject({ id: retryCheck.id, status: "PASSED", attempt_number: 2 });
+    const savedQc = await readApi<{ status: string; repair_order_id: string; attempt_number: number }>(
+      staffPage,
+      "/qc/" + retryCheck.id,
+    );
+    expect(savedQc).toMatchObject({ status: "PASSED", repair_order_id: createdOrder.id, attempt_number: 2 });
     const qcPassedOrder = await readApi<{ status: string }>(staffPage, "/repair_orders/" + createdOrder.id);
     expect(qcPassedOrder.status).toBe("QC_PASSED");
     await screenshot(staffPage, "55-repair-order-passed-quality-control.png");
