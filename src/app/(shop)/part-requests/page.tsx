@@ -26,7 +26,7 @@ import { formatDateTime, formatNumber } from "@/lib/format";
  * Technicians can request parts but cannot approve their own requests.
  */
 export default function PartRequestsPage() {
-  const { can } = useSession();
+  const { can, user } = useSession();
   const { userName, staff } = useReferences();
   const [status, setStatus] = useState("");
   const [requestedBy, setRequestedBy] = useState("");
@@ -131,7 +131,9 @@ export default function PartRequestsPage() {
       numeric: true,
       render: (request) => (
         <div className="flex items-center justify-end gap-2">
-          {!mayDecide ? (
+          {request.status === "PENDING" && request.requested_by_id && request.requested_by_id === user?.id ? (
+            <span className="text-xs text-ink-400">You raised this request; another staff member must decide it.</span>
+          ) : !mayDecide ? (
             <span className="text-xs text-ink-400">
               {request.status === "PENDING" ? "Awaiting parts" : "—"}
             </span>
