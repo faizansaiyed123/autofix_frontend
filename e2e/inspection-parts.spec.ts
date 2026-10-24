@@ -220,6 +220,59 @@ test.describe("Inspection and parts catalogue mutations", () => {
     expect(afterDelete.items.some((item) => item.id === addedItem.id)).toBe(false);
     await expect(page.getByRole("button", { name: "Completed", exact: true })).toBeDisabled();
     await screenshot(page, "64-inspection-empty-after-remove.png");
+
+    // Completion is allowed once there is a recorded finding. This time leave
+    // one valid item on the inspection and verify the completed report is frozen.
+    await page.getByRole("button", { name: "Add item", exact: true }).click();
+    const finalItemDialog = page.getByRole("dialog", { name: "Add inspection item" });
+    const finalItemName = "E2E completed finding " + Date.now();
+    await finalItemDialog.getByLabel("Category").selectOption("BRAKES");
+    await finalItemDialog.getByLabel("Status").selectOption("OK");
+    await finalItemDialog.getByLabel("What was checked").fill(finalItemName);
+    await finalItemDialog.getByLabel("Measurement").fill("4.1 mm");
+    await finalItemDialog.getByLabel("Notes").fill("Completion-path verification.");
+    const finalItemResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/inspections/" +
+          createdInspection.id + "/items" &&
+        response.status() === 201,
+    );
+    await finalItemDialog.getByRole("button", { name: "Add item", exact: true }).click();
+    const inspectionWithFinalItem = (await (await finalItemResponsePromise).json()) as {
+      id: string;
+      items: Array<{ id: string; item_name: string; status: string }>;
+    };
+    const finalItem = inspectionWithFinalItem.items.find((item) => item.item_name === finalItemName);
+    expect(finalItem).toBeTruthy();
+    if (!finalItem) throw new Error("The final inspection finding was not returned by the API");
+
+    const completePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/inspections/" +
+          createdInspection.id + "/status" &&
+        new URL(response.url()).searchParams.get("status") === "COMPLETED" &&
+        response.status() === 200,
+    );
+    await page.getByRole("button", { name: "Completed", exact: true }).click();
+    const completedResponse = (await (await completePromise).json()) as { id: string; status: string };
+    expect(completedResponse).toMatchObject({ id: createdInspection.id, status: "COMPLETED" });
+
+    const completedReadback = await readApi<{
+      id: string;
+      status: string;
+      items: Array<{ id: string; item_name: string; status: string; measurement: string }>;
+    }>(page, "/inspections/" + createdInspection.id);
+    expect(completedReadback.status).toBe("COMPLETED");
+    expect(completedReadback.items).toContainEqual(expect.objectContaining({
+      id: finalItem.id,
+      item_name: finalItemName,
+      status: "OK",
+      measurement: "4.1 mm",
+    }));
+    await expect(page.getByRole("button", { name: "Completed", exact: true })).toBeDisabled();
+    await screenshot(page, "71-inspection-completed-report.png");
   });
 
   test("part catalogue creation, pricing update, stock immutability and eligible deletion use real API calls", async ({ page }) => {
