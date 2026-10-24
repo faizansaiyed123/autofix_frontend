@@ -468,8 +468,8 @@ The table separates browser-driven full-stack scenarios from backend HTTP lifecy
 |---|---|---|---|
 | Public homepage and responsive signup entry | [Homepage](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/00-homepage.png), [Signup](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/00-signup.png) | Auth and registration suites | Layout and reachability |
 | Login, token lifecycle and permissions | Login page; dashboard entry | Auth, rate-limit, RBAC and access-boundary suites | Real login for staff/customer; auth error and signup/recovery scenarios |
-| Customer registration and email verification | Signup, verification screens | Registration and email-outbox suites | Real flow through local SMTP inbox (current CI result determines final status) |
-| Password recovery | Reset screenshots above | Auth and email-outbox suites | Request, email, confirmation, replay rejection and new-password login (current CI result determines final status) |
+| Customer registration and email verification | Signup, verification screens | Registration and email-outbox suites | Real local SMTP inbox flow passed in browser run #124, including verification and portal redirect |
+| Password recovery | Reset screenshots above | Auth and email-outbox suites | Browser run #124 passed request, email, confirmation, token-replay rejection and sign-in with the changed password |
 | Dashboard | [Dashboard](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/01-dashboard.png) | Reports and lifecycle suites | Live read |
 | Attention centre and notifications | [Attention](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/02-attention-centre.png) | Notifications and audit suites | Live read |
 | Customers | [Customers](https://raw.githubusercontent.com/faizansaiyed123/autofix_frontend/main/docs/testing/visuals/03-customers.png) | Customers and lifecycle suites | Create, search, detail and reload |
