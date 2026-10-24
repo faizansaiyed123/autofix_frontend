@@ -1080,7 +1080,7 @@ test.describe("Additional customer and workshop write paths", () => {
     await expect(receivedRow).toContainText(/RECEIVED/i);
     await page.getByRole("button", { name: order.po_number, exact: true }).click();
     const receivedDialog = page.getByRole("dialog", { name: order.po_number });
-    await expect(receivedDialog.getByText(/RECEIVED/i)).toBeVisible();
+    await expect(receivedDialog.getByText("RECEIVED", { exact: true })).toBeVisible();
     await screenshot(page, "62-purchase-order-received.png");
   });
 
