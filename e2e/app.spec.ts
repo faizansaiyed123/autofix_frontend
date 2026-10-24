@@ -367,6 +367,77 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await staffContext.close();
   });
 
+
+  test("staff rejects a customer service request through the UI and both accounts read the persisted result", async ({ browser }) => {
+    test.setTimeout(90_000);
+    const customerContext = await browser.newContext({ baseURL: BASE_URL });
+    const customerPage = await customerContext.newPage();
+    await login(customerPage, CUSTOMER, "/portal/service-requests");
+    await expectPage(customerPage, "Requests");
+    await customerPage.getByRole("button", { name: "Ask for work", exact: true }).click();
+
+    const title = "E2E rejection branch " + Date.now();
+    const createDialog = customerPage.getByRole("dialog");
+    await createDialog.getByLabel("What is it for").fill(title);
+    await createDialog.getByLabel("Anything more we should know").fill(
+      "This request is intentionally rejected to validate the workshop outcome.",
+    );
+    const createPromise = customerPage.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/v1/portal/service-requests" &&
+        response.status() === 201,
+    );
+    await createDialog.getByRole("button", { name: "Send", exact: true }).click();
+    const created = (await (await createPromise).json()) as { id: string; status: string };
+    expect(created.status).toBe("NEW");
+    await customerContext.close();
+
+    const staffContext = await browser.newContext({ baseURL: BASE_URL });
+    const staffPage = await staffContext.newPage();
+    await login(staffPage, STAFF, "/service-requests");
+    await expectPage(staffPage, "Service requests");
+    const row = staffPage.getByRole("row").filter({ hasText: title });
+    await expect(row).toBeVisible();
+    await row.getByText(title, { exact: true }).click();
+    const detail = staffPage.getByRole("dialog", { name: title });
+    await expect(detail.getByText("NEW", { exact: true })).toBeVisible();
+
+    const reviewPromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/service_requests/" + created.id + "/status" &&
+        new URL(response.url()).searchParams.get("status") === "IN_REVIEW" &&
+        response.status() === 200,
+    );
+    await detail.getByRole("button", { name: "In Review", exact: true }).click();
+    expect(((await (await reviewPromise).json()) as { status: string }).status).toBe("IN_REVIEW");
+
+    const rejectPromise = staffPage.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === "/api/v1/service_requests/" + created.id + "/status" &&
+        new URL(response.url()).searchParams.get("status") === "REJECTED" &&
+        response.status() === 200,
+    );
+    await detail.getByRole("button", { name: "Rejected", exact: true }).click();
+    const rejected = (await (await rejectPromise).json()) as { id: string; status: string };
+    expect(rejected).toMatchObject({ id: created.id, status: "REJECTED" });
+    const savedByStaff = await readApi<{ id: string; status: string }>(staffPage, "/service_requests/" + created.id);
+    expect(savedByStaff).toMatchObject({ id: created.id, status: "REJECTED" });
+    await screenshot(staffPage, "76-service-request-rejected.png");
+    await staffContext.close();
+
+    const customerCheckContext = await browser.newContext({ baseURL: BASE_URL });
+    const customerCheckPage = await customerCheckContext.newPage();
+    await login(customerCheckPage, CUSTOMER, "/portal/service-requests");
+    const portalRead = await readApi<Array<{ id: string; status: string }>>(customerCheckPage, "/portal/service-requests");
+    expect(portalRead.find((item) => item.id === created.id)?.status).toBe("REJECTED");
+    await expect(customerCheckPage.getByText(title, { exact: true })).toBeVisible();
+    await screenshot(customerCheckPage, "77-customer-portal-shows-rejected-request.png");
+    await customerCheckContext.close();
+  });
+
   test("a staff-created customer survives navigation and reload", async ({ page }) => {
     await login(page, STAFF, "/customers");
     await expectPage(page, "Customers");
