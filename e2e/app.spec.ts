@@ -423,7 +423,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     await detail.getByRole("button", { name: "Rejected", exact: true }).click();
     const rejected = (await (await rejectPromise).json()) as { id: string; status: string };
     expect(rejected).toMatchObject({ id: created.id, status: "REJECTED" });
-    const savedByStaff = await readApi<{ id: string; status: string }>(staffPage, "/service_requests/" + created.id);
+    const savedByStaff = await readAuthenticatedApi<{ id: string; status: string }>(staffPage, "/service_requests/" + created.id);
     expect(savedByStaff).toMatchObject({ id: created.id, status: "REJECTED" });
     await screenshot(staffPage, "76-service-request-rejected.png");
     await staffContext.close();
@@ -431,7 +431,7 @@ test.describe("AutoFix user-facing full-stack walkthrough", () => {
     const customerCheckContext = await browser.newContext({ baseURL: BASE_URL });
     const customerCheckPage = await customerCheckContext.newPage();
     await login(customerCheckPage, CUSTOMER, "/portal/service-requests");
-    const portalRead = await readApi<Array<{ id: string; status: string }>>(customerCheckPage, "/portal/service-requests");
+    const portalRead = await readAuthenticatedApi<Array<{ id: string; status: string }>>(customerCheckPage, "/portal/service-requests");
     expect(portalRead.find((item) => item.id === created.id)?.status).toBe("REJECTED");
     await expect(customerCheckPage.getByText(title, { exact: true })).toBeVisible();
     await screenshot(customerCheckPage, "77-customer-portal-shows-rejected-request.png");
