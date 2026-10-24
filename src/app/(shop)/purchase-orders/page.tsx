@@ -26,6 +26,7 @@ export default function PurchaseOrdersPage() {
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const summary = useApiQuery(() => purchaseOrdersApi.summary(), []);
   const suppliers = useApiQuery(
@@ -115,6 +116,13 @@ export default function PurchaseOrdersPage() {
       <PageHeader
         title="Purchase orders"
         subtitle={query.data ? `${query.data.meta.total} in the order book` : "What the shop has on order"}
+        actions={
+          can("purchase_orders:write") ? (
+            <Button variant="primary" onClick={() => setCreating(true)}>
+              New order
+            </Button>
+          ) : null
+        }
       />
 
       {summary.error ? (
@@ -244,6 +252,19 @@ export default function PurchaseOrdersPage() {
         those two mean goods physically arrived.
       </Notice>
 
+      {creating ? (
+        <NewPurchaseOrderModal
+          suppliers={suppliers.data ?? []}
+          onClose={() => setCreating(false)}
+          onCreated={(order) => {
+            setCreating(false);
+            query.refetch();
+            summary.refetch();
+            setSelected(order.id);
+          }}
+        />
+      ) : null}
+
       {selected ? (
         <OrderModal
           orderId={selected}
@@ -334,6 +355,286 @@ const LINE_COLUMNS: Column<PurchaseOrderItem>[] = [
   },
 ];
 
+interface DraftOrderLine {
+  key: number;
+  part_id: string;
+  quantity_ordered: string;
+  unit_cost: string;
+  notes: string;
+}
+
+function NewPurchaseOrderModal({
+  suppliers,
+  onClose,
+  onCreated,
+}: {
+  suppliers: Array<{ id: string; name: string }>;
+  onClose: () => void;
+  onCreated: (order: PurchaseOrder) => void;
+}) {
+  const catalog = useApiQuery<PartOption[]>(
+    () => inventoryApi.stockLevels() as Promise<PartOption[]>,
+    [],
+  );
+  const create = useApiMutation((body: Record<string, unknown>) => purchaseOrdersApi.create(body));
+  const [supplierId, setSupplierId] = useState("");
+  const [expectedDate, setExpectedDate] = useState("");
+  const [currency, setCurrency] = useState("USD");
+  const [tax, setTax] = useState("0");
+  const [shipping, setShipping] = useState("0");
+  const [notes, setNotes] = useState("");
+  const [internalNotes, setInternalNotes] = useState("");
+  const [lines, setLines] = useState<DraftOrderLine[]>([
+    { key: 1, part_id: "", quantity_ordered: "1", unit_cost: "", notes: "" },
+  ]);
+  const [nextKey, setNextKey] = useState(2);
+
+  const hasInvalidLine = lines.some((line) => {
+    const quantity = Number(line.quantity_ordered);
+    const cost = line.unit_cost === "" ? 0 : Number(line.unit_cost);
+    return !line.part_id || !(quantity > 0) || !Number.isFinite(quantity) || !(cost >= 0) || !Number.isFinite(cost);
+  });
+  const duplicateParts = new Set(lines.map((line) => line.part_id).filter(Boolean)).size !== lines.filter((line) => line.part_id).length;
+  const blocked = !supplierId || lines.length === 0 || hasInvalidLine || duplicateParts || create.pending;
+
+  function updateLine(key: number, update: Partial<DraftOrderLine>) {
+    setLines((current) => current.map((line) => line.key === key ? { ...line, ...update } : line));
+  }
+
+  function addLine() {
+    setLines((current) => [...current, {
+      key: nextKey,
+      part_id: "",
+      quantity_ordered: "1",
+      unit_cost: "",
+      notes: "",
+    }]);
+    setNextKey((value) => value + 1);
+  }
+
+  async function submit() {
+    if (blocked) return;
+    const items = lines.map((line) => {
+      const part = catalog.data?.find((option) => option.part_id === line.part_id);
+      return {
+        part_id: line.part_id,
+        quantity_ordered: Number(line.quantity_ordered),
+        unit_cost: line.unit_cost === "" ? (part?.unit_cost ?? 0) : Number(line.unit_cost),
+        notes: line.notes.trim() || null,
+      };
+    });
+    const created = await create.run({
+      supplier_id: supplierId,
+      expected_delivery_date: expectedDate || null,
+      tax_amount: Number(tax) || 0,
+      shipping_amount: Number(shipping) || 0,
+      currency: currency.toUpperCase(),
+      notes: notes.trim() || null,
+      internal_notes: internalNotes.trim() || null,
+      items,
+    });
+    if (created) onCreated(created as PurchaseOrder);
+  }
+
+  const availableFor = (line: DraftOrderLine) => {
+    const used = new Set(lines.filter((entry) => entry.key !== line.key).map((entry) => entry.part_id));
+    return (catalog.data ?? []).filter((part) => !used.has(part.part_id));
+  };
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="New purchase order"
+      description="Create a draft, review its lines, then send it to the supplier when you're ready."
+      width="max-w-3xl"
+      footer={
+        <>
+          <Button onClick={onClose} disabled={create.pending}>Cancel</Button>
+          <Button
+            variant="primary"
+            pending={create.pending}
+            disabled={blocked}
+            onClick={() => void submit()}
+          >
+            Create draft order
+          </Button>
+        </>
+      }
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submit();
+        }}
+        className="space-y-4"
+      >
+        <FormError error={create.error} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Supplier" required>
+            <Select value={supplierId} onChange={(event) => setSupplierId(event.target.value)}>
+              <option value="">Choose supplier</option>
+              {suppliers.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Expected delivery date">
+            <Input type="date" value={expectedDate} onChange={(event) => setExpectedDate(event.target.value)} />
+          </Field>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label="Currency" required>
+            <Select value={currency} onChange={(event) => setCurrency(event.target.value)}>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+              <option value="EUR">EUR</option>
+              <option value="INR">INR</option>
+            </Select>
+          </Field>
+          <Field label="Tax amount">
+            <Input type="number" min="0" step="0.01" value={tax} onChange={(event) => setTax(event.target.value)} />
+          </Field>
+          <Field label="Shipping amount">
+            <Input type="number" min="0" step="0.01" value={shipping} onChange={(event) => setShipping(event.target.value)} />
+          </Field>
+        </div>
+
+        <div className="space-y-3 rounded-lg border border-ink-200 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-ink-900">Order lines</h3>
+              <p className="text-xs text-ink-500">Each part can appear once. Quantity must be greater than zero.</p>
+            </div>
+            <Button type="button" size="sm" variant="secondary" onClick={addLine}>Add line</Button>
+          </div>
+          {lines.map((line, index) => (
+            <div key={line.key} className="space-y-2 rounded-md bg-ink-50 p-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label={`Part ${index + 1}`} required>
+                  <Select value={line.part_id} onChange={(event) => updateLine(line.key, { part_id: event.target.value })}>
+                    <option value="">Choose part</option>
+                    {availableFor(line).map((part) => (
+                      <option key={part.part_id} value={part.part_id}>{part.part_number} · {part.name}</option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Line notes">
+                  <Input value={line.notes} onChange={(event) => updateLine(line.key, { notes: event.target.value })} />
+                </Field>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                <Field label="Quantity" required>
+                  <Input type="number" min="0" step="0.01" value={line.quantity_ordered} onChange={(event) => updateLine(line.key, { quantity_ordered: event.target.value })} />
+                </Field>
+                <Field label="Unit cost" hint="Blank uses catalog cost.">
+                  <Input type="number" min="0" step="0.01" value={line.unit_cost} onChange={(event) => updateLine(line.key, { unit_cost: event.target.value })} />
+                </Field>
+                <Button
+                  type="button"
+                  variant="danger"
+                  disabled={lines.length === 1}
+                  onClick={() => setLines((current) => current.filter((entry) => entry.key !== line.key))}
+                >
+                  Remove line
+                </Button>
+              </div>
+            </div>
+          ))}
+          {duplicateParts ? <p className="text-sm text-rose-700">Choose a different part for each line.</p> : null}
+          {hasInvalidLine ? <p className="text-sm text-rose-700">Every line needs a part, a positive quantity and a non-negative unit cost.</p> : null}
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Supplier-facing notes">
+            <Textarea rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} />
+          </Field>
+          <Field label="Internal notes">
+            <Textarea rows={2} value={internalNotes} onChange={(event) => setInternalNotes(event.target.value)} />
+          </Field>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function EditPurchaseOrderHeaderModal({
+  order,
+  onClose,
+  onSaved,
+}: {
+  order: PurchaseOrder;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const form = useForm({
+    expected_delivery_date: order.expected_delivery_date?.slice(0, 10) ?? "",
+    tax_amount: String(order.tax_amount),
+    shipping_amount: String(order.shipping_amount),
+    currency: order.currency,
+    notes: order.notes ?? "",
+    internal_notes: order.internal_notes ?? "",
+  });
+  const update = useApiMutation((body: Record<string, unknown>) => purchaseOrdersApi.update(order.id, body));
+
+  async function submit() {
+    const saved = await update.run({
+      expected_delivery_date: form.values.expected_delivery_date || null,
+      tax_amount: Number(form.values.tax_amount) || 0,
+      shipping_amount: Number(form.values.shipping_amount) || 0,
+      currency: form.values.currency.toUpperCase(),
+      notes: form.values.notes.trim() || null,
+      internal_notes: form.values.internal_notes.trim() || null,
+    });
+    if (saved) onSaved();
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="Edit order details"
+      description="Header details are editable only while the order is a draft."
+      footer={
+        <>
+          <Button onClick={onClose} disabled={update.pending}>Cancel</Button>
+          <Button variant="primary" pending={update.pending} onClick={() => void submit()}>Save details</Button>
+        </>
+      }
+    >
+      <form onSubmit={(event) => { event.preventDefault(); void submit(); }} className="space-y-3">
+        <FormError error={update.error} />
+        <Field label="Expected delivery date">
+          <Input type="date" value={form.values.expected_delivery_date} onChange={(event) => form.set("expected_delivery_date", event.target.value)} />
+        </Field>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label="Tax amount">
+            <Input type="number" min="0" step="0.01" value={form.values.tax_amount} onChange={(event) => form.set("tax_amount", event.target.value)} />
+          </Field>
+          <Field label="Shipping amount">
+            <Input type="number" min="0" step="0.01" value={form.values.shipping_amount} onChange={(event) => form.set("shipping_amount", event.target.value)} />
+          </Field>
+          <Field label="Currency">
+            <Select value={form.values.currency} onChange={(event) => form.set("currency", event.target.value)}>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+              <option value="EUR">EUR</option>
+              <option value="INR">INR</option>
+            </Select>
+          </Field>
+        </div>
+        <Field label="Supplier-facing notes">
+          <Textarea rows={2} value={form.values.notes} onChange={(event) => form.set("notes", event.target.value)} />
+        </Field>
+        <Field label="Internal notes">
+          <Textarea rows={2} value={form.values.internal_notes} onChange={(event) => form.set("internal_notes", event.target.value)} />
+        </Field>
+      </form>
+    </Modal>
+  );
+}
+
 function OrderModal({
   orderId,
   onClose,
@@ -348,6 +649,7 @@ function OrderModal({
   const [cancelling, setCancelling] = useState(false);
   const [receiving, setReceiving] = useState(false);
   const [addingLine, setAddingLine] = useState(false);
+  const [editingHeader, setEditingHeader] = useState(false);
 
   const order = query.data;
   const writable = can("purchase_orders:write");
@@ -383,6 +685,11 @@ function OrderModal({
       footer={
         <>
           <Button onClick={onClose}>Close</Button>
+          {writable && order?.status === "DRAFT" ? (
+            <Button variant="secondary" onClick={() => setEditingHeader(true)}>
+              Edit details
+            </Button>
+          ) : null}
           {writable ? (
             <>
               <Button
@@ -525,6 +832,18 @@ function OrderModal({
               />
             )}
           </div>
+
+          {editingHeader && order ? (
+            <EditPurchaseOrderHeaderModal
+              order={order}
+              onClose={() => setEditingHeader(false)}
+              onSaved={() => {
+                setEditingHeader(false);
+                query.refetch();
+                onChanged();
+              }}
+            />
+          ) : null}
 
           {addingLine ? (
             <AddLineModal
