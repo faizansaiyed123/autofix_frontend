@@ -227,7 +227,7 @@ test.describe("Inspection and parts catalogue mutations", () => {
     const finalItemDialog = page.getByRole("dialog", { name: "Add inspection item" });
     const finalItemName = "E2E completed finding " + Date.now();
     await finalItemDialog.getByLabel("Category").selectOption("BRAKES");
-    await finalItemDialog.getByLabel("Status").selectOption("GOOD");
+    // Leave the UI default GOOD status selected; it is the valid API enum.
     await finalItemDialog.getByLabel("What was checked").fill(finalItemName);
     await finalItemDialog.getByLabel("Measurement").fill("4.1 mm");
     await finalItemDialog.getByLabel("Notes").fill("Completion-path verification.");
