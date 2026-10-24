@@ -121,15 +121,24 @@ test.describe("Inspection and parts catalogue mutations", () => {
         response.status() === 201,
     );
     await addDialog.getByRole("button", { name: "Add item", exact: true }).click();
-    const addedItem = (await (await addItemResponsePromise).json()) as {
+    const inspectionWithItem = (await (await addItemResponsePromise).json()) as {
       id: string;
-      category: string;
-      item_name: string;
       status: string;
-      measurement: string;
-      recommendation: string;
-      photos: Array<{ photo_url: string; caption: string }>;
+      items: Array<{
+        id: string;
+        category: string;
+        item_name: string;
+        status: string;
+        measurement: string;
+        recommendation: string;
+        photos: Array<{ photo_url: string; caption: string }>;
+      }>;
     };
+    expect(inspectionWithItem.id).toBe(createdInspection.id);
+    expect(inspectionWithItem.status).toBe("IN_PROGRESS");
+    const addedItem = inspectionWithItem.items.find((item) => item.item_name === itemName);
+    expect(addedItem).toBeTruthy();
+    if (!addedItem) throw new Error("The inspection POST response did not include the created item");
     expect(addedItem).toMatchObject({
       category: "BRAKES",
       item_name: itemName,
