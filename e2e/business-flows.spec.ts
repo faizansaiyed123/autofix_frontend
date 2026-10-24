@@ -982,7 +982,7 @@ test.describe("Additional customer and workshop write paths", () => {
     await page.reload({ waitUntil: "networkidle" });
     await page.getByRole("button", { name: order.po_number, exact: true }).click();
     const orderDialog = page.getByRole("dialog", { name: order.po_number });
-    await expect(orderDialog.getByText(/DRAFT/i)).toBeVisible();
+    await expect(orderDialog.getByText("DRAFT", { exact: true })).toBeVisible();
     await expect(orderDialog.getByRole("button", { name: "Receive", exact: true })).toBeDisabled();
 
     const sendPromise = page.waitForResponse(
