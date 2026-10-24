@@ -503,7 +503,10 @@ test.describe("Additional customer and workshop write paths", () => {
       attempt_number: 1,
     });
     await staffPage.getByRole("button", { name: "Checks", exact: true }).click();
-    const checkRow = staffPage.getByRole("row").filter({ hasText: createdOrder.ro_number });
+    const checkRow = staffPage
+      .getByRole("row")
+      .filter({ hasText: createdOrder.ro_number })
+      .filter({ hasText: "#" + qualityCheck.attempt_number });
     await expect(checkRow).toBeVisible();
     await checkRow.click();
     const qcDialog = staffPage.getByRole("dialog", { name: "Inspection · attempt 1" });
