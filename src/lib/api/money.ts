@@ -23,22 +23,26 @@ export const invoicesApi = {
     customer_notes?: string | null;
     extra_items?: unknown[];
   }) => api.post<Invoice>("/invoices/", body),
-  update: (id: string, body: Record<string, unknown>) => api.patch<Invoice>(`/invoices/${id}`, body),
+  update: (id: string, body: Record<string, unknown>) =>
+    api.patch<Invoice>(`/invoices/${id}`, body),
   remove: (id: string) => api.delete<void>(`/invoices/${id}`),
   issue: (id: string) => api.post<Invoice>(`/invoices/${id}/issue`),
-  void: (id: string, reason: string) => api.post<Invoice>(`/invoices/${id}/void`, undefined, { reason }),
+  void: (id: string, reason: string) =>
+    api.post<Invoice>(`/invoices/${id}/void`, undefined, { reason }),
   addItem: (id: string, body: Record<string, unknown>) =>
     api.post<InvoiceItem>(`/invoices/${id}/items`, body),
   updateItem: (id: string, itemId: string, body: Record<string, unknown>) =>
     api.patch<InvoiceItem>(`/invoices/${id}/items/${itemId}`, body),
-  removeItem: (id: string, itemId: string) => api.delete<void>(`/invoices/${id}/items/${itemId}`),
+  removeItem: (id: string, itemId: string) =>
+    api.delete<void>(`/invoices/${id}/items/${itemId}`),
   /** Deliberately absent: a generic status endpoint. A bill is settled by a payment. */
 };
 
 export const paymentsApi = {
   list: (query?: Query) => api.get<Paginated<Payment>>("/payments/", query),
   get: (id: string) => api.get<Payment>(`/payments/${id}`),
-  summary: (query?: Query) => api.get<PaymentSummary>("/payments/summary", query),
+  summary: (query?: Query) =>
+    api.get<PaymentSummary>("/payments/summary", query),
   record: (body: {
     invoice_id: string;
     amount: number;
@@ -48,5 +52,6 @@ export const paymentsApi = {
     notes?: string | null;
   }) => api.post<Payment>("/payments/", body),
   /** A payment is an event, never edited — a wrong one is reversed, and the row survives. */
-  void: (id: string, reason: string) => api.post<Payment>(`/payments/${id}/void`, { reason }),
+  void: (id: string, reason: string) =>
+    api.post<Payment>(`/payments/${id}/void`, { reason }),
 };

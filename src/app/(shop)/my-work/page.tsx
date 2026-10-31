@@ -8,7 +8,12 @@ import { Card } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Select } from "@/components/ui/Form";
 import { PageHeader, StatTile, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { laborApi } from "@/lib/api/work";
 import type { TechnicianDashboardOpenTask } from "@/lib/api/types";
@@ -39,7 +44,9 @@ export default function MyWorkPage() {
     {
       key: "description",
       header: "Task",
-      render: (task) => <span className="font-medium text-ink-900">{task.description}</span>,
+      render: (task) => (
+        <span className="font-medium text-ink-900">{task.description}</span>
+      ),
     },
     {
       key: "ro",
@@ -80,7 +87,9 @@ export default function MyWorkPage() {
             <Select
               value={chosen ?? "me"}
               onChange={(event) =>
-                setChosen(event.target.value === "me" ? null : event.target.value)
+                setChosen(
+                  event.target.value === "me" ? null : event.target.value,
+                )
               }
               className="w-64"
             >
@@ -97,8 +106,8 @@ export default function MyWorkPage() {
             </Select>
           </label>
           <p className="text-xs text-ink-500">
-            This is one person&rsquo;s board, not the shop&rsquo;s. Open a repair order to work its
-            tasks.
+            This is one person&rsquo;s board, not the shop&rsquo;s. Open a
+            repair order to work its tasks.
           </p>
         </Toolbar>
       </Card>
@@ -133,7 +142,9 @@ export default function MyWorkPage() {
               label="Part requests"
               value={formatNumber(board.pending_part_request_count)}
               hint="Yours, still waiting on parts"
-              tone={board.pending_part_request_count > 0 ? "warning" : "neutral"}
+              tone={
+                board.pending_part_request_count > 0 ? "warning" : "neutral"
+              }
             />
           </div>
 
@@ -141,8 +152,9 @@ export default function MyWorkPage() {
             <div className="mb-4">
               <Notice tone="info">
                 {board.pending_part_request_count} part request
-                {board.pending_part_request_count === 1 ? " is" : "s are"} still waiting on the parts
-                desk. You raised them, but somebody else has to approve them.
+                {board.pending_part_request_count === 1 ? " is" : "s are"} still
+                waiting on the parts desk. You raised them, but somebody else
+                has to approve them.
               </Notice>
             </div>
           ) : null}

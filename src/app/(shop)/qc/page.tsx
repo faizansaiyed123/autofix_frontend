@@ -7,10 +7,21 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { qcApi, repairOrdersApi } from "@/lib/api/work";
 import type { ApiError } from "@/lib/api/client";
@@ -50,8 +61,11 @@ export default function QualityControlPage() {
     qcApi.create({ repair_order_id: repairOrderId }),
   );
 
-  const roNumberById = new Map((orders.data ?? []).map((ro) => [ro.id, ro.ro_number]));
-  const selected = checks.data?.data.find((check) => check.id === openCheckId) ?? null;
+  const roNumberById = new Map(
+    (orders.data ?? []).map((ro) => [ro.id, ro.ro_number]),
+  );
+  const selected =
+    checks.data?.data.find((check) => check.id === openCheckId) ?? null;
 
   const queueColumns: Column<QCQueueItem>[] = [
     {
@@ -69,20 +83,28 @@ export default function QualityControlPage() {
     {
       key: "vehicle",
       header: "Vehicle",
-      render: (item) => <span className="text-sm">{vehicleLabel(item.vehicle_id)}</span>,
+      render: (item) => (
+        <span className="text-sm">{vehicleLabel(item.vehicle_id)}</span>
+      ),
     },
     {
       key: "technician",
       header: "Technician",
       render: (item) => (
-        <span className="text-sm">{item.technician_id ? userName(item.technician_id) : "—"}</span>
+        <span className="text-sm">
+          {item.technician_id ? userName(item.technician_id) : "—"}
+        </span>
       ),
     },
     {
       key: "completed_at",
       header: "Completed",
       numeric: true,
-      render: (item) => <span className="text-xs text-ink-500">{formatDateTime(item.completed_at)}</span>,
+      render: (item) => (
+        <span className="text-xs text-ink-500">
+          {formatDateTime(item.completed_at)}
+        </span>
+      ),
     },
     {
       key: "open_check",
@@ -126,7 +148,9 @@ export default function QualityControlPage() {
             >
               Start check
             </Button>
-            {block ? <span className="text-xs text-ink-500">{block}</span> : null}
+            {block ? (
+              <span className="text-xs text-ink-500">{block}</span>
+            ) : null}
           </div>
         );
       },
@@ -138,7 +162,9 @@ export default function QualityControlPage() {
       key: "attempt",
       header: "Attempt",
       numeric: true,
-      render: (check) => <span className="tabular font-medium">#{check.attempt_number}</span>,
+      render: (check) => (
+        <span className="tabular font-medium">#{check.attempt_number}</span>
+      ),
     },
     {
       key: "ro",
@@ -156,7 +182,9 @@ export default function QualityControlPage() {
       key: "inspector",
       header: "Inspector",
       render: (check) => (
-        <span className="text-sm">{check.inspector_id ? userName(check.inspector_id) : "—"}</span>
+        <span className="text-sm">
+          {check.inspector_id ? userName(check.inspector_id) : "—"}
+        </span>
       ),
     },
     {
@@ -166,7 +194,9 @@ export default function QualityControlPage() {
         <div className="min-w-0">
           <StatusBadge status={check.status} />
           {check.failure_reason ? (
-            <p className="mt-1 line-clamp-2 text-xs text-ink-500">{check.failure_reason}</p>
+            <p className="mt-1 line-clamp-2 text-xs text-ink-500">
+              {check.failure_reason}
+            </p>
           ) : null}
         </div>
       ),
@@ -176,9 +206,15 @@ export default function QualityControlPage() {
       header: "Blocking failures",
       numeric: true,
       render: (check) => {
-        const failing = check.checks.filter((item) => item.blocking && !item.passed).length;
+        const failing = check.checks.filter(
+          (item) => item.blocking && !item.passed,
+        ).length;
         return (
-          <span className={failing > 0 ? "font-medium text-rose-700" : "text-ink-500"}>
+          <span
+            className={
+              failing > 0 ? "font-medium text-rose-700" : "text-ink-500"
+            }
+          >
             {formatNumber(failing)}
           </span>
         );
@@ -189,7 +225,9 @@ export default function QualityControlPage() {
       header: "Completed",
       numeric: true,
       render: (check) => (
-        <span className="text-xs text-ink-500">{formatDateTime(check.completed_at)}</span>
+        <span className="text-xs text-ink-500">
+          {formatDateTime(check.completed_at)}
+        </span>
       ),
     },
   ];
@@ -207,7 +245,11 @@ export default function QualityControlPage() {
         </div>
       ) : null}
 
-      <div className="mb-4 flex gap-2" role="tablist" aria-label="Quality control">
+      <div
+        className="mb-4 flex gap-2"
+        role="tablist"
+        aria-label="Quality control"
+      >
         <Button
           variant={tab === "queue" ? "primary" : "secondary"}
           onClick={() => setTab("queue")}
@@ -238,7 +280,11 @@ export default function QualityControlPage() {
               description="A repair order appears here once its work is COMPLETED."
             />
           ) : (
-            <DataTable rows={queue.data} columns={queueColumns} rowKey={(item) => item.repair_order_id} />
+            <DataTable
+              rows={queue.data}
+              columns={queueColumns}
+              rowKey={(item) => item.repair_order_id}
+            />
           )}
         </Card>
       ) : (
@@ -270,7 +316,10 @@ export default function QualityControlPage() {
               <ErrorState error={checks.error} onRetry={checks.refetch} />
             </div>
           ) : !checks.data || checks.data.data.length === 0 ? (
-            <EmptyState title="No checks yet" description="Open one from the queue to start an inspection." />
+            <EmptyState
+              title="No checks yet"
+              description="Open one from the queue to start an inspection."
+            />
           ) : (
             <>
               <DataTable
@@ -293,7 +342,9 @@ export default function QualityControlPage() {
       <CheckDetailModal
         check={selected}
         mayPerform={mayPerform}
-        roNumber={selected ? roNumberById.get(selected.repair_order_id) : undefined}
+        roNumber={
+          selected ? roNumberById.get(selected.repair_order_id) : undefined
+        }
         onClose={() => setOpenCheckId(null)}
         onChanged={() => checks.refetch()}
       />
@@ -322,14 +373,18 @@ function CheckDetailModal({
 
   const reverify = useApiMutation((id: string) => qcApi.reverify(id));
   const pass = useApiMutation((id: string) => qcApi.pass(id));
-  const fail = useApiMutation((id: string, reason: string) => qcApi.fail(id, reason));
+  const fail = useApiMutation((id: string, reason: string) =>
+    qcApi.fail(id, reason),
+  );
   const addPhoto = useApiMutation((id: string, url: string, caption: string) =>
     qcApi.addPhoto(id, { photo_url: url, caption: caption || null }),
   );
 
   if (!check) return null;
 
-  const blockingFailures = check.checks.filter((item) => item.blocking && !item.passed);
+  const blockingFailures = check.checks.filter(
+    (item) => item.blocking && !item.passed,
+  );
   const open = !check.is_terminal;
 
   async function refresh() {
@@ -362,17 +417,27 @@ function CheckDetailModal({
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={check.status} />
-            <span className="text-xs text-ink-500">Completed {formatDateTime(check.completed_at)}</span>
+            <span className="text-xs text-ink-500">
+              Completed {formatDateTime(check.completed_at)}
+            </span>
           </div>
 
           {check.failure_reason ? (
             <Notice tone="danger">Sent back: {check.failure_reason}</Notice>
           ) : null}
 
-          {reverify.error ? <Notice tone="danger">{reverify.error.messageForUser}</Notice> : null}
-          {pass.error ? <Notice tone="danger">{pass.error.messageForUser}</Notice> : null}
-          {fail.error ? <Notice tone="danger">{fail.error.messageForUser}</Notice> : null}
-          {addPhoto.error ? <Notice tone="danger">{addPhoto.error.messageForUser}</Notice> : null}
+          {reverify.error ? (
+            <Notice tone="danger">{reverify.error.messageForUser}</Notice>
+          ) : null}
+          {pass.error ? (
+            <Notice tone="danger">{pass.error.messageForUser}</Notice>
+          ) : null}
+          {fail.error ? (
+            <Notice tone="danger">{fail.error.messageForUser}</Notice>
+          ) : null}
+          {addPhoto.error ? (
+            <Notice tone="danger">{addPhoto.error.messageForUser}</Notice>
+          ) : null}
 
           <div>
             <p className="mb-2 text-xs font-medium tracking-wide text-ink-600 uppercase">
@@ -380,19 +445,30 @@ function CheckDetailModal({
             </p>
             <ul className="space-y-2">
               {check.checks.map((item) => (
-                <li key={item.id} className="rounded-lg border border-ink-200 p-3">
+                <li
+                  key={item.id}
+                  className="rounded-lg border border-ink-200 p-3"
+                >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <StatusBadge status={item.passed ? "PASSED" : "FAILED"} />
-                      <span className="text-sm font-medium text-ink-900">{item.check_type}</span>
+                      <span className="text-sm font-medium text-ink-900">
+                        {item.check_type}
+                      </span>
                       {item.blocking ? (
                         <span className="text-xs text-rose-700">Blocking</span>
                       ) : (
-                        <span className="text-xs text-ink-500">Not blocking</span>
+                        <span className="text-xs text-ink-500">
+                          Not blocking
+                        </span>
                       )}
                     </div>
                     {mayPerform && open ? (
-                      <Button size="sm" variant="ghost" onClick={() => setOverriding(item)}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setOverriding(item)}
+                      >
                         Override
                       </Button>
                     ) : null}
@@ -400,7 +476,11 @@ function CheckDetailModal({
                   {item.evidence ? (
                     <p className="mt-1 text-xs text-ink-600">{item.evidence}</p>
                   ) : null}
-                  {item.notes ? <p className="mt-1 text-xs text-ink-500">Note: {item.notes}</p> : null}
+                  {item.notes ? (
+                    <p className="mt-1 text-xs text-ink-500">
+                      Note: {item.notes}
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-xs text-ink-400">
                     {item.auto_verified
                       ? "Verified automatically from shop records"
@@ -412,9 +492,13 @@ function CheckDetailModal({
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-medium tracking-wide text-ink-600 uppercase">Photos</p>
+            <p className="mb-2 text-xs font-medium tracking-wide text-ink-600 uppercase">
+              Photos
+            </p>
             {check.photos.length === 0 ? (
-              <p className="text-sm text-ink-500">No photos attached to this inspection.</p>
+              <p className="text-sm text-ink-500">
+                No photos attached to this inspection.
+              </p>
             ) : (
               <ul className="space-y-1">
                 {check.photos.map((photo) => (
@@ -445,7 +529,11 @@ function CheckDetailModal({
                   }}
                 />
               ) : (
-                <Button className="mt-2" size="sm" onClick={() => setAddingPhoto(true)}>
+                <Button
+                  className="mt-2"
+                  size="sm"
+                  onClick={() => setAddingPhoto(true)}
+                >
                   Add a photo by URL
                 </Button>
               )
@@ -454,16 +542,19 @@ function CheckDetailModal({
 
           {mayPerform && open ? (
             <div className="rounded-lg border border-ink-200 p-3">
-              <p className="mb-2 text-xs font-medium tracking-wide text-ink-600 uppercase">Verdict</p>
+              <p className="mb-2 text-xs font-medium tracking-wide text-ink-600 uppercase">
+                Verdict
+              </p>
               {blockingFailures.length > 0 ? (
                 <Notice tone="danger">
                   Pass is refused while a blocking check fails:{" "}
-                  {blockingFailures.map((item) => item.check_type).join(", ")}. Override a check or
-                  fix the work first.
+                  {blockingFailures.map((item) => item.check_type).join(", ")}.
+                  Override a check or fix the work first.
                 </Notice>
               ) : (
                 <Notice tone="success">
-                  No blocking check is failing, so this inspection can be passed.
+                  No blocking check is failing, so this inspection can be
+                  passed.
                 </Notice>
               )}
               <div className="mt-3 flex flex-wrap gap-2">
@@ -485,8 +576,9 @@ function CheckDetailModal({
                 </Button>
               </div>
               <p className="mt-2 text-xs text-ink-500">
-                Failing sends the repair order back to IN_PROGRESS for rework, and this attempt is
-                kept — the next one is attempt {check.attempt_number + 1}.
+                Failing sends the repair order back to IN_PROGRESS for rework,
+                and this attempt is kept — the next one is attempt{" "}
+                {check.attempt_number + 1}.
               </p>
             </div>
           ) : (
@@ -550,10 +642,19 @@ function PhotoForm({
         <Input value={url} onChange={(event) => setUrl(event.target.value)} />
       </Field>
       <Field label="Caption">
-        <Input value={caption} onChange={(event) => setCaption(event.target.value)} />
+        <Input
+          value={caption}
+          onChange={(event) => setCaption(event.target.value)}
+        />
       </Field>
       <div className="flex gap-2">
-        <Button type="submit" variant="primary" size="sm" pending={pending} disabled={!url.trim()}>
+        <Button
+          type="submit"
+          variant="primary"
+          size="sm"
+          pending={pending}
+          disabled={!url.trim()}
+        >
           Attach
         </Button>
         <Button type="button" size="sm" onClick={onCancel} disabled={pending}>
@@ -578,12 +679,17 @@ function OverrideModal({
   const [passed, setPassed] = useState(item.passed);
   const [blocking, setBlocking] = useState(item.blocking);
   const [notes, setNotes] = useState(item.notes ?? "");
-  const save = useApiMutation((body: { passed: boolean; blocking: boolean; notes: string | null }) =>
-    qcApi.overrideCheck(checkId, item.check_type, body),
+  const save = useApiMutation(
+    (body: { passed: boolean; blocking: boolean; notes: string | null }) =>
+      qcApi.overrideCheck(checkId, item.check_type, body),
   );
 
   async function submit() {
-    const saved = await save.run({ passed, blocking, notes: notes.trim() || null });
+    const saved = await save.run({
+      passed,
+      blocking,
+      notes: notes.trim() || null,
+    });
     if (saved) onSaved();
   }
 
@@ -598,7 +704,11 @@ function OverrideModal({
           <Button onClick={onClose} disabled={save.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={save.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={save.pending}
+            onClick={() => void submit()}
+          >
             Record verdict
           </Button>
         </>
@@ -627,7 +737,10 @@ function OverrideModal({
               <option value="fail">Fail</option>
             </Select>
           </Field>
-          <Field label="Blocking" hint="A failing blocking check stops the order being passed">
+          <Field
+            label="Blocking"
+            hint="A failing blocking check stops the order being passed"
+          >
             <Select
               value={blocking ? "yes" : "no"}
               onChange={(event) => setBlocking(event.target.value === "yes")}
@@ -638,7 +751,11 @@ function OverrideModal({
           </Field>
         </div>
         <Field label="Why">
-          <Textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} />
+          <Textarea
+            rows={3}
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+          />
         </Field>
       </form>
     </Modal>
@@ -688,8 +805,16 @@ function FailModal({
         }}
       >
         <FormError error={error} />
-        <Field label="What is wrong" required hint="A rework loop with no explanation repeats itself">
-          <Textarea rows={3} value={reason} onChange={(event) => setReason(event.target.value)} />
+        <Field
+          label="What is wrong"
+          required
+          hint="A rework loop with no explanation repeats itself"
+        >
+          <Textarea
+            rows={3}
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
         </Field>
       </form>
     </Modal>

@@ -6,10 +6,22 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, KeyValue, KeyValueGrid } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { appointmentsApi } from "@/lib/api/shop";
 import type { Appointment } from "@/lib/api/types";
@@ -104,7 +116,9 @@ export default function AppointmentsPage() {
         status: status || undefined,
         // The endpoint orders by start time from the beginning of time, so a
         // diary view has to say where its window opens or page one is 2019.
-        start_from: fromToday ? toApiDateTime(new Date(`${todayIso()}T00:00:00`)) : undefined,
+        start_from: fromToday
+          ? toApiDateTime(new Date(`${todayIso()}T00:00:00`))
+          : undefined,
       }),
     [page, status, fromToday],
     { enabled: mode === "list" },
@@ -121,7 +135,9 @@ export default function AppointmentsPage() {
       header: "When",
       render: (a) => (
         <div className="whitespace-nowrap">
-          <p className="font-medium text-ink-800">{formatDate(a.scheduled_start)}</p>
+          <p className="font-medium text-ink-800">
+            {formatDate(a.scheduled_start)}
+          </p>
           <p className="text-xs text-ink-500">
             {formatTime(a.scheduled_start)}–{formatTime(a.scheduled_end)}
           </p>
@@ -131,28 +147,57 @@ export default function AppointmentsPage() {
     {
       key: "customer",
       header: "Customer",
-      render: (a) => <span className="text-sm text-ink-700">{customerLabel(a.customer_id)}</span>,
+      render: (a) => (
+        <span className="text-sm text-ink-700">
+          {customerLabel(a.customer_id)}
+        </span>
+      ),
     },
     {
       key: "vehicle",
       header: "Vehicle",
-      render: (a) => <span className="text-sm text-ink-700">{vehicleLabel(a.vehicle_id)}</span>,
+      render: (a) => (
+        <span className="text-sm text-ink-700">
+          {vehicleLabel(a.vehicle_id)}
+        </span>
+      ),
     },
-    { key: "service", header: "Work", render: (a) => titleCase(a.service_type) },
-    { key: "bay", header: "Bay", render: (a) => a.bay ?? <span className="text-ink-400">—</span> },
+    {
+      key: "service",
+      header: "Work",
+      render: (a) => titleCase(a.service_type),
+    },
+    {
+      key: "bay",
+      header: "Bay",
+      render: (a) => a.bay ?? <span className="text-ink-400">—</span>,
+    },
     {
       key: "technician",
       header: "Technician",
-      render: (a) => (a.technician_id ? userName(a.technician_id) : <span className="text-ink-400">—</span>),
+      render: (a) =>
+        a.technician_id ? (
+          userName(a.technician_id)
+        ) : (
+          <span className="text-ink-400">—</span>
+        ),
     },
-    { key: "status", header: "Status", render: (a) => <StatusBadge status={a.status} /> },
+    {
+      key: "status",
+      header: "Status",
+      render: (a) => <StatusBadge status={a.status} />,
+    },
   ];
 
   return (
     <>
       <PageHeader
         title="Diary"
-        subtitle={calendar.data ? `${formatNumber(calendar.data.total)} booked in view` : undefined}
+        subtitle={
+          calendar.data
+            ? `${formatNumber(calendar.data.total)} booked in view`
+            : undefined
+        }
         actions={
           <>
             <div className="flex rounded-lg bg-ink-100 p-0.5">
@@ -163,7 +208,9 @@ export default function AppointmentsPage() {
                   onClick={() => setMode(option)}
                   aria-pressed={mode === option}
                   className={`rounded-md px-3 py-1 text-xs font-medium ${
-                    mode === option ? "bg-white text-ink-900 shadow-sm" : "text-ink-600"
+                    mode === option
+                      ? "bg-white text-ink-900 shadow-sm"
+                      : "text-ink-600"
                   }`}
                 >
                   {option === "calendar" ? "Calendar" : "List"}
@@ -195,13 +242,19 @@ export default function AppointmentsPage() {
               ))}
             </Select>
             <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => setAnchor(shiftAnchor(anchor, view, -1))}>
+              <Button
+                size="sm"
+                onClick={() => setAnchor(shiftAnchor(anchor, view, -1))}
+              >
                 Previous
               </Button>
               <Button size="sm" onClick={() => setAnchor(todayIso())}>
                 Today
               </Button>
-              <Button size="sm" onClick={() => setAnchor(shiftAnchor(anchor, view, 1))}>
+              <Button
+                size="sm"
+                onClick={() => setAnchor(shiftAnchor(anchor, view, 1))}
+              >
                 Next
               </Button>
             </div>
@@ -216,7 +269,8 @@ export default function AppointmentsPage() {
             </label>
             {calendar.data ? (
               <p className="ml-auto text-xs text-ink-500">
-                {formatDate(calendar.data.range_start)} – {formatDate(calendar.data.range_end)}
+                {formatDate(calendar.data.range_start)} –{" "}
+                {formatDate(calendar.data.range_end)}
               </p>
             ) : null}
           </Toolbar>
@@ -356,9 +410,13 @@ function DayColumn({
       }`}
     >
       <header className="mb-2 flex items-baseline justify-between gap-2">
-        <h2 className="text-xs font-semibold text-ink-700">{formatDate(date)}</h2>
+        <h2 className="text-xs font-semibold text-ink-700">
+          {formatDate(date)}
+        </h2>
         {appointments.length > 0 ? (
-          <span className="tabular text-xs text-ink-500">{appointments.length}</span>
+          <span className="tabular text-xs text-ink-500">
+            {appointments.length}
+          </span>
         ) : null}
       </header>
       {appointments.length === 0 ? (
@@ -383,7 +441,9 @@ function DayColumn({
                 </span>
                 <span className="mt-1 flex items-center gap-1">
                   {appointment.bay ? (
-                    <span className="text-[11px] text-ink-500">{appointment.bay}</span>
+                    <span className="text-[11px] text-ink-500">
+                      {appointment.bay}
+                    </span>
                   ) : null}
                   <StatusBadge status={appointment.status} />
                 </span>
@@ -408,7 +468,9 @@ function AppointmentDetailModal({
   const { can } = useSession();
   const { customerLabel, userName, vehicleLabel } = useReferences();
 
-  const detail = useApiQuery(() => appointmentsApi.get(id ?? ""), [id], { enabled: id !== null });
+  const detail = useApiQuery(() => appointmentsApi.get(id ?? ""), [id], {
+    enabled: id !== null,
+  });
   const setStatus = useApiMutation((status: string, reason: string | null) =>
     appointmentsApi.setStatus(id ?? "", status, reason),
   );
@@ -450,11 +512,21 @@ function AppointmentDetailModal({
           </div>
 
           <KeyValueGrid>
-            <KeyValue label="Customer">{customerLabel(record.customer_id)}</KeyValue>
-            <KeyValue label="Vehicle">{vehicleLabel(record.vehicle_id)}</KeyValue>
-            <KeyValue label="Starts">{formatDateTime(record.scheduled_start)}</KeyValue>
-            <KeyValue label="Ends">{formatDateTime(record.scheduled_end)}</KeyValue>
-            <KeyValue label="Duration">{formatNumber(record.duration_minutes)} min</KeyValue>
+            <KeyValue label="Customer">
+              {customerLabel(record.customer_id)}
+            </KeyValue>
+            <KeyValue label="Vehicle">
+              {vehicleLabel(record.vehicle_id)}
+            </KeyValue>
+            <KeyValue label="Starts">
+              {formatDateTime(record.scheduled_start)}
+            </KeyValue>
+            <KeyValue label="Ends">
+              {formatDateTime(record.scheduled_end)}
+            </KeyValue>
+            <KeyValue label="Duration">
+              {formatNumber(record.duration_minutes)} min
+            </KeyValue>
             <KeyValue label="Bay">{record.bay ?? "—"}</KeyValue>
             <KeyValue label="Technician">
               {record.technician_id ? userName(record.technician_id) : "—"}
@@ -479,8 +551,12 @@ function AppointmentDetailModal({
           ) : null}
           {record.notes ? (
             <div>
-              <p className="text-xs font-medium tracking-wide text-ink-500 uppercase">Notes</p>
-              <p className="mt-0.5 text-sm whitespace-pre-line text-ink-700">{record.notes}</p>
+              <p className="text-xs font-medium tracking-wide text-ink-500 uppercase">
+                Notes
+              </p>
+              <p className="mt-0.5 text-sm whitespace-pre-line text-ink-700">
+                {record.notes}
+              </p>
             </div>
           ) : null}
 
@@ -525,12 +601,14 @@ function StatusControl({
 
   return (
     <div className="rounded-lg bg-ink-50 p-3">
-      <p className="text-xs font-medium tracking-wide text-ink-500 uppercase">Move this booking on</p>
+      <p className="text-xs font-medium tracking-wide text-ink-500 uppercase">
+        Move this booking on
+      </p>
 
       {allowed.length === 0 ? (
         <Notice tone="info">
-          {current} is a final state. The API refuses any further transition, so there is nothing to
-          move it to.
+          {current} is a final state. The API refuses any further transition, so
+          there is nothing to move it to.
         </Notice>
       ) : (
         <>
@@ -626,7 +704,9 @@ function NewAppointmentModal({
     notes: "",
   });
 
-  const create = useApiMutation((body: Record<string, unknown>) => appointmentsApi.create(body));
+  const create = useApiMutation((body: Record<string, unknown>) =>
+    appointmentsApi.create(body),
+  );
   const check = useApiMutation((body: ConflictCheckRequestBody) =>
     appointmentsApi.checkConflicts(body),
   );
@@ -644,7 +724,8 @@ function NewAppointmentModal({
   // Conflicts are checked as soon as the slot is meaningful, so a clash is
   // visible before the booking is attempted rather than after a rejection.
   useEffect(() => {
-    if (!open || !form.values.scheduled_start || !form.values.customer_id) return;
+    if (!open || !form.values.scheduled_start || !form.values.customer_id)
+      return;
     if (!Number.isFinite(duration) || duration < 5 || duration > 1440) return;
     void check.run({
       scheduled_start: toApiDateTime(new Date(form.values.scheduled_start)),
@@ -669,7 +750,11 @@ function NewAppointmentModal({
   const blocked = Boolean(conflicts?.has_conflict);
 
   async function submit() {
-    const missing = form.missing(["customer_id", "vehicle_id", "scheduled_start"]);
+    const missing = form.missing([
+      "customer_id",
+      "vehicle_id",
+      "scheduled_start",
+    ]);
     if (missing.length > 0) return;
     const booked = await create.run({
       customer_id: form.values.customer_id,
@@ -700,7 +785,12 @@ function NewAppointmentModal({
           <Button onClick={onClose} disabled={create.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={create.pending} disabled={blocked} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={create.pending}
+            disabled={blocked}
+            onClick={() => void submit()}
+          >
             Book it
           </Button>
         </>
@@ -753,7 +843,9 @@ function NewAppointmentModal({
               <option value="">Choose a vehicle…</option>
               {vehicles.map((vehicle) => (
                 <option key={vehicle.id} value={vehicle.id}>
-                  {[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ")}
+                  {[vehicle.year, vehicle.make, vehicle.model]
+                    .filter(Boolean)
+                    .join(" ")}
                   {vehicle.license_plate ? ` (${vehicle.license_plate})` : ""}
                 </option>
               ))}
@@ -766,13 +858,17 @@ function NewAppointmentModal({
             <Input
               type="datetime-local"
               value={form.values.scheduled_start}
-              onChange={(event) => form.set("scheduled_start", event.target.value)}
+              onChange={(event) =>
+                form.set("scheduled_start", event.target.value)
+              }
             />
           </Field>
           <Field label="How long">
             <Select
               value={form.values.duration_minutes}
-              onChange={(event) => form.set("duration_minutes", event.target.value)}
+              onChange={(event) =>
+                form.set("duration_minutes", event.target.value)
+              }
             >
               {DURATIONS.map(([value, label]) => (
                 <option key={value} value={value}>
@@ -806,7 +902,9 @@ function NewAppointmentModal({
           <Field label="Technician" hint="Optional">
             <Select
               value={form.values.technician_id}
-              onChange={(event) => form.set("technician_id", event.target.value)}
+              onChange={(event) =>
+                form.set("technician_id", event.target.value)
+              }
             >
               <option value="">Unassigned</option>
               {staff.map((person) => (
@@ -832,8 +930,8 @@ function NewAppointmentModal({
               ))}
             </ul>
             <p className="mt-1 text-xs">
-              Pick another time, or leave the bay and technician blank to book alongside existing
-              work.
+              Pick another time, or leave the bay and technician blank to book
+              alongside existing work.
             </p>
           </Notice>
         ) : conflicts && !conflicts.has_conflict ? (
@@ -845,7 +943,9 @@ function NewAppointmentModal({
             rows={2}
             maxLength={2000}
             value={form.values.customer_concern}
-            onChange={(event) => form.set("customer_concern", event.target.value)}
+            onChange={(event) =>
+              form.set("customer_concern", event.target.value)
+            }
           />
         </Field>
         <Field label="Notes" hint="Up to 2000 characters">
@@ -869,7 +969,11 @@ type ConflictCheckRequestBody = {
   vehicle_id: string | null;
 };
 
-function shiftAnchor(anchor: string, view: CalendarView, direction: 1 | -1): string {
+function shiftAnchor(
+  anchor: string,
+  view: CalendarView,
+  direction: 1 | -1,
+): string {
   const date = new Date(`${anchor}T00:00:00`);
   if (view === "month") {
     // Stepping from the 31st would overshoot into the following month, so the

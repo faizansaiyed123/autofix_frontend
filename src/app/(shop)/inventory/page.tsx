@@ -9,7 +9,12 @@ import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
 import { Field, FormError, Input, Select, useForm } from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, StatTile, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { inventoryApi } from "@/lib/api/stock";
 import type {
@@ -35,7 +40,10 @@ export default function InventoryPage() {
 
   // Unpaginated over the whole catalog, so it doubles as the part lookup that
   // names the part on every movement row.
-  const levels = useApiQuery<StockLevel[]>(() => inventoryApi.stockLevels(), []);
+  const levels = useApiQuery<StockLevel[]>(
+    () => inventoryApi.stockLevels(),
+    [],
+  );
 
   const parts = levels.data ?? [];
   const partById = new Map(parts.map((level) => [level.part_id, level]));
@@ -55,7 +63,10 @@ export default function InventoryPage() {
       />
 
       <div className="mb-4 flex gap-1 border-b border-ink-200">
-        <TabButton active={tab === "movements"} onClick={() => setTab("movements")}>
+        <TabButton
+          active={tab === "movements"}
+          onClick={() => setTab("movements")}
+        >
           Movements
         </TabButton>
         <TabButton active={tab === "stock"} onClick={() => setTab("stock")}>
@@ -123,7 +134,13 @@ function dayEnd(value: string): string | undefined {
   return value ? `${value}T23:59` : undefined;
 }
 
-function MovementsTab({ partById, nonce }: { partById: Map<string, StockLevel>; nonce: number }) {
+function MovementsTab({
+  partById,
+  nonce,
+}: {
+  partById: Map<string, StockLevel>;
+  nonce: number;
+}) {
   const { userName } = useReferences();
   const [type, setType] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -147,14 +164,19 @@ function MovementsTab({ partById, nonce }: { partById: Map<string, StockLevel>; 
       key: "when",
       header: "When",
       numeric: true,
-      render: (m) => <span className="text-xs text-ink-600">{formatDateTime(m.created_at)}</span>,
+      render: (m) => (
+        <span className="text-xs text-ink-600">
+          {formatDateTime(m.created_at)}
+        </span>
+      ),
     },
     {
       key: "part",
       header: "Part",
       render: (m) => {
         const part = partById.get(m.part_id);
-        if (!part) return <span className="text-xs text-ink-400">Unknown part</span>;
+        if (!part)
+          return <span className="text-xs text-ink-400">Unknown part</span>;
         return (
           <div className="text-sm">
             <p>{part.name}</p>
@@ -173,7 +195,13 @@ function MovementsTab({ partById, nonce }: { partById: Map<string, StockLevel>; 
       header: "Quantity",
       numeric: true,
       render: (m) => (
-        <span className={m.quantity < 0 ? "font-medium text-rose-700" : "font-medium text-emerald-700"}>
+        <span
+          className={
+            m.quantity < 0
+              ? "font-medium text-rose-700"
+              : "font-medium text-emerald-700"
+          }
+        >
           {m.quantity > 0 ? `+${qty(m.quantity)}` : qty(m.quantity)}
         </span>
       ),
@@ -182,28 +210,40 @@ function MovementsTab({ partById, nonce }: { partById: Map<string, StockLevel>; 
       key: "before",
       header: "Before",
       numeric: true,
-      render: (m) => <span className="text-xs text-ink-600">{qty(m.quantity_before)}</span>,
+      render: (m) => (
+        <span className="text-xs text-ink-600">{qty(m.quantity_before)}</span>
+      ),
     },
     {
       key: "after",
       header: "After",
       numeric: true,
-      render: (m) => <span className="text-xs text-ink-700">{qty(m.quantity_after)}</span>,
+      render: (m) => (
+        <span className="text-xs text-ink-700">{qty(m.quantity_after)}</span>
+      ),
     },
     {
       key: "reference",
       header: "Reference",
-      render: (m) => <span className="text-xs text-ink-600">{m.reference ?? "—"}</span>,
+      render: (m) => (
+        <span className="text-xs text-ink-600">{m.reference ?? "—"}</span>
+      ),
     },
     {
       key: "reason",
       header: "Reason",
-      render: (m) => <span className="text-xs text-ink-500">{m.reason ?? "—"}</span>,
+      render: (m) => (
+        <span className="text-xs text-ink-500">{m.reason ?? "—"}</span>
+      ),
     },
     {
       key: "by",
       header: "Performed by",
-      render: (m) => <span className="text-xs text-ink-600">{userName(m.performed_by_id)}</span>,
+      render: (m) => (
+        <span className="text-xs text-ink-600">
+          {userName(m.performed_by_id)}
+        </span>
+      ),
     },
   ];
 
@@ -261,7 +301,12 @@ function MovementsTab({ partById, nonce }: { partById: Map<string, StockLevel>; 
         />
       ) : (
         <>
-          <DataTable rows={query.data.data} columns={columns} rowKey={(m) => m.id} dense />
+          <DataTable
+            rows={query.data.data}
+            columns={columns}
+            rowKey={(m) => m.id}
+            dense
+          />
           <Pagination
             page={query.data.meta.page}
             pages={query.data.meta.pages}
@@ -274,8 +319,17 @@ function MovementsTab({ partById, nonce }: { partById: Map<string, StockLevel>; 
   );
 }
 
-function StockTab({ levels, loading }: { levels: StockLevel[]; loading: boolean }) {
-  const summary = useApiQuery<StockSummary>(() => inventoryApi.stockSummary(), []);
+function StockTab({
+  levels,
+  loading,
+}: {
+  levels: StockLevel[];
+  loading: boolean;
+}) {
+  const summary = useApiQuery<StockSummary>(
+    () => inventoryApi.stockSummary(),
+    [],
+  );
 
   const columns: Column<StockLevel>[] = [
     {
@@ -289,7 +343,11 @@ function StockTab({ levels, loading }: { levels: StockLevel[]; loading: boolean 
       key: "name",
       header: "Name",
       render: (level) => (
-        <span className={level.is_low_stock ? "font-medium text-amber-800" : "text-sm"}>
+        <span
+          className={
+            level.is_low_stock ? "font-medium text-amber-800" : "text-sm"
+          }
+        >
           {level.name}
         </span>
       ),
@@ -297,12 +355,18 @@ function StockTab({ levels, loading }: { levels: StockLevel[]; loading: boolean 
     {
       key: "category",
       header: "Category",
-      render: (level) => <span className="text-xs text-ink-600">{titleCase(level.category)}</span>,
+      render: (level) => (
+        <span className="text-xs text-ink-600">
+          {titleCase(level.category)}
+        </span>
+      ),
     },
     {
       key: "location",
       header: "Location",
-      render: (level) => <span className="text-xs text-ink-600">{level.location ?? "—"}</span>,
+      render: (level) => (
+        <span className="text-xs text-ink-600">{level.location ?? "—"}</span>
+      ),
     },
     {
       key: "on_hand",
@@ -323,13 +387,17 @@ function StockTab({ levels, loading }: { levels: StockLevel[]; loading: boolean 
       key: "reorder_level",
       header: "Reorder at",
       numeric: true,
-      render: (level) => <span className="text-ink-600">{qty(level.reorder_level)}</span>,
+      render: (level) => (
+        <span className="text-ink-600">{qty(level.reorder_level)}</span>
+      ),
     },
     {
       key: "unit_cost",
       header: "Cost",
       numeric: true,
-      render: (level) => <span className="text-ink-700">{formatMoney(level.unit_cost)}</span>,
+      render: (level) => (
+        <span className="text-ink-700">{formatMoney(level.unit_cost)}</span>
+      ),
     },
     {
       key: "stock_value",
@@ -339,8 +407,10 @@ function StockTab({ levels, loading }: { levels: StockLevel[]; loading: boolean 
     },
   ];
 
-  if (summary.loading && summary.initial) return <Loading label="Counting the shelf…" />;
-  if (summary.error) return <ErrorState error={summary.error} onRetry={summary.refetch} />;
+  if (summary.loading && summary.initial)
+    return <Loading label="Counting the shelf…" />;
+  if (summary.error)
+    return <ErrorState error={summary.error} onRetry={summary.refetch} />;
 
   const totals = summary.data;
 
@@ -350,7 +420,10 @@ function StockTab({ levels, loading }: { levels: StockLevel[]; loading: boolean 
         <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <StatTile label="Parts" value={qty(totals.total_parts)} />
           <StatTile label="Units on hand" value={qty(totals.total_units)} />
-          <StatTile label="Stock at cost" value={formatMoney(totals.total_stock_value)} />
+          <StatTile
+            label="Stock at cost"
+            value={formatMoney(totals.total_stock_value)}
+          />
           <StatTile
             label="Low stock"
             value={qty(totals.low_stock_count)}
@@ -375,9 +448,17 @@ function StockTab({ levels, loading }: { levels: StockLevel[]; loading: boolean 
         {loading ? (
           <Loading />
         ) : levels.length === 0 ? (
-          <EmptyState title="The catalog is empty" description="Add a part before stocking it." />
+          <EmptyState
+            title="The catalog is empty"
+            description="Add a part before stocking it."
+          />
         ) : (
-          <DataTable rows={levels} columns={columns} rowKey={(level) => level.part_id} dense />
+          <DataTable
+            rows={levels}
+            columns={columns}
+            rowKey={(level) => level.part_id}
+            dense
+          />
         )}
       </Card>
     </>
@@ -389,8 +470,10 @@ const DIRECTION_NOTE: Record<string, string> = {
   RETURN: "A part coming back always adds to the balance.",
   ISSUE: "A part going to a job always comes off the shelf.",
   SCRAP: "Written-off stock always comes off the shelf.",
-  ADJUSTMENT: "A correction can go either way, so the direction has to be stated.",
-  TRANSFER: "A bin move can arrive or leave, so the direction has to be stated.",
+  ADJUSTMENT:
+    "A correction can go either way, so the direction has to be stated.",
+  TRANSFER:
+    "A bin move can arrive or leave, so the direction has to be stated.",
 };
 
 function RecordMovementModal({
@@ -425,12 +508,22 @@ function RecordMovementModal({
   const selected = parts.find((part) => part.part_id === form.values.part_id);
 
   const problems = {
-    part: form.values.part_id ? null : "Choose the part this movement is about.",
+    part: form.values.part_id
+      ? null
+      : "Choose the part this movement is about.",
     quantity: quantity > 0 ? null : "A movement has to be greater than zero.",
-    direction: needsDirection && direction === "" ? "State whether this adds or removes stock." : null,
-    reason: needsReason && form.values.reason.trim() === "" ? "Say why — a blank reason is not a record." : null,
+    direction:
+      needsDirection && direction === ""
+        ? "State whether this adds or removes stock."
+        : null,
+    reason:
+      needsReason && form.values.reason.trim() === ""
+        ? "Say why — a blank reason is not a record."
+        : null,
     location:
-      type === "TRANSFER" && !form.values.to_location.trim() && !form.values.from_location.trim()
+      type === "TRANSFER" &&
+      !form.values.to_location.trim() &&
+      !form.values.from_location.trim()
         ? "Name the other bin: where it arrives, or where it went."
         : null,
     negative:
@@ -445,7 +538,10 @@ function RecordMovementModal({
     // The direction is only meaningful for the two types that can go either way,
     // so choosing any other type clears a stale one rather than sending a
     // contradiction the server would refuse.
-    form.set("direction", next === "ADJUSTMENT" || next === "TRANSFER" ? form.values.direction : "");
+    form.set(
+      "direction",
+      next === "ADJUSTMENT" || next === "TRANSFER" ? form.values.direction : "",
+    );
   }
 
   async function submit() {
@@ -455,7 +551,10 @@ function RecordMovementModal({
       transaction_type: type,
       quantity,
       direction: needsDirection ? direction : null,
-      unit_cost: form.values.unit_cost === "" ? null : Number(form.values.unit_cost) || 0,
+      unit_cost:
+        form.values.unit_cost === ""
+          ? null
+          : Number(form.values.unit_cost) || 0,
       reference: form.values.reference || null,
       reason: form.values.reason || null,
       from_location: form.values.from_location || null,
@@ -479,7 +578,12 @@ function RecordMovementModal({
           <Button onClick={onClose} disabled={record.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={record.pending} disabled={blocked} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={record.pending}
+            disabled={blocked}
+            onClick={() => void submit()}
+          >
             Record movement
           </Button>
         </>
@@ -502,7 +606,8 @@ function RecordMovementModal({
             <option value="">Choose a part</option>
             {parts.map((part) => (
               <option key={part.part_id} value={part.part_id}>
-                {part.part_number} · {part.name} ({qty(part.quantity_on_hand)} on hand)
+                {part.part_number} · {part.name} ({qty(part.quantity_on_hand)}{" "}
+                on hand)
               </option>
             ))}
           </Select>
@@ -510,7 +615,10 @@ function RecordMovementModal({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Movement type" required>
-            <Select value={type} onChange={(event) => chooseType(event.target.value)}>
+            <Select
+              value={type}
+              onChange={(event) => chooseType(event.target.value)}
+            >
               {INVENTORY_TRANSACTION_TYPES.map((value) => (
                 <option key={value} value={value}>
                   {titleCase(value)}
@@ -522,7 +630,11 @@ function RecordMovementModal({
             label="Quantity"
             required
             error={problems.quantity ?? problems.negative}
-            hint={selected ? `${qty(selected.quantity_on_hand)} currently on hand.` : undefined}
+            hint={
+              selected
+                ? `${qty(selected.quantity_on_hand)} currently on hand.`
+                : undefined
+            }
           >
             <Input
               type="number"
@@ -580,20 +692,27 @@ function RecordMovementModal({
               <Input
                 value={form.values.to_location}
                 placeholder={selected?.location ?? "Bin, shelf or rack"}
-                onChange={(event) => form.set("to_location", event.target.value)}
+                onChange={(event) =>
+                  form.set("to_location", event.target.value)
+                }
               />
             </Field>
             <Field label="From location" hint="Where it came from.">
               <Input
                 value={form.values.from_location}
                 placeholder={selected?.location ?? "Bin, shelf or rack"}
-                onChange={(event) => form.set("from_location", event.target.value)}
+                onChange={(event) =>
+                  form.set("from_location", event.target.value)
+                }
               />
             </Field>
           </div>
         ) : null}
 
-        <Field label="Reference" hint="Optional — a PO number, a delivery note, a job card.">
+        <Field
+          label="Reference"
+          hint="Optional — a PO number, a delivery note, a job card."
+        >
           <Input
             value={form.values.reference}
             onChange={(event) => form.set("reference", event.target.value)}
@@ -619,8 +738,9 @@ function RecordMovementModal({
         </Field>
 
         <Notice tone="info">
-          Stock only moves through this ledger. On hand is never typed in anywhere else, and the row
-          keeps the balance either side of itself so any number on the shelf can be explained.
+          Stock only moves through this ledger. On hand is never typed in
+          anywhere else, and the row keeps the balance either side of itself so
+          any number on the shelf can be explained.
         </Notice>
       </form>
     </Modal>

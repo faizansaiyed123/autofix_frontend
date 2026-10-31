@@ -30,40 +30,51 @@ export const customersApi = {
     api.get<Customer[]>("/customers/search", { q, limit }),
   get: (id: string) => api.get<Customer>(`/customers/${id}`),
   create: (body: CustomerCreate) => api.post<Customer>("/customers/", body),
-  update: (id: string, body: CustomerUpdate) => api.patch<Customer>(`/customers/${id}`, body),
+  update: (id: string, body: CustomerUpdate) =>
+    api.patch<Customer>(`/customers/${id}`, body),
   remove: (id: string) => api.delete<void>(`/customers/${id}`),
   vehicles: (id: string) => api.get<Vehicle[]>(`/customers/${id}/vehicles`),
 };
 
 export const vehiclesApi = {
   list: (query?: Query) => api.get<Paginated<Vehicle>>("/vehicles/", query),
-  search: (q: string, limit = 20) => api.get<Vehicle[]>("/vehicles/search", { q, limit }),
+  search: (q: string, limit = 20) =>
+    api.get<Vehicle[]>("/vehicles/search", { q, limit }),
   get: (id: string) => api.get<Vehicle>(`/vehicles/${id}`),
   create: (body: VehicleCreate) => api.post<Vehicle>("/vehicles/", body),
-  update: (id: string, body: VehicleUpdate) => api.patch<Vehicle>(`/vehicles/${id}`, body),
+  update: (id: string, body: VehicleUpdate) =>
+    api.patch<Vehicle>(`/vehicles/${id}`, body),
   remove: (id: string) => api.delete<void>(`/vehicles/${id}`),
   setStatus: (id: string, status: VehicleStatus) =>
     api.patch<Vehicle>(`/vehicles/${id}/status`, undefined, { status }),
   mileage: (id: string) => api.get<MileageRecord[]>(`/vehicles/${id}/mileage`),
-  addMileage: (id: string, body: { mileage: number; source?: string; notes?: string | null }) =>
-    api.post<MileageRecord>(`/vehicles/${id}/mileage`, body),
+  addMileage: (
+    id: string,
+    body: { mileage: number; source?: string; notes?: string | null },
+  ) => api.post<MileageRecord>(`/vehicles/${id}/mileage`, body),
 };
 
 export const serviceRequestsApi = {
-  list: (query?: Query) => api.get<Paginated<ServiceRequest>>("/service_requests/", query),
+  list: (query?: Query) =>
+    api.get<Paginated<ServiceRequest>>("/service_requests/", query),
   get: (id: string) => api.get<ServiceRequest>(`/service_requests/${id}`),
-  create: (body: ServiceRequestCreate) => api.post<ServiceRequest>("/service_requests/", body),
+  create: (body: ServiceRequestCreate) =>
+    api.post<ServiceRequest>("/service_requests/", body),
   update: (id: string, body: ServiceRequestUpdate) =>
     api.patch<ServiceRequest>(`/service_requests/${id}`, body),
   remove: (id: string) => api.delete<void>(`/service_requests/${id}`),
   setStatus: (id: string, status: string) =>
-    api.patch<ServiceRequest>(`/service_requests/${id}/status`, undefined, { status }),
+    api.patch<ServiceRequest>(`/service_requests/${id}/status`, undefined, {
+      status,
+    }),
 };
 
 export const appointmentsApi = {
-  list: (query?: Query) => api.get<Paginated<Appointment>>("/appointments/", query),
+  list: (query?: Query) =>
+    api.get<Paginated<Appointment>>("/appointments/", query),
   get: (id: string) => api.get<Appointment>(`/appointments/${id}`),
-  create: (body: Record<string, unknown>) => api.post<Appointment>("/appointments/", body),
+  create: (body: Record<string, unknown>) =>
+    api.post<Appointment>("/appointments/", body),
   update: (id: string, body: Record<string, unknown>) =>
     api.patch<Appointment>(`/appointments/${id}`, body),
   remove: (id: string) => api.delete<void>(`/appointments/${id}`),
@@ -72,7 +83,8 @@ export const appointmentsApi = {
       status,
       cancellation_reason: cancellationReason ?? null,
     }),
-  calendar: (query?: Query) => api.get<CalendarResponse>("/appointments/calendar", query),
+  calendar: (query?: Query) =>
+    api.get<CalendarResponse>("/appointments/calendar", query),
   checkConflicts: (body: {
     scheduled_start: string;
     duration_minutes: number;
@@ -97,9 +109,11 @@ export const checkInsApi = {
 };
 
 export const inspectionsApi = {
-  list: (query?: Query) => api.get<Paginated<Inspection>>("/inspections/", query),
+  list: (query?: Query) =>
+    api.get<Paginated<Inspection>>("/inspections/", query),
   get: (id: string) => api.get<Inspection>(`/inspections/${id}`),
-  create: (body: InspectionCreate) => api.post<Inspection>("/inspections/", body),
+  create: (body: InspectionCreate) =>
+    api.post<Inspection>("/inspections/", body),
   update: (id: string, body: Partial<InspectionCreate> & { status?: string }) =>
     api.patch<Inspection>(`/inspections/${id}`, body),
   remove: (id: string) => api.delete<void>(`/inspections/${id}`),
@@ -111,5 +125,6 @@ export const inspectionsApi = {
     api.patch<InspectionItem>(`/inspections/${id}/items/${itemId}`, body),
   removeItem: (id: string, itemId: string) =>
     api.delete<void>(`/inspections/${id}/items/${itemId}`),
-  report: (id: string) => api.get<Record<string, unknown>>(`/inspections/${id}/report`),
+  report: (id: string) =>
+    api.get<Record<string, unknown>>(`/inspections/${id}/report`),
 };

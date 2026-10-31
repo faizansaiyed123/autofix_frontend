@@ -8,10 +8,21 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { appointmentsApi } from "@/lib/api/shop";
 import { estimatesApi, repairOrdersApi } from "@/lib/api/work";
@@ -50,7 +61,10 @@ export default function RepairOrdersPage() {
       key: "number",
       header: "RO",
       render: (ro) => (
-        <Link href={`/repair-orders/${ro.id}`} className="font-medium text-brand-700 hover:underline">
+        <Link
+          href={`/repair-orders/${ro.id}`}
+          className="font-medium text-brand-700 hover:underline"
+        >
           {ro.ro_number}
         </Link>
       ),
@@ -58,19 +72,31 @@ export default function RepairOrdersPage() {
     {
       key: "customer",
       header: "Customer",
-      render: (ro) => <span className="text-sm">{customerLabel(ro.customer_id)}</span>,
+      render: (ro) => (
+        <span className="text-sm">{customerLabel(ro.customer_id)}</span>
+      ),
     },
     {
       key: "vehicle",
       header: "Vehicle",
-      render: (ro) => <span className="text-sm">{vehicleLabel(ro.vehicle_id)}</span>,
+      render: (ro) => (
+        <span className="text-sm">{vehicleLabel(ro.vehicle_id)}</span>
+      ),
     },
     {
       key: "technician",
       header: "Technician",
-      render: (ro) => <span className="text-sm">{ro.technician_id ? userName(ro.technician_id) : "—"}</span>,
+      render: (ro) => (
+        <span className="text-sm">
+          {ro.technician_id ? userName(ro.technician_id) : "—"}
+        </span>
+      ),
     },
-    { key: "bay", header: "Bay", render: (ro) => <span className="text-sm">{ro.bay ?? "—"}</span> },
+    {
+      key: "bay",
+      header: "Bay",
+      render: (ro) => <span className="text-sm">{ro.bay ?? "—"}</span>,
+    },
     {
       key: "status",
       header: "Status",
@@ -86,7 +112,11 @@ export default function RepairOrdersPage() {
       key: "promised",
       header: "Promised",
       numeric: true,
-      render: (ro) => <span className="text-xs text-ink-600">{formatDateTime(ro.promised_at)}</span>,
+      render: (ro) => (
+        <span className="text-xs text-ink-600">
+          {formatDateTime(ro.promised_at)}
+        </span>
+      ),
     },
   ];
 
@@ -94,7 +124,9 @@ export default function RepairOrdersPage() {
     <>
       <PageHeader
         title="Repair orders"
-        subtitle={query.data ? `${query.data.meta.total} on the floor` : undefined}
+        subtitle={
+          query.data ? `${query.data.meta.total} on the floor` : undefined
+        }
         actions={
           can("repair_orders:write") ? (
             <Button variant="primary" onClick={() => setCreating(true)}>
@@ -157,7 +189,11 @@ export default function RepairOrdersPage() {
           />
         ) : (
           <>
-            <DataTable rows={query.data.data} columns={columns} rowKey={(ro) => ro.id} />
+            <DataTable
+              rows={query.data.data}
+              columns={columns}
+              rowKey={(ro) => ro.id}
+            />
             <Pagination
               page={query.data.meta.page}
               pages={query.data.meta.pages}
@@ -184,8 +220,11 @@ export default function RepairOrdersPage() {
 /** Done is COMPLETED or SKIPPED — a skipped task is finished, not outstanding. */
 function TaskProgress({ tasks }: { tasks: RepairTask[] }) {
   const total = tasks.length;
-  const done = tasks.filter((task) => task.status === "COMPLETED" || task.status === "SKIPPED").length;
-  if (total === 0) return <span className="text-xs text-ink-400">No tasks</span>;
+  const done = tasks.filter(
+    (task) => task.status === "COMPLETED" || task.status === "SKIPPED",
+  ).length;
+  if (total === 0)
+    return <span className="text-xs text-ink-400">No tasks</span>;
   const percent = Math.round((done / total) * 100);
   return (
     <span className="block">
@@ -193,7 +232,10 @@ function TaskProgress({ tasks }: { tasks: RepairTask[] }) {
         {done} of {total} done
       </span>
       <span className="mt-1 block h-1 w-20 overflow-hidden rounded-full bg-ink-200">
-        <span className="block h-full bg-brand-500" style={{ width: `${percent}%` }} />
+        <span
+          className="block h-full bg-brand-500"
+          style={{ width: `${percent}%` }}
+        />
       </span>
     </span>
   );
@@ -213,7 +255,11 @@ function StaffFilter({
   return (
     <label className="block">
       <span className="sr-only">{label}</span>
-      <Select value={value} onChange={(event) => onChange(event.target.value)} className="w-48">
+      <Select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-48"
+      >
         <option value="">{label}</option>
         {staff.map((person) => (
           <option key={person.id} value={person.id}>
@@ -238,7 +284,12 @@ let taskCounter = 0;
 
 function blankTask(): TaskDraft {
   taskCounter += 1;
-  return { key: `task-${taskCounter}`, description: "", notes: "", assigned_to_id: "" };
+  return {
+    key: `task-${taskCounter}`,
+    description: "",
+    notes: "",
+    assigned_to_id: "",
+  };
 }
 
 function NewRepairOrderModal({
@@ -269,24 +320,33 @@ function NewRepairOrderModal({
   // Only estimates the backend will accept are offered: it refuses anything that
   // is not APPROVED or PARTIALLY_APPROVED, or that is for another vehicle.
   const estimates = useApiQuery(
-    () => estimatesApi.list({ vehicle_id: vehicleId, size: 100 }).then((page) => page.data),
+    () =>
+      estimatesApi
+        .list({ vehicle_id: vehicleId, size: 100 })
+        .then((page) => page.data),
     [vehicleId],
     { enabled: Boolean(vehicleId) && open },
   );
 
   const appointments = useApiQuery(
-    () => appointmentsApi.list({ customer_id: customerId, size: 50 }).then((page) => page.data),
+    () =>
+      appointmentsApi
+        .list({ customer_id: customerId, size: 50 })
+        .then((page) => page.data),
     [customerId],
     { enabled: Boolean(customerId) && open },
   );
 
-  const create = useApiMutation((body: Parameters<typeof repairOrdersApi.create>[0]) =>
-    repairOrdersApi.create(body),
+  const create = useApiMutation(
+    (body: Parameters<typeof repairOrdersApi.create>[0]) =>
+      repairOrdersApi.create(body),
   );
 
   const vehicles = customerId ? vehiclesFor(customerId) : [];
   const usableEstimates = (estimates.data ?? []).filter(
-    (estimate) => estimate.status === "APPROVED" || estimate.status === "PARTIALLY_APPROVED",
+    (estimate) =>
+      estimate.status === "APPROVED" ||
+      estimate.status === "PARTIALLY_APPROVED",
   );
 
   function reset() {
@@ -309,7 +369,8 @@ function NewRepairOrderModal({
     const found: string[] = [];
     if (!customerId) found.push("Choose a customer");
     if (!vehicleId) found.push("Choose the vehicle");
-    if (tasks.some((task) => !task.description.trim())) found.push("Every task needs a description");
+    if (tasks.some((task) => !task.description.trim()))
+      found.push("Every task needs a description");
     setProblems(found);
     if (found.length > 0) return;
 
@@ -352,7 +413,11 @@ function NewRepairOrderModal({
           <Button onClick={onClose} disabled={create.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={create.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={create.pending}
+            onClick={() => void submit()}
+          >
             Create repair order
           </Button>
         </>
@@ -396,7 +461,11 @@ function NewRepairOrderModal({
               ))}
             </Select>
           </Field>
-          <Field label="Vehicle" required hint={customerId ? undefined : "Pick a customer first."}>
+          <Field
+            label="Vehicle"
+            required
+            hint={customerId ? undefined : "Pick a customer first."}
+          >
             <Select
               value={vehicleId}
               disabled={!customerId}
@@ -424,7 +493,11 @@ function NewRepairOrderModal({
                 : "Pick a vehicle to see its approved estimates"
             }
           >
-            <Select value={estimateId} onChange={(event) => setEstimateId(event.target.value)} disabled={!vehicleId}>
+            <Select
+              value={estimateId}
+              onChange={(event) => setEstimateId(event.target.value)}
+              disabled={!vehicleId}
+            >
               <option value="">None</option>
               {usableEstimates.map((estimate) => (
                 <option key={estimate.id} value={estimate.id}>
@@ -433,7 +506,10 @@ function NewRepairOrderModal({
               ))}
             </Select>
           </Field>
-          <Field label="Appointment" hint="Optional — the booking this job came from">
+          <Field
+            label="Appointment"
+            hint="Optional — the booking this job came from"
+          >
             <Select
               value={appointmentId}
               onChange={(event) => setAppointmentId(event.target.value)}
@@ -442,7 +518,8 @@ function NewRepairOrderModal({
               <option value="">None</option>
               {(appointments.data ?? []).map((appointment) => (
                 <option key={appointment.id} value={appointment.id}>
-                  {formatDateTime(appointment.scheduled_start)} — {appointment.service_type}
+                  {formatDateTime(appointment.scheduled_start)} —{" "}
+                  {appointment.service_type}
                 </option>
               ))}
             </Select>
@@ -451,7 +528,10 @@ function NewRepairOrderModal({
 
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label="Advisor">
-            <Select value={advisorId} onChange={(event) => setAdvisorId(event.target.value)}>
+            <Select
+              value={advisorId}
+              onChange={(event) => setAdvisorId(event.target.value)}
+            >
               <option value="">Unassigned</option>
               {staff.map((person) => (
                 <option key={person.id} value={person.id}>
@@ -461,7 +541,10 @@ function NewRepairOrderModal({
             </Select>
           </Field>
           <Field label="Technician">
-            <Select value={technicianId} onChange={(event) => setTechnicianId(event.target.value)}>
+            <Select
+              value={technicianId}
+              onChange={(event) => setTechnicianId(event.target.value)}
+            >
               <option value="">Unassigned</option>
               {staff.map((person) => (
                 <option key={person.id} value={person.id}>
@@ -471,7 +554,10 @@ function NewRepairOrderModal({
             </Select>
           </Field>
           <Field label="Bay">
-            <Input value={bay} onChange={(event) => setBay(event.target.value)} />
+            <Input
+              value={bay}
+              onChange={(event) => setBay(event.target.value)}
+            />
           </Field>
         </div>
 
@@ -503,9 +589,16 @@ function NewRepairOrderModal({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Internal notes">
-            <Textarea rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} />
+            <Textarea
+              rows={2}
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+            />
           </Field>
-          <Field label="Customer notes" hint="What the customer sees on their paperwork">
+          <Field
+            label="Customer notes"
+            hint="What the customer sees on their paperwork"
+          >
             <Textarea
               rows={2}
               value={customerNotes}
@@ -515,19 +608,29 @@ function NewRepairOrderModal({
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-medium tracking-wide text-ink-600 uppercase">Tasks</p>
+          <p className="text-xs font-medium tracking-wide text-ink-600 uppercase">
+            Tasks
+          </p>
           <p className="text-xs text-ink-500">
-            Leave this empty and an approved estimate generates the breakdown from its approved lines.
-            The breakdown cannot be changed once work starts.
+            Leave this empty and an approved estimate generates the breakdown
+            from its approved lines. The breakdown cannot be changed once work
+            starts.
           </p>
           {tasks.map((task, index) => (
-            <div key={task.key} className="rounded-lg border border-ink-200 p-3">
+            <div
+              key={task.key}
+              className="rounded-lg border border-ink-200 p-3"
+            >
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-semibold text-ink-700">Task {index + 1}</p>
+                <p className="text-xs font-semibold text-ink-700">
+                  Task {index + 1}
+                </p>
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => setTasks(tasks.filter((t) => t.key !== task.key))}
+                  onClick={() =>
+                    setTasks(tasks.filter((t) => t.key !== task.key))
+                  }
                 >
                   Remove
                 </Button>
@@ -539,7 +642,9 @@ function NewRepairOrderModal({
                     onChange={(event) =>
                       setTasks(
                         tasks.map((t) =>
-                          t.key === task.key ? { ...t, description: event.target.value } : t,
+                          t.key === task.key
+                            ? { ...t, description: event.target.value }
+                            : t,
                         ),
                       )
                     }
@@ -551,7 +656,9 @@ function NewRepairOrderModal({
                     onChange={(event) =>
                       setTasks(
                         tasks.map((t) =>
-                          t.key === task.key ? { ...t, assigned_to_id: event.target.value } : t,
+                          t.key === task.key
+                            ? { ...t, assigned_to_id: event.target.value }
+                            : t,
                         ),
                       )
                     }
@@ -571,14 +678,20 @@ function NewRepairOrderModal({
                   value={task.notes}
                   onChange={(event) =>
                     setTasks(
-                      tasks.map((t) => (t.key === task.key ? { ...t, notes: event.target.value } : t)),
+                      tasks.map((t) =>
+                        t.key === task.key
+                          ? { ...t, notes: event.target.value }
+                          : t,
+                      ),
                     )
                   }
                 />
               </Field>
             </div>
           ))}
-          <Button onClick={() => setTasks([...tasks, blankTask()])}>Add task</Button>
+          <Button onClick={() => setTasks([...tasks, blankTask()])}>
+            Add task
+          </Button>
         </div>
 
         <Notice tone="info">

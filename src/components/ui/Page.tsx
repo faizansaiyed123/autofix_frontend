@@ -18,11 +18,19 @@ export function PageHeader({
   return (
     <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
       <div>
-        {breadcrumb ? <div className="mb-1 text-xs text-ink-500">{breadcrumb}</div> : null}
-        <h1 className="text-xl font-semibold tracking-tight text-ink-900">{title}</h1>
-        {subtitle ? <p className="mt-1 text-sm text-ink-600">{subtitle}</p> : null}
+        {breadcrumb ? (
+          <div className="mb-1 text-xs text-ink-500">{breadcrumb}</div>
+        ) : null}
+        <h1 className="text-xl font-semibold tracking-tight text-ink-900">
+          {title}
+        </h1>
+        {subtitle ? (
+          <p className="mt-1 text-sm text-ink-600">{subtitle}</p>
+        ) : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="flex flex-wrap items-center gap-2">{actions}</div>
+      ) : null}
     </header>
   );
 }
@@ -99,8 +107,12 @@ export function StatTile({
   } as const;
   return (
     <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-ink-200">
-      <p className="text-xs font-medium tracking-wide text-ink-500 uppercase">{label}</p>
-      <p className={`tabular mt-1 text-2xl font-semibold ${tones[tone]}`}>{value}</p>
+      <p className="text-xs font-medium tracking-wide text-ink-500 uppercase">
+        {label}
+      </p>
+      <p className={`tabular mt-1 text-2xl font-semibold ${tones[tone]}`}>
+        {value}
+      </p>
       {hint ? <p className="mt-1 text-xs text-ink-500">{hint}</p> : null}
     </div>
   );

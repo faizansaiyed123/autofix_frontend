@@ -7,10 +7,21 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { partRequestsApi, repairOrdersApi } from "@/lib/api/work";
 import type { ApiError } from "@/lib/api/client";
@@ -57,7 +68,9 @@ export default function PartRequestsPage() {
   );
   const fulfil = useApiMutation((id: string) => partRequestsApi.fulfil(id));
 
-  const roNumberById = new Map((orders.data ?? []).map((ro) => [ro.id, ro.ro_number]));
+  const roNumberById = new Map(
+    (orders.data ?? []).map((ro) => [ro.id, ro.ro_number]),
+  );
   const mayDecide = can("part_requests:approve");
 
   const columns: Column<PartRequest>[] = [
@@ -67,8 +80,12 @@ export default function PartRequestsPage() {
       render: (request) => (
         <div className="min-w-0">
           <p className="font-medium text-ink-900">{request.part_name}</p>
-          {request.part_number ? <p className="text-xs text-ink-500">{request.part_number}</p> : null}
-          <p className="mt-1 line-clamp-2 text-xs text-ink-500">{request.reason}</p>
+          {request.part_number ? (
+            <p className="text-xs text-ink-500">{request.part_number}</p>
+          ) : null}
+          <p className="mt-1 line-clamp-2 text-xs text-ink-500">
+            {request.reason}
+          </p>
         </div>
       ),
     },
@@ -76,13 +93,21 @@ export default function PartRequestsPage() {
       key: "number",
       header: "Number",
       numeric: true,
-      render: (request) => <span className="tabular text-xs text-ink-500">#{request.id.slice(0, 8)}</span>,
+      render: (request) => (
+        <span className="tabular text-xs text-ink-500">
+          #{request.id.slice(0, 8)}
+        </span>
+      ),
     },
     {
       key: "quantity",
       header: "Qty",
       numeric: true,
-      render: (request) => <span className="tabular text-sm">{formatNumber(request.quantity, 2)}</span>,
+      render: (request) => (
+        <span className="tabular text-sm">
+          {formatNumber(request.quantity, 2)}
+        </span>
+      ),
     },
     {
       key: "ro",
@@ -112,7 +137,9 @@ export default function PartRequestsPage() {
         <div className="min-w-0">
           <StatusBadge status={request.status} />
           {request.decision_reason ? (
-            <p className="mt-1 text-xs text-ink-500">{request.decision_reason}</p>
+            <p className="mt-1 text-xs text-ink-500">
+              {request.decision_reason}
+            </p>
           ) : null}
         </div>
       ),
@@ -122,7 +149,9 @@ export default function PartRequestsPage() {
       header: "Decided",
       numeric: true,
       render: (request) => (
-        <span className="text-xs text-ink-500">{formatDateTime(request.decided_at)}</span>
+        <span className="text-xs text-ink-500">
+          {formatDateTime(request.decided_at)}
+        </span>
       ),
     },
     {
@@ -131,8 +160,12 @@ export default function PartRequestsPage() {
       numeric: true,
       render: (request) => (
         <div className="flex items-center justify-end gap-2">
-          {request.status === "PENDING" && request.requested_by_id && request.requested_by_id === user?.id ? (
-            <span className="text-xs text-ink-400">You raised this request; another staff member must decide it.</span>
+          {request.status === "PENDING" &&
+          request.requested_by_id &&
+          request.requested_by_id === user?.id ? (
+            <span className="text-xs text-ink-400">
+              You raised this request; another staff member must decide it.
+            </span>
           ) : !mayDecide ? (
             <span className="text-xs text-ink-400">
               {request.status === "PENDING" ? "Awaiting parts" : "—"}
@@ -143,11 +176,17 @@ export default function PartRequestsPage() {
                 size="sm"
                 variant="success"
                 pending={decide.pending}
-                onClick={() => decide.run(request.id, "APPROVED").then(() => query.refetch())}
+                onClick={() =>
+                  decide.run(request.id, "APPROVED").then(() => query.refetch())
+                }
               >
                 Approve
               </Button>
-              <Button size="sm" variant="danger" onClick={() => setRejecting(request)}>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => setRejecting(request)}
+              >
                 Reject
               </Button>
             </>
@@ -194,8 +233,8 @@ export default function PartRequestsPage() {
 
       <div className="mb-4">
         <Notice tone="info">
-          Approving, rejecting and fulfilling are held by parts staff and the owner. Whoever raised
-          a request cannot be the one who decides it.
+          Approving, rejecting and fulfilling are held by parts staff and the
+          owner. Whoever raised a request cannot be the one who decides it.
         </Notice>
       </div>
 
@@ -252,7 +291,11 @@ export default function PartRequestsPage() {
           />
         ) : (
           <>
-            <DataTable rows={query.data.data} columns={columns} rowKey={(request) => request.id} />
+            <DataTable
+              rows={query.data.data}
+              columns={columns}
+              rowKey={(request) => request.id}
+            />
             <Pagination
               page={query.data.meta.page}
               pages={query.data.meta.pages}
@@ -308,8 +351,9 @@ function NewPartRequestModal({
   const [reason, setReason] = useState("");
   const [problems, setProblems] = useState<string[]>([]);
 
-  const create = useApiMutation((body: Parameters<typeof partRequestsApi.create>[0]) =>
-    partRequestsApi.create(body),
+  const create = useApiMutation(
+    (body: Parameters<typeof partRequestsApi.create>[0]) =>
+      partRequestsApi.create(body),
   );
 
   // Only offer repair orders the API accepts for part requests.
@@ -357,7 +401,11 @@ function NewPartRequestModal({
           <Button onClick={onClose} disabled={create.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={create.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={create.pending}
+            onClick={() => void submit()}
+          >
             Send to parts
           </Button>
         </>
@@ -407,7 +455,11 @@ function NewPartRequestModal({
         </Field>
 
         <Field label="Task" hint="Optional">
-          <Select value={taskId} onChange={(event) => setTaskId(event.target.value)} disabled={!selected}>
+          <Select
+            value={taskId}
+            onChange={(event) => setTaskId(event.target.value)}
+            disabled={!selected}
+          >
             <option value="">Not against a task</option>
             {(selected?.tasks ?? []).map((task) => (
               <option key={task.id} value={task.id}>
@@ -419,10 +471,16 @@ function NewPartRequestModal({
 
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label="Part number">
-            <Input value={partNumber} onChange={(event) => setPartNumber(event.target.value)} />
+            <Input
+              value={partNumber}
+              onChange={(event) => setPartNumber(event.target.value)}
+            />
           </Field>
           <Field label="Part name" required>
-            <Input value={partName} onChange={(event) => setPartName(event.target.value)} />
+            <Input
+              value={partName}
+              onChange={(event) => setPartName(event.target.value)}
+            />
           </Field>
           <Field label="Quantity" required>
             <Input
@@ -436,12 +494,16 @@ function NewPartRequestModal({
         </div>
 
         <Field label="Why it is needed" required>
-          <Textarea rows={3} value={reason} onChange={(event) => setReason(event.target.value)} />
+          <Textarea
+            rows={3}
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
         </Field>
 
         <Notice tone="info">
-          Parts staff approve or reject, then mark it fulfilled once the part is staged for the job.
-          You cannot approve your own request.
+          Parts staff approve or reject, then mark it fulfilled once the part is
+          staged for the job. You cannot approve your own request.
         </Notice>
       </form>
     </Modal>
@@ -511,7 +573,8 @@ function RejectRequestModal({
           <div className="rounded-lg bg-ink-50 px-3 py-2 text-sm">
             <p className="font-medium text-ink-900">{request.part_name}</p>
             <p className="text-xs text-ink-600">
-              {formatNumber(request.quantity, 2)} · asked because: {request.reason}
+              {formatNumber(request.quantity, 2)} · asked because:{" "}
+              {request.reason}
             </p>
           </div>
         ) : null}
@@ -526,7 +589,9 @@ function RejectRequestModal({
           />
         </Field>
         {reasonMissing ? (
-          <p role="alert" className="text-sm text-rose-700">A reason is required to reject this request.</p>
+          <p role="alert" className="text-sm text-rose-700">
+            A reason is required to reject this request.
+          </p>
         ) : null}
       </form>
     </Modal>

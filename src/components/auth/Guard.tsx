@@ -29,7 +29,8 @@ export function ProtectedRoute({
 
   // One label for both waiting states: the two branches render the same component,
   // and a signed-out visitor's very first paint must match what the server sent.
-  if (status !== "authenticated") return <Loading label="Checking your access…" />;
+  if (status !== "authenticated")
+    return <Loading label="Checking your access…" />;
   if (staffOnly && isCustomer) return <Loading label="Checking your access…" />;
 
   return <>{children}</>;
@@ -48,7 +49,11 @@ export function Can({
   fallback?: ReactNode;
 }) {
   const { can, canAny } = useSession();
-  const allowed = permission ? can(permission) : anyOf ? canAny(...anyOf) : true;
+  const allowed = permission
+    ? can(permission)
+    : anyOf
+      ? canAny(...anyOf)
+      : true;
   return <>{allowed ? children : fallback}</>;
 }
 

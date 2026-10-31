@@ -8,14 +8,35 @@ import { StatusBadge, YesNo } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, KeyValue, KeyValueGrid } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { appointmentsApi, customersApi } from "@/lib/api/shop";
 import { estimatesApi, repairOrdersApi } from "@/lib/api/work";
 import { invoicesApi } from "@/lib/api/money";
-import type { Appointment, Customer, CustomerStatus, ContactMethod, Estimate, Invoice, RepairOrder, Vehicle } from "@/lib/api/types";
+import type {
+  Appointment,
+  Customer,
+  CustomerStatus,
+  ContactMethod,
+  Estimate,
+  Invoice,
+  RepairOrder,
+  Vehicle,
+} from "@/lib/api/types";
 import { useApiMutation } from "@/lib/hooks/useApiMutation";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { useSession } from "@/lib/auth/AuthProvider";
@@ -31,7 +52,8 @@ export default function CustomerDetailPage() {
   const customer = useApiQuery(() => customersApi.get(id), [id]);
   const vehicles = useApiQuery(() => customersApi.vehicles(id), [id]);
   const appointments = useApiQuery(
-    () => appointmentsApi.list({ customer_id: id, size: 10 }).then((p) => p.data),
+    () =>
+      appointmentsApi.list({ customer_id: id, size: 10 }).then((p) => p.data),
     [id],
   );
   const estimates = useApiQuery(
@@ -39,7 +61,8 @@ export default function CustomerDetailPage() {
     [id],
   );
   const repairOrders = useApiQuery(
-    () => repairOrdersApi.list({ customer_id: id, size: 10 }).then((p) => p.data),
+    () =>
+      repairOrdersApi.list({ customer_id: id, size: 10 }).then((p) => p.data),
     [id],
   );
   const invoices = useApiQuery(
@@ -47,8 +70,10 @@ export default function CustomerDetailPage() {
     [id],
   );
 
-  if (customer.loading && customer.initial) return <Loading label="Opening the account…" />;
-  if (customer.error) return <ErrorState error={customer.error} onRetry={customer.refetch} />;
+  if (customer.loading && customer.initial)
+    return <Loading label="Opening the account…" />;
+  if (customer.error)
+    return <ErrorState error={customer.error} onRetry={customer.refetch} />;
 
   const record = customer.data;
   if (!record) return <ErrorState error={new Error("Customer not found")} />;
@@ -56,7 +81,11 @@ export default function CustomerDetailPage() {
   return (
     <>
       <PageHeader
-        breadcrumb={<Link href="/customers" className="hover:underline">Customers</Link>}
+        breadcrumb={
+          <Link href="/customers" className="hover:underline">
+            Customers
+          </Link>
+        }
         title={`${record.first_name} ${record.last_name}`}
         subtitle={record.company_name ?? undefined}
         actions={
@@ -75,7 +104,10 @@ export default function CustomerDetailPage() {
           <KeyValueGrid className="grid-cols-2">
             <KeyValue label="Email">
               {record.email ? (
-                <a href={`mailto:${record.email}`} className="text-brand-700 hover:underline">
+                <a
+                  href={`mailto:${record.email}`}
+                  className="text-brand-700 hover:underline"
+                >
                   {record.email}
                 </a>
               ) : (
@@ -109,13 +141,18 @@ export default function CustomerDetailPage() {
           ) : (
             <ul className="grid gap-3 sm:grid-cols-2">
               {record.addresses.map((address, index) => (
-                <li key={address.id ?? index} className="rounded-lg bg-ink-50 p-3 text-sm">
+                <li
+                  key={address.id ?? index}
+                  className="rounded-lg bg-ink-50 p-3 text-sm"
+                >
                   <p className="mb-1 text-xs font-medium tracking-wide text-ink-500 uppercase">
                     {address.address_type}
                   </p>
                   <p className="text-ink-800">{address.street}</p>
                   <p className="text-ink-600">
-                    {[address.city, address.state, address.postal_code].filter(Boolean).join(", ")}
+                    {[address.city, address.state, address.postal_code]
+                      .filter(Boolean)
+                      .join(", ")}
                   </p>
                   <p className="text-ink-500">{address.country}</p>
                 </li>
@@ -131,7 +168,10 @@ export default function CustomerDetailPage() {
             <CardHeader
               title="Vehicles"
               actions={
-                <Link href="/vehicles" className="text-sm text-brand-700 hover:underline">
+                <Link
+                  href="/vehicles"
+                  className="text-sm text-brand-700 hover:underline"
+                >
                   Vehicle book
                 </Link>
               }
@@ -165,7 +205,12 @@ export default function CustomerDetailPage() {
           ) : !appointments.data || appointments.data.length === 0 ? (
             <EmptyState title="No appointments yet" />
           ) : (
-            <DataTable rows={appointments.data} dense rowKey={(a) => a.id} columns={appointmentColumns} />
+            <DataTable
+              rows={appointments.data}
+              dense
+              rowKey={(a) => a.id}
+              columns={appointmentColumns}
+            />
           )}
         </Card>
 
@@ -178,7 +223,12 @@ export default function CustomerDetailPage() {
           ) : !estimates.data || estimates.data.length === 0 ? (
             <EmptyState title="No estimates yet" />
           ) : (
-            <DataTable rows={estimates.data} dense rowKey={(e) => e.id} columns={estimateColumns} />
+            <DataTable
+              rows={estimates.data}
+              dense
+              rowKey={(e) => e.id}
+              columns={estimateColumns}
+            />
           )}
         </Card>
 
@@ -191,7 +241,12 @@ export default function CustomerDetailPage() {
           ) : !repairOrders.data || repairOrders.data.length === 0 ? (
             <EmptyState title="No repair orders yet" />
           ) : (
-            <DataTable rows={repairOrders.data} dense rowKey={(r) => r.id} columns={repairOrderColumns} />
+            <DataTable
+              rows={repairOrders.data}
+              dense
+              rowKey={(r) => r.id}
+              columns={repairOrderColumns}
+            />
           )}
         </Card>
 
@@ -204,7 +259,12 @@ export default function CustomerDetailPage() {
           ) : !invoices.data || invoices.data.length === 0 ? (
             <EmptyState title="No invoices yet" />
           ) : (
-            <DataTable rows={invoices.data} dense rowKey={(i) => i.id} columns={invoiceColumns} />
+            <DataTable
+              rows={invoices.data}
+              dense
+              rowKey={(i) => i.id}
+              columns={invoiceColumns}
+            />
           )}
         </Card>
       </div>
@@ -228,7 +288,10 @@ const vehicleColumns: Column<Vehicle>[] = [
     key: "vehicle",
     header: "Vehicle",
     render: (v) => (
-      <Link href={`/vehicles/${v.id}`} className="font-medium text-brand-700 hover:underline">
+      <Link
+        href={`/vehicles/${v.id}`}
+        className="font-medium text-brand-700 hover:underline"
+      >
         {[v.year, v.make, v.model].filter(Boolean).join(" ")}
       </Link>
     ),
@@ -243,18 +306,33 @@ const vehicleColumns: Column<Vehicle>[] = [
       </span>
     ),
   },
-  { key: "mileage", header: "Mileage", numeric: true, render: (v) => formatNumber(v.mileage) },
-  { key: "status", header: "Status", render: (v) => <StatusBadge status={v.status} /> },
+  {
+    key: "mileage",
+    header: "Mileage",
+    numeric: true,
+    render: (v) => formatNumber(v.mileage),
+  },
+  {
+    key: "status",
+    header: "Status",
+    render: (v) => <StatusBadge status={v.status} />,
+  },
 ];
 
 const appointmentColumns: Column<Appointment>[] = [
   {
     key: "when",
     header: "When",
-    render: (a) => <span className="text-xs">{formatDateTime(a.scheduled_start)}</span>,
+    render: (a) => (
+      <span className="text-xs">{formatDateTime(a.scheduled_start)}</span>
+    ),
   },
   { key: "service", header: "Service", render: (a) => a.service_type },
-  { key: "status", header: "Status", render: (a) => <StatusBadge status={a.status} /> },
+  {
+    key: "status",
+    header: "Status",
+    render: (a) => <StatusBadge status={a.status} />,
+  },
 ];
 
 const estimateColumns: Column<Estimate>[] = [
@@ -262,13 +340,25 @@ const estimateColumns: Column<Estimate>[] = [
     key: "number",
     header: "Estimate",
     render: (e) => (
-      <Link href={`/estimates/${e.id}`} className="font-medium text-brand-700 hover:underline">
+      <Link
+        href={`/estimates/${e.id}`}
+        className="font-medium text-brand-700 hover:underline"
+      >
         {e.estimate_number}
       </Link>
     ),
   },
-  { key: "total", header: "Total", numeric: true, render: (e) => formatMoney(e.total) },
-  { key: "status", header: "Status", render: (e) => <StatusBadge status={e.status} /> },
+  {
+    key: "total",
+    header: "Total",
+    numeric: true,
+    render: (e) => formatMoney(e.total),
+  },
+  {
+    key: "status",
+    header: "Status",
+    render: (e) => <StatusBadge status={e.status} />,
+  },
 ];
 
 const repairOrderColumns: Column<RepairOrder>[] = [
@@ -276,13 +366,20 @@ const repairOrderColumns: Column<RepairOrder>[] = [
     key: "number",
     header: "RO",
     render: (r) => (
-      <Link href={`/repair-orders/${r.id}`} className="font-medium text-brand-700 hover:underline">
+      <Link
+        href={`/repair-orders/${r.id}`}
+        className="font-medium text-brand-700 hover:underline"
+      >
         {r.ro_number}
       </Link>
     ),
   },
   { key: "bay", header: "Bay", render: (r) => r.bay ?? "—" },
-  { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status} /> },
+  {
+    key: "status",
+    header: "Status",
+    render: (r) => <StatusBadge status={r.status} />,
+  },
 ];
 
 const invoiceColumns: Column<Invoice>[] = [
@@ -290,12 +387,20 @@ const invoiceColumns: Column<Invoice>[] = [
     key: "number",
     header: "Invoice",
     render: (i) => (
-      <Link href={`/invoices/${i.id}`} className="font-medium text-brand-700 hover:underline">
+      <Link
+        href={`/invoices/${i.id}`}
+        className="font-medium text-brand-700 hover:underline"
+      >
         {i.invoice_number}
       </Link>
     ),
   },
-  { key: "balance", header: "Balance", numeric: true, render: (i) => formatMoney(i.balance) },
+  {
+    key: "balance",
+    header: "Balance",
+    numeric: true,
+    render: (i) => formatMoney(i.balance),
+  },
   {
     key: "status",
     header: "Status",
@@ -365,7 +470,11 @@ function EditCustomerModal({
               className="mr-auto"
               pending={remove.pending}
               onClick={() => {
-                if (confirm("Delete this customer? Only a customer with no history can be removed.")) {
+                if (
+                  confirm(
+                    "Delete this customer? Only a customer with no history can be removed.",
+                  )
+                ) {
                   remove.run().then((ok) => {
                     if (ok !== null) onDeleted();
                   });
@@ -378,7 +487,11 @@ function EditCustomerModal({
           <Button onClick={onClose} disabled={save.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={save.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={save.pending}
+            onClick={() => void submit()}
+          >
             Save
           </Button>
         </>
@@ -394,10 +507,16 @@ function EditCustomerModal({
         <FormError error={save.error ?? remove.error} />
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="First name" required>
-            <Input value={form.values.first_name} onChange={(e) => form.set("first_name", e.target.value)} />
+            <Input
+              value={form.values.first_name}
+              onChange={(e) => form.set("first_name", e.target.value)}
+            />
           </Field>
           <Field label="Last name" required>
-            <Input value={form.values.last_name} onChange={(e) => form.set("last_name", e.target.value)} />
+            <Input
+              value={form.values.last_name}
+              onChange={(e) => form.set("last_name", e.target.value)}
+            />
           </Field>
         </div>
         <Field label="Company">
@@ -408,17 +527,26 @@ function EditCustomerModal({
         </Field>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Email">
-            <Input type="email" value={form.values.email} onChange={(e) => form.set("email", e.target.value)} />
+            <Input
+              type="email"
+              value={form.values.email}
+              onChange={(e) => form.set("email", e.target.value)}
+            />
           </Field>
           <Field label="Phone">
-            <Input value={form.values.phone} onChange={(e) => form.set("phone", e.target.value)} />
+            <Input
+              value={form.values.phone}
+              onChange={(e) => form.set("phone", e.target.value)}
+            />
           </Field>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Prefers">
             <Select
               value={form.values.preferred_contact}
-              onChange={(e) => form.set("preferred_contact", e.target.value as ContactMethod)}
+              onChange={(e) =>
+                form.set("preferred_contact", e.target.value as ContactMethod)
+              }
             >
               <option value="EMAIL">Email</option>
               <option value="PHONE">Phone</option>
@@ -428,7 +556,9 @@ function EditCustomerModal({
           <Field label="Status">
             <Select
               value={form.values.customer_status}
-              onChange={(e) => form.set("customer_status", e.target.value as CustomerStatus)}
+              onChange={(e) =>
+                form.set("customer_status", e.target.value as CustomerStatus)
+              }
             >
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
@@ -437,11 +567,16 @@ function EditCustomerModal({
           </Field>
         </div>
         <Field label="Notes">
-          <Textarea rows={3} value={form.values.notes} onChange={(e) => form.set("notes", e.target.value)} />
+          <Textarea
+            rows={3}
+            value={form.values.notes}
+            onChange={(e) => form.set("notes", e.target.value)}
+          />
         </Field>
         {!customer.user_id ? (
           <Notice tone="info">
-            This account has no portal login, so nothing on it is visible to the customer online.
+            This account has no portal login, so nothing on it is visible to the
+            customer online.
           </Notice>
         ) : null}
       </form>

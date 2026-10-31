@@ -9,7 +9,12 @@ import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
 import { Field, FormError, Input, Select, useForm } from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, SearchInput, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { usersApi } from "@/lib/api/insight";
 import type { Role, ShopUser, UserCreate } from "@/lib/api/types";
 import { useApiMutation } from "@/lib/hooks/useApiMutation";
@@ -18,16 +23,23 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { titleCase } from "@/lib/format";
 
 /** Staff access follows roles, not the mutable `is_staff` flag; deactivation preserves history. */
-const ROLES: Role[] = ["OWNER", "SERVICE_ADVISOR", "TECHNICIAN", "PARTS_STAFF", "CUSTOMER"];
+const ROLES: Role[] = [
+  "OWNER",
+  "SERVICE_ADVISOR",
+  "TECHNICIAN",
+  "PARTS_STAFF",
+  "CUSTOMER",
+];
 
 /** Roles are not statuses, so this is the one place a role gets its own colour. */
-const ROLE_TONES: Record<string, "neutral" | "info" | "progress" | "warning"> = {
-  OWNER: "warning",
-  SERVICE_ADVISOR: "info",
-  TECHNICIAN: "progress",
-  PARTS_STAFF: "neutral",
-  CUSTOMER: "neutral",
-};
+const ROLE_TONES: Record<string, "neutral" | "info" | "progress" | "warning"> =
+  {
+    OWNER: "warning",
+    SERVICE_ADVISOR: "info",
+    TECHNICIAN: "progress",
+    PARTS_STAFF: "neutral",
+    CUSTOMER: "neutral",
+  };
 
 export default function StaffPage() {
   const { can, user } = useSession();
@@ -91,7 +103,13 @@ export default function StaffPage() {
     {
       key: "active",
       header: "Active",
-      render: (u) => <YesNo value={u.is_active} trueLabel="Active" falseLabel="Deactivated" />,
+      render: (u) => (
+        <YesNo
+          value={u.is_active}
+          trueLabel="Active"
+          falseLabel="Deactivated"
+        />
+      ),
     },
     {
       key: "staff",
@@ -105,7 +123,9 @@ export default function StaffPage() {
     {
       key: "phone",
       header: "Phone",
-      render: (u) => <span className="text-sm text-ink-600">{u.phone ?? "—"}</span>,
+      render: (u) => (
+        <span className="text-sm text-ink-600">{u.phone ?? "—"}</span>
+      ),
     },
   ];
 
@@ -113,7 +133,11 @@ export default function StaffPage() {
     <>
       <PageHeader
         title="Staff"
-        subtitle={query.data ? `${query.data.meta.total} account(s)` : "Accounts that can sign in"}
+        subtitle={
+          query.data
+            ? `${query.data.meta.total} account(s)`
+            : "Accounts that can sign in"
+        }
         actions={
           writable ? (
             <Button variant="primary" onClick={() => setCreating(true)}>
@@ -131,8 +155,9 @@ export default function StaffPage() {
         <>
           <p className="mb-4 text-sm text-ink-600">
             Staffness follows the role list, not the staff flag:{" "}
-            <span className="font-medium text-ink-800">CUSTOMER</span> is the only role that
-            is not staff. The flag is recorded as given and shown for what it is.
+            <span className="font-medium text-ink-800">CUSTOMER</span> is the
+            only role that is not staff. The flag is recorded as given and shown
+            for what it is.
           </p>
 
           <Card padded={false}>
@@ -196,7 +221,8 @@ export default function StaffPage() {
 
           {writable ? null : (
             <p className="mt-3 text-xs text-ink-500">
-              You can read this list but not change it — editing accounts needs users:write.
+              You can read this list but not change it — editing accounts needs
+              users:write.
             </p>
           )}
         </>
@@ -240,7 +266,10 @@ function RoleCheckboxes({
       </legend>
       <div className="space-y-1.5">
         {ROLES.map((role) => (
-          <label key={role} className="flex items-center gap-2 text-sm text-ink-800">
+          <label
+            key={role}
+            className="flex items-center gap-2 text-sm text-ink-800"
+          >
             <input
               type="checkbox"
               checked={value.includes(role)}
@@ -307,7 +336,9 @@ function EditUserModal({
   async function submit() {
     setLocalError(null);
     if (form.missing(["first_name", "last_name", "email"]).length > 0) {
-      setLocalError("A first name, a last name and an email address are all required.");
+      setLocalError(
+        "A first name, a last name and an email address are all required.",
+      );
       return;
     }
     if (!form.values.email.includes("@")) {
@@ -315,7 +346,9 @@ function EditUserModal({
       return;
     }
     if (roles.length === 0) {
-      setLocalError("Give the account at least one role — an account with none can do nothing.");
+      setLocalError(
+        "Give the account at least one role — an account with none can do nothing.",
+      );
       return;
     }
     const updated = await save.run();
@@ -336,10 +369,18 @@ function EditUserModal({
               variant="danger"
               className="mr-auto"
               disabled={!canDeactivate}
-              title={ownAccount ? "You cannot deactivate your own account" : undefined}
+              title={
+                ownAccount
+                  ? "You cannot deactivate your own account"
+                  : undefined
+              }
               pending={deactivate.pending}
               onClick={() => {
-                if (!confirm("Deactivate this account? Their name stays on the records they touched.")) {
+                if (
+                  !confirm(
+                    "Deactivate this account? Their name stays on the records they touched.",
+                  )
+                ) {
                   return;
                 }
                 deactivate.run().then((result) => {
@@ -353,7 +394,11 @@ function EditUserModal({
           <Button onClick={onClose} disabled={save.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={save.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={save.pending}
+            onClick={() => void submit()}
+          >
             Save
           </Button>
         </>
@@ -384,7 +429,11 @@ function EditUserModal({
           </Field>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Email" required hint="Must not already belong to another account">
+          <Field
+            label="Email"
+            required
+            hint="Must not already belong to another account"
+          >
             <Input
               type="email"
               value={form.values.email}
@@ -392,7 +441,10 @@ function EditUserModal({
             />
           </Field>
           <Field label="Phone">
-            <Input value={form.values.phone} onChange={(e) => form.set("phone", e.target.value)} />
+            <Input
+              value={form.values.phone}
+              onChange={(e) => form.set("phone", e.target.value)}
+            />
           </Field>
         </div>
 
@@ -417,15 +469,16 @@ function EditUserModal({
           <span>
             Staff flag
             <span className="block text-xs text-ink-500">
-              Recorded as given. This is not what grants access — the role list above is.
+              Recorded as given. This is not what grants access — the role list
+              above is.
             </span>
           </span>
         </label>
 
         {ownAccount ? (
           <Notice tone="info">
-            This is your own account, so it cannot be deactivated from here. Changing your
-            own roles can take away your own access.
+            This is your own account, so it cannot be deactivated from here.
+            Changing your own roles can take away your own access.
           </Notice>
         ) : null}
       </form>
@@ -459,8 +512,12 @@ function NewUserModal({
 
   async function submit() {
     setLocalError(null);
-    if (form.missing(["first_name", "last_name", "email", "password"]).length > 0) {
-      setLocalError("A first name, a last name, an email address and a password are all required.");
+    if (
+      form.missing(["first_name", "last_name", "email", "password"]).length > 0
+    ) {
+      setLocalError(
+        "A first name, a last name, an email address and a password are all required.",
+      );
       return;
     }
     if (!form.values.email.includes("@")) {
@@ -472,7 +529,9 @@ function NewUserModal({
       return;
     }
     if (roles.length === 0) {
-      setLocalError("Give the account at least one role — an account with none can do nothing.");
+      setLocalError(
+        "Give the account at least one role — an account with none can do nothing.",
+      );
       return;
     }
     const created = await create.run({
@@ -504,7 +563,11 @@ function NewUserModal({
           <Button onClick={onClose} disabled={create.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={create.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={create.pending}
+            onClick={() => void submit()}
+          >
             Create account
           </Button>
         </>
@@ -535,7 +598,11 @@ function NewUserModal({
           </Field>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Email" required hint="Must not already belong to another account">
+          <Field
+            label="Email"
+            required
+            hint="Must not already belong to another account"
+          >
             <Input
               type="email"
               value={form.values.email}
@@ -543,7 +610,10 @@ function NewUserModal({
             />
           </Field>
           <Field label="Phone">
-            <Input value={form.values.phone} onChange={(e) => form.set("phone", e.target.value)} />
+            <Input
+              value={form.values.phone}
+              onChange={(e) => form.set("phone", e.target.value)}
+            />
           </Field>
         </div>
         <Field
@@ -580,15 +650,16 @@ function NewUserModal({
           <span>
             Staff flag
             <span className="block text-xs text-ink-500">
-              Recorded as given. This is not what grants access — the role list above is,
-              and CUSTOMER is the only role that is not staff.
+              Recorded as given. This is not what grants access — the role list
+              above is, and CUSTOMER is the only role that is not staff.
             </span>
           </span>
         </label>
 
         <Notice tone="info">
-          An account holding only the CUSTOMER role is a portal login, not a member of staff.
-          A new account needs a password typed here — there is no invitation link to send.
+          An account holding only the CUSTOMER role is a portal login, not a
+          member of staff. A new account needs a password typed here — there is
+          no invitation link to send.
         </Notice>
       </form>
     </Modal>

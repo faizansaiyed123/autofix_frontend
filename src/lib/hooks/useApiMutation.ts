@@ -36,7 +36,11 @@ export function useApiMutation<TArgs extends unknown[], TResult>(
       setResult(value);
       return value;
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught : new ApiError(0, caught, "Something went wrong"));
+      setError(
+        caught instanceof ApiError
+          ? caught
+          : new ApiError(0, caught, "Something went wrong"),
+      );
       return null;
     } finally {
       setPending(false);

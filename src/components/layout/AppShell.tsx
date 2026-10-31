@@ -47,7 +47,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen">
       <aside className="hidden w-64 shrink-0 flex-col bg-ink-900 text-ink-200 lg:flex">
         <div className="border-b border-white/10 px-5 py-4">
-          <p className="text-sm font-semibold tracking-wide text-white">{COMPANY_NAME}</p>
+          <p className="text-sm font-semibold tracking-wide text-white">
+            {COMPANY_NAME}
+          </p>
           <p className="text-xs text-ink-400">Front desk</p>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-4">
@@ -58,7 +60,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               </p>
               <ul className="space-y-0.5">
                 {group.items.map((item) => {
-                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  const active =
+                    pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
                   return (
                     <li key={item.href}>
                       <Link
@@ -110,7 +114,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link
               href="/attention"
               className="relative rounded-lg p-2 text-ink-500 hover:bg-ink-100 hover:text-ink-800"
-              aria-label={unread > 0 ? `Attention centre, ${unread} unread` : "Attention centre"}
+              aria-label={
+                unread > 0
+                  ? `Attention centre, ${unread} unread`
+                  : "Attention centre"
+              }
             >
               <Icon name="bell" />
               {unread > 0 ? (
@@ -121,7 +129,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               <p className="text-sm font-medium text-ink-900">
                 {user ? `${user.first_name} ${user.last_name}` : ""}
               </p>
-              <p className="text-[11px] text-ink-500">{user?.roles.join(", ")}</p>
+              <p className="text-[11px] text-ink-500">
+                {user?.roles.join(", ")}
+              </p>
             </div>
             <button
               type="button"
@@ -139,7 +149,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 /** Derive the last-updated context from the record already loaded on the page. */
-export function RecordMeta({ label, at }: { label: string; at: string | null | undefined }) {
+export function RecordMeta({
+  label,
+  at,
+}: {
+  label: string;
+  at: string | null | undefined;
+}) {
   return (
     <span className="text-xs text-ink-500">
       {label} {formatRelative(at)}

@@ -8,10 +8,21 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, KeyValue, KeyValueGrid } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { laborApi, repairOrdersApi } from "@/lib/api/work";
 import type { LaborRecord, RepairTask } from "@/lib/api/types";
@@ -33,7 +44,10 @@ export default function RepairOrderDetailPage() {
 
   const order = useApiQuery(() => repairOrdersApi.get(id), [id]);
   const labour = useApiQuery(
-    () => laborApi.list({ repair_order_id: id, size: 100 }).then((page) => page.data),
+    () =>
+      laborApi
+        .list({ repair_order_id: id, size: 100 })
+        .then((page) => page.data),
     [id],
     { enabled: can("labor:read") },
   );
@@ -44,10 +58,14 @@ export default function RepairOrderDetailPage() {
   const setTaskStatus = useApiMutation((taskId: string, status: string) =>
     repairOrdersApi.setTaskStatus(id, taskId, status),
   );
-  const removeTask = useApiMutation((taskId: string) => repairOrdersApi.removeTask(id, taskId));
+  const removeTask = useApiMutation((taskId: string) =>
+    repairOrdersApi.removeTask(id, taskId),
+  );
 
-  if (order.loading && order.initial) return <Loading label="Opening the repair order…" />;
-  if (order.error) return <ErrorState error={order.error} onRetry={order.refetch} />;
+  if (order.loading && order.initial)
+    return <Loading label="Opening the repair order…" />;
+  if (order.error)
+    return <ErrorState error={order.error} onRetry={order.refetch} />;
 
   const ro = order.data;
   if (!ro) return <ErrorState error={new Error("Repair order not found")} />;
@@ -59,7 +77,11 @@ export default function RepairOrderDetailPage() {
   const mayWriteTasks = can("tasks:write");
   const mayWriteLabour = can("labor:write");
 
-  const options = reachableStatuses(ro.status, ro.tasks.length > 0, ro.all_tasks_done);
+  const options = reachableStatuses(
+    ro.status,
+    ro.tasks.length > 0,
+    ro.all_tasks_done,
+  );
   const statusBlock = terminal
     ? `This order is ${ro.status}, which is final — nothing further will change on it.`
     : nextStatus === "IN_PROGRESS" && ro.tasks.length === 0
@@ -90,7 +112,11 @@ export default function RepairOrderDetailPage() {
       key: "sequence",
       header: "#",
       numeric: true,
-      render: (task) => <span className="tabular text-xs text-ink-500">{task.sequence + 1}</span>,
+      render: (task) => (
+        <span className="tabular text-xs text-ink-500">
+          {task.sequence + 1}
+        </span>
+      ),
     },
     {
       key: "description",
@@ -98,7 +124,9 @@ export default function RepairOrderDetailPage() {
       render: (task) => (
         <div className="min-w-0">
           <p className="font-medium text-ink-900">{task.description}</p>
-          {task.notes ? <p className="text-xs text-ink-500">{task.notes}</p> : null}
+          {task.notes ? (
+            <p className="text-xs text-ink-500">{task.notes}</p>
+          ) : null}
         </div>
       ),
     },
@@ -106,7 +134,9 @@ export default function RepairOrderDetailPage() {
       key: "assignee",
       header: "Assigned to",
       render: (task) => (
-        <span className="text-sm">{task.assigned_to_id ? userName(task.assigned_to_id) : "—"}</span>
+        <span className="text-sm">
+          {task.assigned_to_id ? userName(task.assigned_to_id) : "—"}
+        </span>
       ),
     },
     {
@@ -119,7 +149,9 @@ export default function RepairOrderDetailPage() {
       header: "Completed",
       numeric: true,
       render: (task) => (
-        <span className="text-xs text-ink-500">{formatDateTime(task.completed_at)}</span>
+        <span className="text-xs text-ink-500">
+          {formatDateTime(task.completed_at)}
+        </span>
       ),
     },
     {
@@ -138,7 +170,9 @@ export default function RepairOrderDetailPage() {
                   ? "A delivered or cancelled order accepts no task changes"
                   : "Only the states this task can move to are listed"
               }
-              onChange={(event) => void changeTaskStatus(task.id, event.target.value)}
+              onChange={(event) =>
+                void changeTaskStatus(task.id, event.target.value)
+              }
               className="w-36"
             >
               {reachableTaskStatuses(task.status).map((value) => (
@@ -150,7 +184,11 @@ export default function RepairOrderDetailPage() {
           ) : null}
           {mayWriteTasks && tasksEditable ? (
             <>
-              <Button size="sm" variant="ghost" onClick={() => setEditingTask(task)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setEditingTask(task)}
+              >
                 Edit
               </Button>
               <Button
@@ -180,8 +218,12 @@ export default function RepairOrderDetailPage() {
       header: "Work",
       render: (record) => (
         <div className="min-w-0">
-          <p className="text-sm font-medium text-ink-900">{record.description}</p>
-          {record.notes ? <p className="text-xs text-ink-500">{record.notes}</p> : null}
+          <p className="text-sm font-medium text-ink-900">
+            {record.description}
+          </p>
+          {record.notes ? (
+            <p className="text-xs text-ink-500">{record.notes}</p>
+          ) : null}
         </div>
       ),
     },
@@ -189,33 +231,49 @@ export default function RepairOrderDetailPage() {
       key: "technician",
       header: "Technician",
       render: (record) => (
-        <span className="text-sm">{record.technician_id ? userName(record.technician_id) : "—"}</span>
+        <span className="text-sm">
+          {record.technician_id ? userName(record.technician_id) : "—"}
+        </span>
       ),
     },
     {
       key: "actual",
       header: "Actual h",
       numeric: true,
-      render: (record) => <span className="tabular text-xs">{formatNumber(record.actual_hours, 2)}</span>,
+      render: (record) => (
+        <span className="tabular text-xs">
+          {formatNumber(record.actual_hours, 2)}
+        </span>
+      ),
     },
     {
       key: "billable",
       header: "Billable h",
       numeric: true,
-      render: (record) => <span className="tabular text-xs">{formatNumber(record.billable_hours, 2)}</span>,
+      render: (record) => (
+        <span className="tabular text-xs">
+          {formatNumber(record.billable_hours, 2)}
+        </span>
+      ),
     },
     {
       key: "rate",
       header: "Rate",
       numeric: true,
-      render: (record) => <span className="tabular text-xs">{formatMoney(record.hourly_rate)}</span>,
+      render: (record) => (
+        <span className="tabular text-xs">
+          {formatMoney(record.hourly_rate)}
+        </span>
+      ),
     },
     {
       key: "cost",
       header: "Cost",
       numeric: true,
       render: (record) => (
-        <span className="tabular text-sm font-medium">{formatMoney(record.labor_cost)}</span>
+        <span className="tabular text-sm font-medium">
+          {formatMoney(record.labor_cost)}
+        </span>
       ),
     },
     {
@@ -223,7 +281,9 @@ export default function RepairOrderDetailPage() {
       header: "Performed",
       numeric: true,
       render: (record) => (
-        <span className="text-xs text-ink-500">{formatDateTime(record.performed_at)}</span>
+        <span className="text-xs text-ink-500">
+          {formatDateTime(record.performed_at)}
+        </span>
       ),
     },
   ];
@@ -231,7 +291,11 @@ export default function RepairOrderDetailPage() {
   return (
     <>
       <PageHeader
-        breadcrumb={<Link href="/repair-orders" className="hover:underline">Repair orders</Link>}
+        breadcrumb={
+          <Link href="/repair-orders" className="hover:underline">
+            Repair orders
+          </Link>
+        }
         title={ro.ro_number}
         subtitle={`${vehicleLabel(ro.vehicle_id)} · ${customerLabel(ro.customer_id)}`}
         actions={
@@ -252,20 +316,31 @@ export default function RepairOrderDetailPage() {
 
       <div className="mb-4 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader title="The job" subtitle="Authorisation, bay and milestones" />
+          <CardHeader
+            title="The job"
+            subtitle="Authorisation, bay and milestones"
+          />
           <KeyValueGrid>
             <KeyValue label="Estimate">
               {ro.estimate_id ? (
-                <Link href={`/estimates/${ro.estimate_id}`} className="text-brand-700 hover:underline">
+                <Link
+                  href={`/estimates/${ro.estimate_id}`}
+                  className="text-brand-700 hover:underline"
+                >
                   Open the estimate
                 </Link>
               ) : (
-                <span className="text-ink-500">Not raised from an estimate</span>
+                <span className="text-ink-500">
+                  Not raised from an estimate
+                </span>
               )}
             </KeyValue>
             <KeyValue label="Appointment">
               {ro.appointment_id ? (
-                <Link href="/appointments" className="text-brand-700 hover:underline">
+                <Link
+                  href="/appointments"
+                  className="text-brand-700 hover:underline"
+                >
                   From a booking
                 </Link>
               ) : (
@@ -282,18 +357,33 @@ export default function RepairOrderDetailPage() {
             <KeyValue label="Odometer">
               {formatNumber(ro.odometer_in)} → {formatNumber(ro.odometer_out)}
             </KeyValue>
-            <KeyValue label="Promised">{formatDateTime(ro.promised_at)}</KeyValue>
+            <KeyValue label="Promised">
+              {formatDateTime(ro.promised_at)}
+            </KeyValue>
             <KeyValue label="Started">{formatDateTime(ro.started_at)}</KeyValue>
-            <KeyValue label="Completed">{formatDateTime(ro.completed_at)}</KeyValue>
-            <KeyValue label="Delivered">{formatDateTime(ro.delivered_at)}</KeyValue>
-            <KeyValue label="Internal notes" className="col-span-2 sm:col-span-3">
+            <KeyValue label="Completed">
+              {formatDateTime(ro.completed_at)}
+            </KeyValue>
+            <KeyValue label="Delivered">
+              {formatDateTime(ro.delivered_at)}
+            </KeyValue>
+            <KeyValue
+              label="Internal notes"
+              className="col-span-2 sm:col-span-3"
+            >
               {ro.notes ?? <span className="text-ink-500">None</span>}
             </KeyValue>
-            <KeyValue label="Customer notes" className="col-span-2 sm:col-span-3">
+            <KeyValue
+              label="Customer notes"
+              className="col-span-2 sm:col-span-3"
+            >
               {ro.customer_notes ?? <span className="text-ink-500">None</span>}
             </KeyValue>
             {ro.cancel_reason ? (
-              <KeyValue label="Cancelled because" className="col-span-2 sm:col-span-3">
+              <KeyValue
+                label="Cancelled because"
+                className="col-span-2 sm:col-span-3"
+              >
                 {ro.cancel_reason}
               </KeyValue>
             ) : null}
@@ -308,13 +398,24 @@ export default function RepairOrderDetailPage() {
           {mayWriteOrder ? (
             <div className="space-y-3">
               {options.length === 0 ? (
-                <Notice tone="info">{terminal ? `A ${ro.status} order is final.` : "Nothing to move to."}</Notice>
+                <Notice tone="info">
+                  {terminal
+                    ? `A ${ro.status} order is final.`
+                    : "Nothing to move to."}
+                </Notice>
               ) : (
                 <Field label="New status" required>
-                  <Select value={nextStatus} onChange={(event) => setNextStatus(event.target.value)}>
+                  <Select
+                    value={nextStatus}
+                    onChange={(event) => setNextStatus(event.target.value)}
+                  >
                     <option value="">Choose a state</option>
                     {options.map((option) => (
-                      <option key={option.value} value={option.value} disabled={option.blocked}>
+                      <option
+                        key={option.value}
+                        value={option.value}
+                        disabled={option.blocked}
+                      >
                         {option.value}
                         {option.blocked ? ` — ${option.reason}` : ""}
                       </option>
@@ -324,7 +425,11 @@ export default function RepairOrderDetailPage() {
               )}
               {nextStatus === "CANCELLED" ? (
                 <Field label="Why" hint="Kept against the order">
-                  <Textarea rows={2} value={reason} onChange={(event) => setReason(event.target.value)} />
+                  <Textarea
+                    rows={2}
+                    value={reason}
+                    onChange={(event) => setReason(event.target.value)}
+                  />
                 </Field>
               ) : null}
               <Button
@@ -338,13 +443,15 @@ export default function RepairOrderDetailPage() {
               </Button>
               {statusBlock ? <Notice tone="info">{statusBlock}</Notice> : null}
               <p className="text-xs text-ink-500">
-                An order cannot complete while a task is still open, and money is not tracked here —
-                the estimate stays the source of truth for pricing.
+                An order cannot complete while a task is still open, and money
+                is not tracked here — the estimate stays the source of truth for
+                pricing.
               </p>
             </div>
           ) : (
             <p className="text-sm text-ink-500">
-              This order is {ro.status}. You do not hold the permission to change its status.
+              This order is {ro.status}. You do not hold the permission to
+              change its status.
             </p>
           )}
         </Card>
@@ -372,7 +479,11 @@ export default function RepairOrderDetailPage() {
             description="Work cannot start, and the order cannot complete, until the job is broken down into tasks."
           />
         ) : (
-          <DataTable rows={ro.tasks} columns={taskColumns} rowKey={(task) => task.id} />
+          <DataTable
+            rows={ro.tasks}
+            columns={taskColumns}
+            rowKey={(task) => task.id}
+          />
         )}
       </Card>
 
@@ -400,20 +511,31 @@ export default function RepairOrderDetailPage() {
         </div>
         <div className="px-5 pb-3">
           {!mayWriteLabour ? (
-            <p className="text-xs text-ink-500">You do not hold the permission to log time.</p>
+            <p className="text-xs text-ink-500">
+              You do not hold the permission to log time.
+            </p>
           ) : labourLoggable ? null : (
             <Notice tone="info">
-              Labour can only be recorded while the order is IN_PROGRESS or ON_HOLD. This order is{" "}
-              {ro.status}, so there is no work in progress to record hours against.
+              Labour can only be recorded while the order is IN_PROGRESS or
+              ON_HOLD. This order is {ro.status}, so there is no work in
+              progress to record hours against.
             </Notice>
           )}
         </div>
         {labour.loading && labour.initial ? (
           <Loading />
         ) : !labour.data || labour.data.length === 0 ? (
-          <EmptyState title="No labour logged" description="Nobody has recorded time against this order yet." />
+          <EmptyState
+            title="No labour logged"
+            description="Nobody has recorded time against this order yet."
+          />
         ) : (
-          <DataTable rows={labour.data} columns={labourColumns} rowKey={(record) => record.id} dense />
+          <DataTable
+            rows={labour.data}
+            columns={labourColumns}
+            rowKey={(record) => record.id}
+            dense
+          />
         )}
       </Card>
 
@@ -462,7 +584,11 @@ interface StatusOption {
  * the user has to interpret, so a move that is blocked by a rule rather than by
  * the machine is listed but disabled, with the rule spelled out.
  */
-function reachableStatuses(status: string, hasTasks: boolean, allTasksDone: boolean): StatusOption[] {
+function reachableStatuses(
+  status: string,
+  hasTasks: boolean,
+  allTasksDone: boolean,
+): StatusOption[] {
   const transitions: Record<string, string[]> = {
     DRAFT: ["APPROVED", "CANCELLED"],
     APPROVED: ["IN_PROGRESS", "CANCELLED"],
@@ -478,7 +604,11 @@ function reachableStatuses(status: string, hasTasks: boolean, allTasksDone: bool
     if (value === "IN_PROGRESS" && status === "APPROVED" && !hasTasks) {
       return { value, blocked: true, reason: "no tasks on the order" };
     }
-    if (value === "COMPLETED" && (status === "IN_PROGRESS" || status === "ON_HOLD") && !allTasksDone) {
+    if (
+      value === "COMPLETED" &&
+      (status === "IN_PROGRESS" || status === "ON_HOLD") &&
+      !allTasksDone
+    ) {
       return { value, blocked: true, reason: "tasks still open" };
     }
     return { value, blocked: false, reason: "" };
@@ -544,7 +674,11 @@ function TaskModal({
           <Button onClick={onClose} disabled={save.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={save.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={save.pending}
+            onClick={() => void submit()}
+          >
             Save task
           </Button>
         </>
@@ -567,12 +701,19 @@ function TaskModal({
               />
             </Field>
             <Field label="Notes">
-              <Textarea rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} />
+              <Textarea
+                rows={2}
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+              />
             </Field>
           </>
         ) : null}
         <Field label="Assigned to">
-          <Select value={assignee} onChange={(event) => setAssignee(event.target.value)}>
+          <Select
+            value={assignee}
+            onChange={(event) => setAssignee(event.target.value)}
+          >
             <option value="">Unassigned</option>
             {staff.map((person) => (
               <option key={person.id} value={person.id}>
@@ -613,8 +754,10 @@ function LogLabourModal({
   async function submit() {
     const found: string[] = [];
     if (!description.trim()) found.push("Describe the work that was done");
-    if (Number(actualHours) <= 0) found.push("Actual hours must be greater than zero");
-    if (billableHours && Number(billableHours) < 0) found.push("Billable hours cannot be negative");
+    if (Number(actualHours) <= 0)
+      found.push("Actual hours must be greater than zero");
+    if (billableHours && Number(billableHours) < 0)
+      found.push("Billable hours cannot be negative");
     setProblems(found);
     if (found.length > 0) return;
 
@@ -642,7 +785,11 @@ function LogLabourModal({
           <Button onClick={onClose} disabled={create.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={create.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={create.pending}
+            onClick={() => void submit()}
+          >
             Record
           </Button>
         </>
@@ -684,7 +831,10 @@ function LogLabourModal({
               onChange={(event) => setActualHours(event.target.value)}
             />
           </Field>
-          <Field label="Billable hours" hint="Leave blank to bill the actual hours">
+          <Field
+            label="Billable hours"
+            hint="Leave blank to bill the actual hours"
+          >
             <Input
               type="number"
               min="0"
@@ -706,7 +856,10 @@ function LogLabourModal({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Task" hint="Optional">
-            <Select value={taskId} onChange={(event) => setTaskId(event.target.value)}>
+            <Select
+              value={taskId}
+              onChange={(event) => setTaskId(event.target.value)}
+            >
               <option value="">Not against a task</option>
               {tasks.map((task) => (
                 <option key={task.id} value={task.id}>
@@ -725,7 +878,11 @@ function LogLabourModal({
         </div>
 
         <Field label="Notes">
-          <Textarea rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} />
+          <Textarea
+            rows={2}
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+          />
         </Field>
       </form>
     </Modal>

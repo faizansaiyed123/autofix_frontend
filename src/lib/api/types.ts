@@ -166,7 +166,9 @@ export interface ServiceRequestCreate {
   service_advisor_notes?: string | null;
 }
 
-export type ServiceRequestUpdate = Partial<Omit<ServiceRequestCreate, "customer_id">> & {
+export type ServiceRequestUpdate = Partial<
+  Omit<ServiceRequestCreate, "customer_id">
+> & {
   status?: string;
 };
 
@@ -356,7 +358,9 @@ export interface EstimateItemCreate {
   notes?: string | null;
 }
 
-export type EstimateItemUpdate = Partial<EstimateItemCreate> & { sequence?: number | null };
+export type EstimateItemUpdate = Partial<EstimateItemCreate> & {
+  sequence?: number | null;
+};
 
 export interface EstimateUpdate {
   valid_until?: string | null;
@@ -482,7 +486,11 @@ export interface RepairOrderCreate {
   promised_at?: string | null;
   notes?: string | null;
   customer_notes?: string | null;
-  tasks?: { description: string; notes?: string | null; assigned_to_id?: string | null }[];
+  tasks?: {
+    description: string;
+    notes?: string | null;
+    assigned_to_id?: string | null;
+  }[];
 }
 
 export interface RepairOrderTaskCounts {
@@ -1090,7 +1098,13 @@ export interface InventoryValueReport {
   units_on_hand: number;
   low_stock_count: number;
   out_of_stock_count: number;
-  by_category: { category: string; cost_value: number; retail_value: number; part_count: number; units_on_hand: number }[];
+  by_category: {
+    category: string;
+    cost_value: number;
+    retail_value: number;
+    part_count: number;
+    units_on_hand: number;
+  }[];
   low_stock_items: {
     part_id: string;
     part_number: string;
@@ -1100,7 +1114,13 @@ export interface InventoryValueReport {
     stock_status: string;
     cost_value: number;
   }[];
-  top_movers: { part_id: string; part_number: string; name: string; quantity_issued: number; value_issued: number }[];
+  top_movers: {
+    part_id: string;
+    part_number: string;
+    name: string;
+    quantity_issued: number;
+    value_issued: number;
+  }[];
 }
 
 export interface CustomerRetentionReport {
@@ -1111,7 +1131,12 @@ export interface CustomerRetentionReport {
   repeat_rate: number;
   settled_revenue: number;
   revenue_per_customer: number;
-  top_customers: { customer_id: string; name: string; revenue: number; invoice_count: number }[];
+  top_customers: {
+    customer_id: string;
+    name: string;
+    revenue: number;
+    invoice_count: number;
+  }[];
 }
 
 /* ------------------------------------------------------------------ audit -- */

@@ -15,7 +15,12 @@ import type {
   PortalServiceRequest,
 } from "@/lib/api/types";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
-import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
+import {
+  formatDate,
+  formatDateTime,
+  formatMoney,
+  formatNumber,
+} from "@/lib/format";
 
 /** Customer vehicle history excludes internal inspection details; spend counts settled invoices only. */
 export default function PortalVehicleHistoryPage() {
@@ -28,14 +33,27 @@ export default function PortalVehicleHistoryPage() {
   const data = history.data;
   if (!data) return <ErrorState error={new Error("No history")} />;
 
-  const { vehicle, repair_orders, inspections, invoices, service_requests, total_spent, visit_count } =
-    data;
+  const {
+    vehicle,
+    repair_orders,
+    inspections,
+    invoices,
+    service_requests,
+    total_spent,
+    visit_count,
+  } = data;
 
   return (
     <>
       <PageHeader
-        breadcrumb={<Link href="/portal/vehicles" className="hover:underline">My vehicles</Link>}
-        title={[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ")}
+        breadcrumb={
+          <Link href="/portal/vehicles" className="hover:underline">
+            My vehicles
+          </Link>
+        }
+        title={[vehicle.year, vehicle.make, vehicle.model]
+          .filter(Boolean)
+          .join(" ")}
         subtitle={vehicle.license_plate ?? undefined}
       />
 
@@ -51,13 +69,17 @@ export default function PortalVehicleHistoryPage() {
             <KeyValue label="Year">{vehicle.year ?? "—"}</KeyValue>
           </KeyValueGrid>
           {vehicle.status_view.detail ? (
-            <p className="mt-3 text-sm text-ink-600">{vehicle.status_view.detail}</p>
+            <p className="mt-3 text-sm text-ink-600">
+              {vehicle.status_view.detail}
+            </p>
           ) : null}
         </Card>
 
         <Card>
           <CardHeader title="Your spend" subtitle="Settled invoices only" />
-          <p className="tabular text-2xl font-semibold text-ink-900">{formatMoney(total_spent)}</p>
+          <p className="tabular text-2xl font-semibold text-ink-900">
+            {formatMoney(total_spent)}
+          </p>
           <p className="mt-1 text-sm text-ink-500">
             {visit_count} visit{visit_count === 1 ? "" : "s"} on record
           </p>
@@ -88,7 +110,12 @@ export default function PortalVehicleHistoryPage() {
           {inspections.length === 0 ? (
             <EmptyState title="No inspections recorded" />
           ) : (
-            <DataTable rows={inspections} dense rowKey={(i) => i.id} columns={inspectionColumns} />
+            <DataTable
+              rows={inspections}
+              dense
+              rowKey={(i) => i.id}
+              columns={inspectionColumns}
+            />
           )}
         </Card>
 
@@ -99,7 +126,12 @@ export default function PortalVehicleHistoryPage() {
           {invoices.length === 0 ? (
             <EmptyState title="No invoices yet" />
           ) : (
-            <DataTable rows={invoices} dense rowKey={(i) => i.id} columns={invoiceColumns} />
+            <DataTable
+              rows={invoices}
+              dense
+              rowKey={(i) => i.id}
+              columns={invoiceColumns}
+            />
           )}
         </Card>
 
@@ -123,7 +155,13 @@ export default function PortalVehicleHistoryPage() {
   );
 }
 
-function CustomerStatusCell({ label, detail }: { label: string; detail?: string }) {
+function CustomerStatusCell({
+  label,
+  detail,
+}: {
+  label: string;
+  detail?: string;
+}) {
   return (
     <span title={detail} className="text-xs text-ink-700">
       {label}
@@ -139,7 +177,9 @@ const repairOrderColumns: Column<PortalRepairOrder>[] = [
       <div>
         <p className="font-medium text-ink-800">{r.ro_number}</p>
         <p className="text-xs text-ink-500">
-          {r.completed_at ? `Finished ${formatDate(r.completed_at)}` : "In progress"}
+          {r.completed_at
+            ? `Finished ${formatDate(r.completed_at)}`
+            : "In progress"}
         </p>
       </div>
     ),
@@ -147,7 +187,12 @@ const repairOrderColumns: Column<PortalRepairOrder>[] = [
   {
     key: "status",
     header: "Status",
-    render: (r) => <CustomerStatusCell label={r.status_view.label} detail={r.status_view.detail} />,
+    render: (r) => (
+      <CustomerStatusCell
+        label={r.status_view.label}
+        detail={r.status_view.detail}
+      />
+    ),
   },
 ];
 
@@ -156,7 +201,9 @@ const inspectionColumns: Column<PortalInspection>[] = [
     key: "condition",
     header: "Condition",
     render: (i) => (
-      <span className="text-xs font-medium text-ink-700">{i.overall_condition}</span>
+      <span className="text-xs font-medium text-ink-700">
+        {i.overall_condition}
+      </span>
     ),
   },
   { key: "date", header: "Date", render: (i) => formatDate(i.created_at) },
@@ -167,18 +214,30 @@ const invoiceColumns: Column<PortalInvoice>[] = [
     key: "number",
     header: "Invoice",
     render: (i) => (
-      <Link href="/portal/invoices" className="font-medium text-brand-700 hover:underline">
+      <Link
+        href="/portal/invoices"
+        className="font-medium text-brand-700 hover:underline"
+      >
         {i.invoice_number}
       </Link>
     ),
   },
-  { key: "total", header: "Total", numeric: true, render: (i) => formatMoney(i.total) },
+  {
+    key: "total",
+    header: "Total",
+    numeric: true,
+    render: (i) => formatMoney(i.total),
+  },
   {
     key: "balance",
     header: "Balance",
     numeric: true,
     render: (i) => (
-      <span className={i.balance > 0 ? "font-medium text-amber-700" : "text-ink-600"}>
+      <span
+        className={
+          i.balance > 0 ? "font-medium text-amber-700" : "text-ink-600"
+        }
+      >
         {formatMoney(i.balance)}
       </span>
     ),

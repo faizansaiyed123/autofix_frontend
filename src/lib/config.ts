@@ -9,7 +9,8 @@ export const API_PREFIX = "/api/v1";
 export const CURRENCY = process.env.NEXT_PUBLIC_CURRENCY ?? "USD";
 
 /** Company name for the shell header. Mirrors `COMPANY_NAME` on the backend. */
-export const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "AutoFix Garage";
+export const COMPANY_NAME =
+  process.env.NEXT_PUBLIC_COMPANY_NAME ?? "AutoFix Garage";
 
 export const STORAGE_KEYS = {
   accessToken: "autofix.access_token",

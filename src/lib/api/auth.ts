@@ -1,9 +1,17 @@
 import { api, request } from "@/lib/api/client";
-import type { CurrentUser, PermissionBundle, TokenResponse } from "@/lib/api/types";
+import type {
+  CurrentUser,
+  PermissionBundle,
+  TokenResponse,
+} from "@/lib/api/types";
 
 export const authApi = {
   login: (email: string, password: string) =>
-    request<TokenResponse>("/auth/login", { method: "POST", body: { email, password }, anonymous: true }),
+    request<TokenResponse>("/auth/login", {
+      method: "POST",
+      body: { email, password },
+      anonymous: true,
+    }),
 
   register: (input: {
     first_name: string;

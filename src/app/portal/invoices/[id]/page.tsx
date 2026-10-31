@@ -7,7 +7,14 @@ import { useState } from "react";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, KeyValue, KeyValueGrid } from "@/components/ui/Card";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/Page";
 import { ErrorState, Loading, Notice } from "@/components/ui/States";
@@ -36,12 +43,17 @@ export default function PortalInvoiceDetailPage() {
   const record = invoice.data;
   if (!record) return <ErrorState error={new Error("Invoice not found")} />;
 
-  const payable = record.balance > 0 && record.status !== "DRAFT" && record.status !== "VOID";
+  const payable =
+    record.balance > 0 && record.status !== "DRAFT" && record.status !== "VOID";
 
   return (
     <>
       <PageHeader
-        breadcrumb={<Link href="/portal/invoices" className="hover:underline">Invoices</Link>}
+        breadcrumb={
+          <Link href="/portal/invoices" className="hover:underline">
+            Invoices
+          </Link>
+        }
         title={record.invoice_number}
         subtitle={record.status_view.detail || undefined}
         actions={
@@ -58,8 +70,14 @@ export default function PortalInvoiceDetailPage() {
             >
               Download copy
             </Button>
-            <Button variant="primary" disabled={!payable} onClick={() => setPaying(true)}>
-              {record.balance > 0 ? `Pay ${formatMoney(record.balance)}` : "Settled"}
+            <Button
+              variant="primary"
+              disabled={!payable}
+              onClick={() => setPaying(true)}
+            >
+              {record.balance > 0
+                ? `Pay ${formatMoney(record.balance)}`
+                : "Settled"}
             </Button>
           </>
         }
@@ -77,32 +95,58 @@ export default function PortalInvoiceDetailPage() {
 
       <div className="mb-4 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader title="The bill" subtitle="The shop's copy itemises every line; this is the document you settle." />
+          <CardHeader
+            title="The bill"
+            subtitle="The shop's copy itemises every line; this is the document you settle."
+          />
           <KeyValueGrid>
             <KeyValue label="Subtotal">{formatMoney(record.subtotal)}</KeyValue>
-            <KeyValue label="Discount">{formatMoney(record.discount_amount)}</KeyValue>
+            <KeyValue label="Discount">
+              {formatMoney(record.discount_amount)}
+            </KeyValue>
             <KeyValue label="Tax">{formatMoney(record.tax_amount)}</KeyValue>
             <KeyValue label="Total">
-              <span className="text-lg font-semibold">{formatMoney(record.total)}</span>
+              <span className="text-lg font-semibold">
+                {formatMoney(record.total)}
+              </span>
             </KeyValue>
-            <KeyValue label="Already paid">{formatMoney(record.amount_paid)}</KeyValue>
+            <KeyValue label="Already paid">
+              {formatMoney(record.amount_paid)}
+            </KeyValue>
             <KeyValue label="Balance">
-              <span className={record.balance > 0 ? "text-lg font-semibold text-amber-700" : "text-lg font-semibold text-emerald-700"}>
+              <span
+                className={
+                  record.balance > 0
+                    ? "text-lg font-semibold text-amber-700"
+                    : "text-lg font-semibold text-emerald-700"
+                }
+              >
                 {formatMoney(record.balance)}
               </span>
             </KeyValue>
           </KeyValueGrid>
-          {record.notes ? <p className="mt-4 text-sm text-ink-600">{record.notes}</p> : null}
+          {record.notes ? (
+            <p className="mt-4 text-sm text-ink-600">{record.notes}</p>
+          ) : null}
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-ink-100 pt-3 text-sm">
             <span className="text-ink-500">
               Status <StatusBadge status={record.status} className="ml-1" />
             </span>
             <span className="text-ink-500">
-              Dated <span className="text-ink-800">{formatDate(record.invoice_date)}</span>
+              Dated{" "}
+              <span className="text-ink-800">
+                {formatDate(record.invoice_date)}
+              </span>
             </span>
             <span className="text-ink-500">
               Due{" "}
-              <span className={record.is_overdue ? "font-medium text-rose-700" : "text-ink-800"}>
+              <span
+                className={
+                  record.is_overdue
+                    ? "font-medium text-rose-700"
+                    : "text-ink-800"
+                }
+              >
                 {record.is_overdue
                   ? `${formatDate(record.due_date)} · ${record.days_overdue} day(s) late`
                   : formatDate(record.due_date)}
@@ -111,9 +155,9 @@ export default function PortalInvoiceDetailPage() {
           </div>
           <div className="mt-4">
             <Notice tone="info">
-              The downloadable copy carries the itemised lines. Only what you approved on the
-              estimate is ever charged, so anything here that you did not approve is worth a phone
-              call.
+              The downloadable copy carries the itemised lines. Only what you
+              approved on the estimate is ever charged, so anything here that
+              you did not approve is worth a phone call.
             </Notice>
           </div>
         </Card>
@@ -132,12 +176,15 @@ export default function PortalInvoiceDetailPage() {
               onClick={() => setPaying(true)}
               className="w-full"
             >
-              {record.balance > 0 ? `Pay ${formatMoney(record.balance)}` : "Nothing to pay"}
+              {record.balance > 0
+                ? `Pay ${formatMoney(record.balance)}`
+                : "Nothing to pay"}
             </Button>
           </div>
           <p className="mt-3 text-xs text-ink-500">
-            Paying here moves the same balance the counter would move. A bill is settled only by
-            money arriving, so it can never say it was paid when nothing was taken.
+            Paying here moves the same balance the counter would move. A bill is
+            settled only by money arriving, so it can never say it was paid when
+            nothing was taken.
           </p>
         </Card>
       </div>
@@ -212,7 +259,9 @@ function PayModal({
           <Button
             variant="primary"
             pending={pay.pending}
-            disabled={overpaying || (needsReference && !form.values.reference.trim())}
+            disabled={
+              overpaying || (needsReference && !form.values.reference.trim())
+            }
             onClick={() => void submit()}
           >
             Pay
@@ -232,7 +281,11 @@ function PayModal({
         <Field
           label="How much"
           required
-          error={overpaying ? `That is more than the ${formatMoney(invoice.balance)} owed. Pay the balance or less.` : null}
+          error={
+            overpaying
+              ? `That is more than the ${formatMoney(invoice.balance)} owed. Pay the balance or less.`
+              : null
+          }
           hint="A bill can be settled in part — the rest simply stays owed."
         >
           <Input

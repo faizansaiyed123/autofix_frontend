@@ -9,7 +9,13 @@
  * than as a screaming raw code.
  */
 
-export type Tone = "neutral" | "info" | "progress" | "success" | "warning" | "danger";
+export type Tone =
+  | "neutral"
+  | "info"
+  | "progress"
+  | "success"
+  | "warning"
+  | "danger";
 
 const TONES: Record<Tone, string> = {
   neutral: "bg-ink-100 text-ink-700 ring-ink-200",
@@ -124,13 +130,29 @@ export const SERVICE_TYPES = [
   "OTHER",
 ];
 
-export const SERVICE_REQUEST_STATUSES = ["NEW", "IN_REVIEW", "APPROVED", "REJECTED", "CONVERTED"];
+export const SERVICE_REQUEST_STATUSES = [
+  "NEW",
+  "IN_REVIEW",
+  "APPROVED",
+  "REJECTED",
+  "CONVERTED",
+];
 
-export const CHECKIN_STATUSES = ["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
+export const CHECKIN_STATUSES = [
+  "PENDING",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "CANCELLED",
+];
 
 export const CHECKIN_TYPES = ["DRIVE_IN", "WALK_IN", "APPOINTMENT"];
 
-export const INSPECTION_STATUSES = ["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
+export const INSPECTION_STATUSES = [
+  "DRAFT",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "CANCELLED",
+];
 
 export const INSPECTION_ITEM_STATUSES = [
   "GOOD",
@@ -188,7 +210,12 @@ export const REPAIR_ORDER_STATUSES = [
   "CANCELLED",
 ];
 
-export const REPAIR_TASK_STATUSES = ["PENDING", "IN_PROGRESS", "COMPLETED", "SKIPPED"];
+export const REPAIR_TASK_STATUSES = [
+  "PENDING",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "SKIPPED",
+];
 
 export const PART_REQUEST_STATUSES = [
   "PENDING",
@@ -200,7 +227,13 @@ export const PART_REQUEST_STATUSES = [
 
 export const QC_STATUSES = ["IN_PROGRESS", "PASSED", "FAILED"];
 
-export const INVOICE_STATUSES = ["DRAFT", "ISSUED", "PARTIALLY_PAID", "PAID", "VOID"];
+export const INVOICE_STATUSES = [
+  "DRAFT",
+  "ISSUED",
+  "PARTIALLY_PAID",
+  "PAID",
+  "VOID",
+];
 
 export const PAYMENT_METHODS = [
   "CASH",

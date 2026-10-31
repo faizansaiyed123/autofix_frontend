@@ -15,7 +15,10 @@ import { formatDate, formatMoney } from "@/lib/format";
 
 export default function PortalInvoicesPage() {
   const [unpaidOnly, setUnpaidOnly] = useState(false);
-  const invoices = useApiQuery(() => portalApi.invoices({ unpaid_only: unpaidOnly }), [unpaidOnly]);
+  const invoices = useApiQuery(
+    () => portalApi.invoices({ unpaid_only: unpaidOnly }),
+    [unpaidOnly],
+  );
 
   const columns: Column<PortalInvoice>[] = [
     {
@@ -23,22 +26,39 @@ export default function PortalInvoicesPage() {
       header: "Invoice",
       render: (i) => (
         <div>
-          <Link href={`/portal/invoices/${i.id}`} className="font-medium text-brand-700 hover:underline">
+          <Link
+            href={`/portal/invoices/${i.id}`}
+            className="font-medium text-brand-700 hover:underline"
+          >
             {i.invoice_number}
           </Link>
-          <p className="text-xs text-ink-500">dated {formatDate(i.invoice_date)}</p>
+          <p className="text-xs text-ink-500">
+            dated {formatDate(i.invoice_date)}
+          </p>
         </div>
       ),
     },
-    { key: "total", header: "Total", numeric: true, render: (i) => formatMoney(i.total) },
-    { key: "paid", header: "Paid", numeric: true, render: (i) => formatMoney(i.amount_paid) },
+    {
+      key: "total",
+      header: "Total",
+      numeric: true,
+      render: (i) => formatMoney(i.total),
+    },
+    {
+      key: "paid",
+      header: "Paid",
+      numeric: true,
+      render: (i) => formatMoney(i.amount_paid),
+    },
     {
       key: "balance",
       header: "Still owed",
       numeric: true,
       render: (i) =>
         i.balance > 0 ? (
-          <span className="font-semibold text-amber-700">{formatMoney(i.balance)}</span>
+          <span className="font-semibold text-amber-700">
+            {formatMoney(i.balance)}
+          </span>
         ) : (
           <span className="text-emerald-700">Settled</span>
         ),

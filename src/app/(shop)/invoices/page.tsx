@@ -11,7 +11,12 @@ import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
 import { Field, FormError, Input, Select, useForm } from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, SearchInput, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { invoicesApi } from "@/lib/api/money";
 import { repairOrdersApi } from "@/lib/api/work";
@@ -68,12 +73,18 @@ export default function InvoicesPage() {
     {
       key: "customer",
       header: "Customer",
-      render: (i) => <span className="text-sm">{customerLabel(i.customer_id)}</span>,
+      render: (i) => (
+        <span className="text-sm">{customerLabel(i.customer_id)}</span>
+      ),
     },
     {
       key: "vehicle",
       header: "Vehicle",
-      render: (i) => <span className="text-sm text-ink-600">{vehicleText(i.vehicle_id)}</span>,
+      render: (i) => (
+        <span className="text-sm text-ink-600">
+          {vehicleText(i.vehicle_id)}
+        </span>
+      ),
     },
     {
       key: "status",
@@ -84,7 +95,11 @@ export default function InvoicesPage() {
       key: "invoiced",
       header: "Invoiced",
       numeric: true,
-      render: (i) => <span className="text-xs text-ink-600">{formatDate(i.invoice_date)}</span>,
+      render: (i) => (
+        <span className="text-xs text-ink-600">
+          {formatDate(i.invoice_date)}
+        </span>
+      ),
     },
     {
       key: "due",
@@ -93,8 +108,12 @@ export default function InvoicesPage() {
       render: (i) =>
         i.is_overdue ? (
           <div className="text-right">
-            <p className="text-xs font-semibold text-rose-700">{formatDate(i.due_date)}</p>
-            <p className="text-xs text-rose-600">{i.days_overdue} day(s) late</p>
+            <p className="text-xs font-semibold text-rose-700">
+              {formatDate(i.due_date)}
+            </p>
+            <p className="text-xs text-rose-600">
+              {i.days_overdue} day(s) late
+            </p>
           </div>
         ) : (
           <span className="text-xs text-ink-600">{formatDate(i.due_date)}</span>
@@ -110,7 +129,9 @@ export default function InvoicesPage() {
       key: "paid",
       header: "Paid",
       numeric: true,
-      render: (i) => <span className="text-ink-600">{formatMoney(i.amount_paid)}</span>,
+      render: (i) => (
+        <span className="text-ink-600">{formatMoney(i.amount_paid)}</span>
+      ),
     },
     {
       key: "balance",
@@ -118,7 +139,9 @@ export default function InvoicesPage() {
       numeric: true,
       render: (i) =>
         i.balance > 0 ? (
-          <span className="font-semibold text-ink-900">{formatMoney(i.balance)}</span>
+          <span className="font-semibold text-ink-900">
+            {formatMoney(i.balance)}
+          </span>
         ) : (
           <span className="text-ink-400">{formatMoney(i.balance)}</span>
         ),
@@ -129,7 +152,11 @@ export default function InvoicesPage() {
     <>
       <PageHeader
         title="Invoices"
-        subtitle={query.data ? `${query.data.meta.total} in the book` : "The shop's bills"}
+        subtitle={
+          query.data
+            ? `${query.data.meta.total} in the book`
+            : "The shop's bills"
+        }
         actions={
           can("invoices:write") ? (
             <Button variant="primary" onClick={() => setRaising(true)}>
@@ -212,7 +239,9 @@ export default function InvoicesPage() {
           </div>
         ) : !query.data || query.data.data.length === 0 ? (
           <EmptyState
-            title={search || status ? "No invoice matches that" : "No invoices yet"}
+            title={
+              search || status ? "No invoice matches that" : "No invoices yet"
+            }
             description="An invoice is raised against work that has passed quality control, so nothing appears here until QC has signed the job off."
           />
         ) : (
@@ -300,7 +329,8 @@ function extraLineProblem(line: ExtraLine): string | null {
   if (line.description.trim() === "") return null;
   if (line.item_type !== "DISCOUNT" && !(Number(line.quantity) > 0))
     return "Quantity must be greater than zero.";
-  if (!(Number(line.unit_price) > 0)) return "A charge needs a unit price above zero.";
+  if (!(Number(line.unit_price) > 0))
+    return "A charge needs a unit price above zero.";
   if (line.discount_amount.trim() !== "" && Number(line.discount_amount) < 0)
     return "A discount cannot be negative.";
   return null;
@@ -321,8 +351,12 @@ function RaiseInvoiceModal({
   const billable = useApiQuery<RepairOrder[]>(
     () =>
       Promise.all([
-        repairOrdersApi.list({ page: 1, size: 100, status: "QC_PASSED" }).then((p) => p.data),
-        repairOrdersApi.list({ page: 1, size: 100, status: "DELIVERED" }).then((p) => p.data),
+        repairOrdersApi
+          .list({ page: 1, size: 100, status: "QC_PASSED" })
+          .then((p) => p.data),
+        repairOrdersApi
+          .list({ page: 1, size: 100, status: "DELIVERED" })
+          .then((p) => p.data),
       ]).then(([passed, delivered]) => [...passed, ...delivered]),
     [],
     { enabled: open },
@@ -336,13 +370,16 @@ function RaiseInvoiceModal({
     notes: "",
   });
   const [lines, setLines] = useState<ExtraLine[]>([]);
-  const create = useApiMutation((body: Parameters<typeof invoicesApi.create>[0]) =>
-    invoicesApi.create(body),
+  const create = useApiMutation(
+    (body: Parameters<typeof invoicesApi.create>[0]) =>
+      invoicesApi.create(body),
   );
 
   function updateLine(index: number, patch: Partial<ExtraLine>) {
     setLines((current) =>
-      current.map((line, position) => (position === index ? { ...line, ...patch } : line)),
+      current.map((line, position) =>
+        position === index ? { ...line, ...patch } : line,
+      ),
     );
   }
 
@@ -363,12 +400,16 @@ function RaiseInvoiceModal({
       .map((line) => ({
         item_type: line.item_type,
         description: line.description.trim(),
-        quantity: line.item_type === "DISCOUNT" ? 1 : Number(line.quantity) || 0,
+        quantity:
+          line.item_type === "DISCOUNT" ? 1 : Number(line.quantity) || 0,
         unit_price: Number(line.unit_price) || 0,
-        discount_amount: line.item_type === "DISCOUNT" ? 0 : Number(line.discount_amount) || 0,
+        discount_amount:
+          line.item_type === "DISCOUNT" ? 0 : Number(line.discount_amount) || 0,
       }));
 
-    const bad = extra.find((line) => line.quantity <= 0 || line.unit_price <= 0);
+    const bad = extra.find(
+      (line) => line.quantity <= 0 || line.unit_price <= 0,
+    );
     if (bad) return;
     const created = await create.run({
       repair_order_id: form.values.repair_order_id,
@@ -420,13 +461,19 @@ function RaiseInvoiceModal({
       >
         <FormError error={create.error} />
 
-        <Field label="Repair order" required hint="Only jobs that passed QC or were delivered.">
+        <Field
+          label="Repair order"
+          required
+          hint="Only jobs that passed QC or were delivered."
+        >
           {billable.loading && billable.initial ? (
             <Input value="Loading…" disabled readOnly />
           ) : (
             <Select
               value={form.values.repair_order_id}
-              onChange={(event) => form.set("repair_order_id", event.target.value)}
+              onChange={(event) =>
+                form.set("repair_order_id", event.target.value)
+              }
             >
               <option value="">Choose a repair order</option>
               {orders.map((ro) => (
@@ -439,9 +486,10 @@ function RaiseInvoiceModal({
         </Field>
 
         <Notice tone="info">
-          The estimate lines the customer approved are copied across automatically. They become
-          frozen the moment the invoice is issued and cannot be changed afterwards — only the extra
-          charges added here can be corrected, and only while the invoice is a draft.
+          The estimate lines the customer approved are copied across
+          automatically. They become frozen the moment the invoice is issued and
+          cannot be changed afterwards — only the extra charges added here can
+          be corrected, and only while the invoice is a draft.
         </Notice>
 
         <div className="grid gap-3 sm:grid-cols-3">
@@ -452,7 +500,10 @@ function RaiseInvoiceModal({
               onChange={(event) => form.set("invoice_date", event.target.value)}
             />
           </Field>
-          <Field label="Due date" hint="Cannot be earlier than the invoice date.">
+          <Field
+            label="Due date"
+            hint="Cannot be earlier than the invoice date."
+          >
             <Input
               type="date"
               value={form.values.due_date}
@@ -470,7 +521,10 @@ function RaiseInvoiceModal({
           </Field>
         </div>
 
-        <Field label="Notes" hint="Internal — not shown on the customer's copy.">
+        <Field
+          label="Notes"
+          hint="Internal — not shown on the customer's copy."
+        >
           <Input
             value={form.values.notes}
             onChange={(event) => form.set("notes", event.target.value)}
@@ -488,7 +542,8 @@ function RaiseInvoiceModal({
           </div>
           {lines.length === 0 ? (
             <p className="px-3 py-3 text-sm text-ink-500">
-              None. Work agreed at the counter can be added here as a manual line.
+              None. Work agreed at the counter can be added here as a manual
+              line.
             </p>
           ) : (
             <ul className="divide-y divide-ink-100">
@@ -498,11 +553,15 @@ function RaiseInvoiceModal({
                     <Input
                       value={line.description}
                       placeholder="What was charged for"
-                      onChange={(event) => updateLine(index, { description: event.target.value })}
+                      onChange={(event) =>
+                        updateLine(index, { description: event.target.value })
+                      }
                     />
                     <Select
                       value={line.item_type}
-                      onChange={(event) => updateLine(index, { item_type: event.target.value })}
+                      onChange={(event) =>
+                        updateLine(index, { item_type: event.target.value })
+                      }
                     >
                       {LINE_TYPES.map((value) => (
                         <option key={value} value={value}>
@@ -517,9 +576,13 @@ function RaiseInvoiceModal({
                         type="number"
                         step="0.01"
                         min="0"
-                        value={line.item_type === "DISCOUNT" ? "1" : line.quantity}
+                        value={
+                          line.item_type === "DISCOUNT" ? "1" : line.quantity
+                        }
                         disabled={line.item_type === "DISCOUNT"}
-                        onChange={(event) => updateLine(index, { quantity: event.target.value })}
+                        onChange={(event) =>
+                          updateLine(index, { quantity: event.target.value })
+                        }
                       />
                     </Field>
                     <Field label="Unit price" className="w-32">
@@ -528,12 +591,15 @@ function RaiseInvoiceModal({
                         step="0.01"
                         min="0"
                         value={line.unit_price}
-                        onChange={(event) => updateLine(index, { unit_price: event.target.value })}
+                        onChange={(event) =>
+                          updateLine(index, { unit_price: event.target.value })
+                        }
                       />
                     </Field>
                     {line.item_type === "DISCOUNT" ? (
                       <p className="pb-2 text-xs text-ink-500">
-                        A discount is one line of one amount; it cannot carry its own discount.
+                        A discount is one line of one amount; it cannot carry
+                        its own discount.
                       </p>
                     ) : (
                       <Field label="Discount" className="w-28">
@@ -543,17 +609,25 @@ function RaiseInvoiceModal({
                           min="0"
                           value={line.discount_amount}
                           onChange={(event) =>
-                            updateLine(index, { discount_amount: event.target.value })
+                            updateLine(index, {
+                              discount_amount: event.target.value,
+                            })
                           }
                         />
                       </Field>
                     )}
-                    <Button variant="ghost" size="sm" onClick={() => removeLine(index)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeLine(index)}
+                    >
                       Remove
                     </Button>
                   </div>
                   {extraLineProblem(line) ? (
-                    <p className="text-xs text-rose-700">{extraLineProblem(line)}</p>
+                    <p className="text-xs text-rose-700">
+                      {extraLineProblem(line)}
+                    </p>
                   ) : null}
                 </li>
               ))}
@@ -561,8 +635,8 @@ function RaiseInvoiceModal({
           )}
         </div>
         <Notice tone="info">
-          The totals are derived by the server from the lines and the tax rate — the draft is created
-          with them already calculated.
+          The totals are derived by the server from the lines and the tax rate —
+          the draft is created with them already calculated.
         </Notice>
       </form>
     </Modal>

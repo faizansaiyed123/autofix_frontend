@@ -149,7 +149,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
   ),
 };
 
-export function Icon({ name, className = "" }: { name: IconName; className?: string }) {
+export function Icon({
+  name,
+  className = "",
+}: {
+  name: IconName;
+  className?: string;
+}) {
   return (
     <svg
       width="18"

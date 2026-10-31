@@ -29,9 +29,14 @@ export class ApiError extends Error {
   get fieldErrors(): { field: string; message: string }[] {
     if (!Array.isArray(this.detail)) return [];
     return this.detail
-      .filter((d): d is { loc?: unknown[]; msg?: string } => !!d && typeof d === "object")
+      .filter(
+        (d): d is { loc?: unknown[]; msg?: string } =>
+          !!d && typeof d === "object",
+      )
       .map((d) => ({
-        field: Array.isArray(d.loc) ? d.loc.filter((x) => x !== "body").join(".") : "",
+        field: Array.isArray(d.loc)
+          ? d.loc.filter((x) => x !== "body").join(".")
+          : "",
         message: d.msg ?? "Invalid value",
       }));
   }
@@ -39,7 +44,9 @@ export class ApiError extends Error {
   get messageForUser(): string {
     const fieldErrors = this.fieldErrors;
     if (fieldErrors.length > 0) {
-      return fieldErrors.map((f) => (f.field ? `${f.field}: ${f.message}` : f.message)).join("; ");
+      return fieldErrors
+        .map((f) => (f.field ? `${f.field}: ${f.message}` : f.message))
+        .join("; ");
     }
     if (typeof this.detail === "string") return this.detail;
     return this.message;
@@ -86,7 +93,13 @@ export function hasStoredSession(): boolean {
   return readToken(STORAGE_KEYS.accessToken) !== null;
 }
 
-export type QueryValue = string | number | boolean | null | undefined | string[];
+export type QueryValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | string[];
 export type Query = Record<string, QueryValue>;
 
 function buildQuery(query?: Query): string {
@@ -142,13 +155,19 @@ async function refreshTokens(): Promise<boolean> {
     const refresh = readToken(STORAGE_KEYS.refreshToken);
     if (!refresh) return false;
     try {
-      const response = await fetch(`${API_BASE_URL}${API_PREFIX}/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token: refresh }),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}${API_PREFIX}/auth/refresh`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refresh }),
+        },
+      );
       if (!response.ok) return false;
-      const tokens = (await response.json()) as { access_token: string; refresh_token: string };
+      const tokens = (await response.json()) as {
+        access_token: string;
+        refresh_token: string;
+      };
       // A logout/password reset/new login may have changed local session state
       // while the refresh request was in flight. Never resurrect or overwrite it.
       if (readToken(STORAGE_KEYS.refreshToken) !== refresh) return false;
@@ -168,7 +187,10 @@ async function refreshTokens(): Promise<boolean> {
   return refreshInFlight;
 }
 
-export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+export async function request<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
   const { method = "GET", body, query, anonymous = false, signal } = options;
   const headers: Record<string, string> = { Accept: "application/json" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -178,12 +200,15 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}${buildQuery(query)}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
-    signal,
-  });
+  const response = await fetch(
+    `${API_BASE_URL}${API_PREFIX}${path}${buildQuery(query)}`,
+    {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal,
+    },
+  );
 
   if (response.status === 401 && !anonymous && !options._isRetry) {
     const refreshed = await refreshTokens();
@@ -206,7 +231,9 @@ export async function requestDocument<T = string>(path: string): Promise<T> {
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, { headers });
+  const response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, {
+    headers,
+  });
   if (!response.ok) throw await parseError(response);
   return (await response.text()) as T;
 }
@@ -234,5 +261,6 @@ export const api = {
     request<T>(path, { method: "PATCH", body, query }),
   put: <T>(path: string, body?: unknown, query?: Query) =>
     request<T>(path, { method: "PUT", body, query }),
-  delete: <T>(path: string, query?: Query) => request<T>(path, { method: "DELETE", query }),
+  delete: <T>(path: string, query?: Query) =>
+    request<T>(path, { method: "DELETE", query }),
 };

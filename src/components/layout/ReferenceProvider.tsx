@@ -98,7 +98,9 @@ export function ReferenceProvider({ children }: { children: ReactNode }) {
         const customer = id ? customerById.get(id) : undefined;
         if (!customer) return "—";
         const name = `${customer.first_name} ${customer.last_name}`;
-        return customer.company_name ? `${name} · ${customer.company_name}` : name;
+        return customer.company_name
+          ? `${name} · ${customer.company_name}`
+          : name;
       },
       vehicleText: (id) => {
         const vehicle = id ? vehicleById.get(id) : undefined;
@@ -112,11 +114,16 @@ export function ReferenceProvider({ children }: { children: ReactNode }) {
         const person = id ? userById.get(id) : undefined;
         return person ? `${person.first_name} ${person.last_name}` : "—";
       },
-      vehiclesFor: (customerId) => (vehicles.data ?? []).filter((v) => v.customer_id === customerId),
+      vehiclesFor: (customerId) =>
+        (vehicles.data ?? []).filter((v) => v.customer_id === customerId),
     };
   }, [customers.data, vehicles.data, staff.data]);
 
-  return <ReferenceContext.Provider value={value}>{children}</ReferenceContext.Provider>;
+  return (
+    <ReferenceContext.Provider value={value}>
+      {children}
+    </ReferenceContext.Provider>
+  );
 }
 
 export function useReferences(): References {

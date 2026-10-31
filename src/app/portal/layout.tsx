@@ -13,10 +13,18 @@ import { useSession } from "@/lib/auth/AuthProvider";
 const PORTAL_LINKS = [
   { href: "/portal", label: "Overview", icon: "dashboard" as const },
   { href: "/portal/vehicles", label: "My vehicles", icon: "vehicle" as const },
-  { href: "/portal/appointments", label: "Appointments", icon: "calendar" as const },
+  {
+    href: "/portal/appointments",
+    label: "Appointments",
+    icon: "calendar" as const,
+  },
   { href: "/portal/estimates", label: "Estimates", icon: "estimate" as const },
   { href: "/portal/invoices", label: "Invoices", icon: "invoice" as const },
-  { href: "/portal/service-requests", label: "Requests", icon: "request" as const },
+  {
+    href: "/portal/service-requests",
+    label: "Requests",
+    icon: "request" as const,
+  },
   { href: "/portal/payments", label: "Payments", icon: "payment" as const },
 ];
 
@@ -68,7 +76,9 @@ function PortalShell({ children }: { children: ReactNode }) {
             <Link
               href="/attention"
               className="relative rounded-lg p-2 text-ink-500 hover:bg-ink-100"
-              aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
+              aria-label={
+                unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
+              }
             >
               <Icon name="bell" />
               {unread > 0 ? (
