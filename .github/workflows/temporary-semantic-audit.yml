@@ -1,0 +1,134 @@
+name: Temporary Semantic Formatting Audit
+
+on:
+  push:
+    branches:
+      - chore/formatting-only-autofix
+
+permissions:
+  contents: read
+
+jobs:
+  semantic-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch and history
+        uses: actions/checkout@v4
+        with:
+          ref: chore/formatting-only-autofix
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install existing project dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Compare emitted JavaScript semantics against main
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const { execFileSync } = require("node:child_process");
+          const ts = require("typescript");
+          const postcss = require("postcss");
+
+          const base = "origin/main";
+          const files = execFileSync("git", ["diff", "--name-only", base + "...HEAD"], { encoding: "utf8" })
+            .trim().split("\n").filter(Boolean);
+
+          function runGit(args) {
+            return execFileSync("git", args, { encoding: "utf8", maxBuffer: 20 * 1024 * 1024 });
+          }
+
+          function canonicalTs(node) {
+            if (node.kind === ts.SyntaxKind.ParenthesizedExpression) return canonicalTs(node.expression);
+            if (ts.isNumericLiteral(node)) {
+              const value = Number(node.text.replaceAll("_", ""));
+              return ["NumericLiteral", Number.isFinite(value) ? String(value) : node.text];
+            }
+            if (ts.isIdentifier(node)) return ["Identifier", String(node.escapedText)];
+            if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+              return [ts.SyntaxKind[node.kind], node.text];
+            }
+            if (ts.isJsxText(node)) return ["JsxText", node.text];
+            const children = [];
+            ts.forEachChild(node, child => children.push(canonicalTs(child)));
+            return [ts.SyntaxKind[node.kind], children];
+          }
+
+          function emittedAst(source, fileName) {
+            const result = ts.transpileModule(source, {
+              fileName,
+              reportDiagnostics: true,
+              compilerOptions: {
+                target: ts.ScriptTarget.ES2022,
+                module: ts.ModuleKind.ESNext,
+                jsx: ts.JsxEmit.ReactJSX,
+                removeComments: true,
+                useDefineForClassFields: false,
+              },
+            });
+            const errors = (result.diagnostics || []).filter(d => d.category === ts.DiagnosticCategory.Error);
+            if (errors.length) {
+              throw new Error(fileName + ": " + errors.map(d => ts.flattenDiagnosticMessageText(d.messageText, " ")).join("; "));
+            }
+            const output = ts.createSourceFile(fileName + ".js", result.outputText, ts.ScriptTarget.ES2022, true, ts.ScriptKind.JS);
+            return JSON.stringify(canonicalTs(output));
+          }
+
+          function canonicalCss(node) {
+            const value = {
+              type: node.type,
+              name: node.name ?? null,
+              params: node.params ?? null,
+              selector: node.selector ?? null,
+              prop: node.prop ?? null,
+              value: node.value ?? null,
+              important: node.important ?? null,
+              children: (node.nodes || []).map(canonicalCss),
+            };
+            return value;
+          }
+
+          const semanticFiles = [];
+          const mismatches = [];
+          for (const file of files) {
+            if (/\.(tsx?|jsx?)$/i.test(file)) {
+              const oldSource = runGit(["show", base + ":" + file]);
+              const newSource = fs.readFileSync(file, "utf8");
+              semanticFiles.push(file);
+              try {
+                if (emittedAst(oldSource, file) !== emittedAst(newSource, file)) {
+                  mismatches.push(file + " (emitted JavaScript AST differs)");
+                }
+              } catch (error) {
+                mismatches.push(file + " (" + error.message + ")");
+              }
+            } else if (/\.json$/i.test(file)) {
+              const oldJson = JSON.parse(runGit(["show", base + ":" + file]));
+              const newJson = JSON.parse(fs.readFileSync(file, "utf8"));
+              if (JSON.stringify(oldJson) !== JSON.stringify(newJson)) {
+                mismatches.push(file + " (parsed JSON differs)");
+              }
+            } else if (/\.css$/i.test(file)) {
+              const oldCss = postcss.parse(runGit(["show", base + ":" + file]), { from: file });
+              const newCss = postcss.parse(fs.readFileSync(file, "utf8"), { from: file });
+              if (JSON.stringify(canonicalCss(oldCss)) !== JSON.stringify(canonicalCss(newCss))) {
+                mismatches.push(file + " (PostCSS syntax tree differs)");
+              }
+            }
+          }
+
+          console.log("TypeScript/JavaScript files checked:", semanticFiles.length);
+          console.log("Total changed files checked:", files.length);
+          if (mismatches.length) {
+            console.error("Potential non-formatting differences:");
+            for (const mismatch of mismatches) console.error(" - " + mismatch);
+            process.exit(1);
+          }
+          console.log("PASS: emitted JavaScript ASTs, parsed JSON and CSS syntax trees are semantically identical to main.");
+          NODE
