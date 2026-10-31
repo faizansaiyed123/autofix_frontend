@@ -11,7 +11,12 @@ import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
 import { Field, FormError, Input, Select, useForm } from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, SearchInput, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { customersApi } from "@/lib/api/shop";
 import type { Customer } from "@/lib/api/types";
 import { useApiMutation } from "@/lib/hooks/useApiMutation";
@@ -44,10 +49,15 @@ export default function CustomersPage() {
       header: "Customer",
       render: (c) => (
         <div>
-          <Link href={`/customers/${c.id}`} className="font-medium text-brand-700 hover:underline">
+          <Link
+            href={`/customers/${c.id}`}
+            className="font-medium text-brand-700 hover:underline"
+          >
             {c.first_name} {c.last_name}
           </Link>
-          {c.company_name ? <p className="text-xs text-ink-500">{c.company_name}</p> : null}
+          {c.company_name ? (
+            <p className="text-xs text-ink-500">{c.company_name}</p>
+          ) : null}
         </div>
       ),
     },
@@ -58,14 +68,18 @@ export default function CustomersPage() {
         <div className="text-sm">
           {c.email ? <p>{c.email}</p> : null}
           {c.phone ? <p className="text-xs text-ink-500">{c.phone}</p> : null}
-          {!c.email && !c.phone ? <span className="text-ink-400">—</span> : null}
+          {!c.email && !c.phone ? (
+            <span className="text-ink-400">—</span>
+          ) : null}
         </div>
       ),
     },
     {
       key: "preferred",
       header: "Prefers",
-      render: (c) => <span className="text-xs text-ink-600">{c.preferred_contact}</span>,
+      render: (c) => (
+        <span className="text-xs text-ink-600">{c.preferred_contact}</span>
+      ),
     },
     {
       key: "status",
@@ -78,7 +92,9 @@ export default function CustomersPage() {
     <>
       <PageHeader
         title="Customers"
-        subtitle={query.data ? `${query.data.meta.total} in the book` : undefined}
+        subtitle={
+          query.data ? `${query.data.meta.total} in the book` : undefined
+        }
         actions={
           can("customers:write") ? (
             <Button variant="primary" onClick={() => setCreating(true)}>
@@ -133,7 +149,7 @@ export default function CustomersPage() {
           <>
             <DataTable
               rows={query.data.data}
-              columns={ columns}
+              columns={columns}
               rowKey={(c) => c.id}
               onRowClick={(c) => router.push(`/customers/${c.id}`)}
             />
@@ -177,7 +193,9 @@ function NewCustomerModal({
     phone: "",
     preferred_contact: "EMAIL",
   });
-  const create = useApiMutation((body: Record<string, unknown>) => customersApi.create(body as never));
+  const create = useApiMutation((body: Record<string, unknown>) =>
+    customersApi.create(body as never),
+  );
 
   async function submit() {
     const missing = form.missing(["first_name", "last_name"]);
@@ -207,7 +225,11 @@ function NewCustomerModal({
           <Button onClick={onClose} disabled={create.pending}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={() => void submit()} pending={create.pending}>
+          <Button
+            variant="primary"
+            onClick={() => void submit()}
+            pending={create.pending}
+          >
             Create customer
           </Button>
         </>
@@ -267,8 +289,8 @@ function NewCustomerModal({
           </Select>
         </Field>
         <Notice tone="info">
-          Accounts are linked to a portal login separately — a customer record exists whether or not
-          anybody can sign in to it.
+          Accounts are linked to a portal login separately — a customer record
+          exists whether or not anybody can sign in to it.
         </Notice>
       </form>
     </Modal>

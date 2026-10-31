@@ -8,10 +8,22 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, SearchInput, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { vehiclesApi } from "@/lib/api/shop";
 import type { Vehicle, VehicleCreate, VehicleStatus } from "@/lib/api/types";
@@ -49,7 +61,10 @@ export default function VehiclesPage() {
       header: "Vehicle",
       render: (v) => (
         <div className="min-w-0">
-          <Link href={`/vehicles/${v.id}`} className="font-medium text-brand-700 hover:underline">
+          <Link
+            href={`/vehicles/${v.id}`}
+            className="font-medium text-brand-700 hover:underline"
+          >
             {[v.year, v.make, v.model].filter(Boolean).join(" ")}
           </Link>
           {v.license_plate ? (
@@ -63,15 +78,28 @@ export default function VehiclesPage() {
     {
       key: "customer",
       header: "Customer",
-      render: (v) => <span className="text-sm text-ink-700">{customerLabel(v.customer_id)}</span>,
+      render: (v) => (
+        <span className="text-sm text-ink-700">
+          {customerLabel(v.customer_id)}
+        </span>
+      ),
     },
     {
       key: "mileage",
       header: "Mileage",
       numeric: true,
-      render: (v) => (v.mileage === null ? <span className="text-ink-400">—</span> : formatNumber(v.mileage)),
+      render: (v) =>
+        v.mileage === null ? (
+          <span className="text-ink-400">—</span>
+        ) : (
+          formatNumber(v.mileage)
+        ),
     },
-    { key: "status", header: "Status", render: (v) => <StatusBadge status={v.status} /> },
+    {
+      key: "status",
+      header: "Status",
+      render: (v) => <StatusBadge status={v.status} />,
+    },
     {
       key: "updated",
       header: "Updated",
@@ -80,7 +108,9 @@ export default function VehiclesPage() {
         // The vehicle payload has no updated_at, so use the latest mileage reading timestamp.
         const latest = lastReadingAt(v);
         return (
-          <span className="text-xs text-ink-500">{latest ? formatRelative(latest) : "No reading"}</span>
+          <span className="text-xs text-ink-500">
+            {latest ? formatRelative(latest) : "No reading"}
+          </span>
         );
       },
     },
@@ -90,7 +120,9 @@ export default function VehiclesPage() {
     <>
       <PageHeader
         title="Vehicles"
-        subtitle={query.data ? `${query.data.meta.total} in the book` : undefined}
+        subtitle={
+          query.data ? `${query.data.meta.total} in the book` : undefined
+        }
         actions={
           can("vehicles:write") ? (
             <Button variant="primary" onClick={() => setCreating(true)}>
@@ -175,9 +207,11 @@ export default function VehiclesPage() {
 }
 
 function lastReadingAt(vehicle: Vehicle): string | null {
-  if (!vehicle.mileage_records || vehicle.mileage_records.length === 0) return null;
+  if (!vehicle.mileage_records || vehicle.mileage_records.length === 0)
+    return null;
   return vehicle.mileage_records.reduce(
-    (latest, record) => (record.created_at > latest ? record.created_at : latest),
+    (latest, record) =>
+      record.created_at > latest ? record.created_at : latest,
     vehicle.mileage_records[0].created_at,
   );
 }
@@ -204,12 +238,16 @@ function NewVehicleModal({
     status: "ACTIVE",
     notes: "",
   });
-  const create = useApiMutation((body: VehicleCreate) => vehiclesApi.create(body));
+  const create = useApiMutation((body: VehicleCreate) =>
+    vehiclesApi.create(body),
+  );
 
   const year = Number(form.values.year);
-  const yearRejected = form.values.year !== "" && !(year >= 1900 && year <= 2030);
+  const yearRejected =
+    form.values.year !== "" && !(year >= 1900 && year <= 2030);
   const vinRejected = Boolean(
-    form.values.vin && !/^[A-HJ-NPR-Z0-9]{11,17}$/i.test(form.values.vin.trim()),
+    form.values.vin &&
+      !/^[A-HJ-NPR-Z0-9]{11,17}$/i.test(form.values.vin.trim()),
   );
 
   async function submit() {
@@ -285,10 +323,16 @@ function NewVehicleModal({
         </Field>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Make" required>
-            <Input value={form.values.make} onChange={(e) => form.set("make", e.target.value)} />
+            <Input
+              value={form.values.make}
+              onChange={(e) => form.set("make", e.target.value)}
+            />
           </Field>
           <Field label="Model" required>
-            <Input value={form.values.model} onChange={(e) => form.set("model", e.target.value)} />
+            <Input
+              value={form.values.model}
+              onChange={(e) => form.set("model", e.target.value)}
+            />
           </Field>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -306,7 +350,10 @@ function NewVehicleModal({
             />
           </Field>
           <Field label="Colour">
-            <Input value={form.values.color} onChange={(e) => form.set("color", e.target.value)} />
+            <Input
+              value={form.values.color}
+              onChange={(e) => form.set("color", e.target.value)}
+            />
           </Field>
         </div>
         <Field
@@ -324,7 +371,9 @@ function NewVehicleModal({
           <Field label="Plate">
             <Input
               value={form.values.license_plate}
-              onChange={(e) => form.set("license_plate", e.target.value.toUpperCase())}
+              onChange={(e) =>
+                form.set("license_plate", e.target.value.toUpperCase())
+              }
             />
           </Field>
           <Field label="Mileage">
@@ -356,8 +405,8 @@ function NewVehicleModal({
           />
         </Field>
         <Notice tone="info">
-          Mileage entered here sets the current reading. Add readings over time from the vehicle page
-          so the history explains itself.
+          Mileage entered here sets the current reading. Add readings over time
+          from the vehicle page so the history explains itself.
         </Notice>
       </form>
     </Modal>

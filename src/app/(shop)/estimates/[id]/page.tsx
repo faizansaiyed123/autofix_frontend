@@ -8,17 +8,34 @@ import { Badge, StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, KeyValue, KeyValueGrid } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { estimatesApi } from "@/lib/api/work";
 import type { Estimate, EstimateItem } from "@/lib/api/types";
 import { useApiMutation } from "@/lib/hooks/useApiMutation";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { useSession } from "@/lib/auth/AuthProvider";
-import { formatDate, formatDateTime, formatMoney, formatNumber, formatPercent } from "@/lib/format";
+import {
+  formatDate,
+  formatDateTime,
+  formatMoney,
+  formatNumber,
+  formatPercent,
+} from "@/lib/format";
 
 /** Estimate detail. Approval is per line, and billed totals come from the API. */
 export default function EstimateDetailPage() {
@@ -31,11 +48,17 @@ export default function EstimateDetailPage() {
 
   const query = useApiQuery(() => estimatesApi.get(id), [id]);
 
-  const send = useApiMutation((estimateId: string) => estimatesApi.send(estimateId));
-  const removeItem = useApiMutation((itemId: string) => estimatesApi.removeItem(id, itemId));
+  const send = useApiMutation((estimateId: string) =>
+    estimatesApi.send(estimateId),
+  );
+  const removeItem = useApiMutation((itemId: string) =>
+    estimatesApi.removeItem(id, itemId),
+  );
 
-  if (query.loading && query.initial) return <Loading label="Opening the estimate…" />;
-  if (query.error) return <ErrorState error={query.error} onRetry={query.refetch} />;
+  if (query.loading && query.initial)
+    return <Loading label="Opening the estimate…" />;
+  if (query.error)
+    return <ErrorState error={query.error} onRetry={query.refetch} />;
 
   const estimate = query.data;
   if (!estimate) return <ErrorState error={new Error("Estimate not found")} />;
@@ -47,8 +70,12 @@ export default function EstimateDetailPage() {
   const mayDecide = can("estimates:approve");
 
   const pending = estimate.items.filter((item) => item.status === "PENDING");
-  const approvedCount = estimate.items.filter((item) => item.status === "APPROVED").length;
-  const declinedCount = estimate.items.filter((item) => item.status === "DECLINED").length;
+  const approvedCount = estimate.items.filter(
+    (item) => item.status === "APPROVED",
+  ).length;
+  const declinedCount = estimate.items.filter(
+    (item) => item.status === "DECLINED",
+  ).length;
 
   const sendBlock = sendBlockReason(estimate);
 
@@ -66,8 +93,14 @@ export default function EstimateDetailPage() {
               ? ` · ${formatNumber(item.labor_hours, 2)}h at ${formatMoney(item.labor_rate)}`
               : ""}
           </p>
-          {item.is_optional ? <Badge tone="neutral" className="mt-1">Optional</Badge> : null}
-          {item.notes ? <p className="mt-1 text-xs text-ink-500">{item.notes}</p> : null}
+          {item.is_optional ? (
+            <Badge tone="neutral" className="mt-1">
+              Optional
+            </Badge>
+          ) : null}
+          {item.notes ? (
+            <p className="mt-1 text-xs text-ink-500">{item.notes}</p>
+          ) : null}
         </div>
       ),
     },
@@ -76,7 +109,9 @@ export default function EstimateDetailPage() {
       header: "Qty",
       numeric: true,
       render: (item) => (
-        <span className="text-xs">{item.item_type === "LABOR" ? "—" : formatNumber(item.quantity, 2)}</span>
+        <span className="text-xs">
+          {item.item_type === "LABOR" ? "—" : formatNumber(item.quantity, 2)}
+        </span>
       ),
     },
     {
@@ -84,20 +119,28 @@ export default function EstimateDetailPage() {
       header: "Unit",
       numeric: true,
       render: (item) => (
-        <span className="text-xs">{item.item_type === "LABOR" ? "—" : formatMoney(item.unit_price)}</span>
+        <span className="text-xs">
+          {item.item_type === "LABOR" ? "—" : formatMoney(item.unit_price)}
+        </span>
       ),
     },
     {
       key: "discount",
       header: "Discount",
       numeric: true,
-      render: (item) => <span className="text-xs text-ink-500">{formatMoney(item.discount_amount)}</span>,
+      render: (item) => (
+        <span className="text-xs text-ink-500">
+          {formatMoney(item.discount_amount)}
+        </span>
+      ),
     },
     {
       key: "line_total",
       header: "Line total",
       numeric: true,
-      render: (item) => <span className="font-medium">{formatMoney(item.line_total)}</span>,
+      render: (item) => (
+        <span className="font-medium">{formatMoney(item.line_total)}</span>
+      ),
     },
     {
       key: "decision",
@@ -116,19 +159,27 @@ export default function EstimateDetailPage() {
                 Record decision
               </Button>
             ) : (
-              <span className="text-xs text-ink-500">Awaiting the customer</span>
+              <span className="text-xs text-ink-500">
+                Awaiting the customer
+              </span>
             )
           ) : null}
           {mayWrite && isDraft ? (
             <>
-              <Button size="sm" variant="ghost" onClick={() => setLineItem(item)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setLineItem(item)}
+              >
                 Edit
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
                 pending={removeItem.pending}
-                onClick={() => removeItem.run(item.id).then(() => query.refetch())}
+                onClick={() =>
+                  removeItem.run(item.id).then(() => query.refetch())
+                }
               >
                 Remove
               </Button>
@@ -142,7 +193,11 @@ export default function EstimateDetailPage() {
   return (
     <>
       <PageHeader
-        breadcrumb={<Link href="/estimates" className="hover:underline">Estimates</Link>}
+        breadcrumb={
+          <Link href="/estimates" className="hover:underline">
+            Estimates
+          </Link>
+        }
         title={estimate.estimate_number}
         subtitle={`${customerLabel(estimate.customer_id)} · ${vehicleLabel(estimate.vehicle_id)}`}
         actions={
@@ -155,7 +210,9 @@ export default function EstimateDetailPage() {
                   pending={send.pending}
                   disabled={sendBlock !== null}
                   title={sendBlock ?? undefined}
-                  onClick={() => send.run(id).then((result) => result && query.refetch())}
+                  onClick={() =>
+                    send.run(id).then((result) => result && query.refetch())
+                  }
                 >
                   Send to customer
                 </Button>
@@ -177,12 +234,14 @@ export default function EstimateDetailPage() {
         }
       />
 
-      {send.error ? <Notice tone="danger">{send.error.messageForUser}</Notice> : null}
+      {send.error ? (
+        <Notice tone="danger">{send.error.messageForUser}</Notice>
+      ) : null}
       {estimate.is_expired ? (
         <div className="mb-4">
           <Notice tone="danger">
-            This estimate expired on {formatDate(estimate.valid_until)}. It can no longer be sent or
-            decided on.
+            This estimate expired on {formatDate(estimate.valid_until)}. It can
+            no longer be sent or decided on.
           </Notice>
         </div>
       ) : null}
@@ -210,11 +269,16 @@ export default function EstimateDetailPage() {
               description="An estimate cannot be sent until it has at least one priced line."
             />
           ) : (
-            <DataTable rows={estimate.items} columns={columns} rowKey={(item) => item.id} />
+            <DataTable
+              rows={estimate.items}
+              columns={columns}
+              rowKey={(item) => item.id}
+            />
           )}
           <p className="mt-3 text-xs text-ink-500">
-            Only approved lines are billed. A declined line is not charged for, and an optional line
-            the customer did not pick is not part of {formatMoney(estimate.approved_total)}.
+            Only approved lines are billed. A declined line is not charged for,
+            and an optional line the customer did not pick is not part of{" "}
+            {formatMoney(estimate.approved_total)}.
           </p>
         </Card>
 
@@ -222,8 +286,14 @@ export default function EstimateDetailPage() {
           <Card>
             <CardHeader title="Money" subtitle="As the backend has it" />
             <dl className="space-y-2">
-              <MoneyRow label="Subtotal" value={formatMoney(estimate.subtotal)} />
-              <MoneyRow label="Discount" value={`- ${formatMoney(estimate.discount_amount)}`} />
+              <MoneyRow
+                label="Subtotal"
+                value={formatMoney(estimate.subtotal)}
+              />
+              <MoneyRow
+                label="Discount"
+                value={`- ${formatMoney(estimate.discount_amount)}`}
+              />
               <MoneyRow
                 label={`Tax at ${formatPercent(estimate.tax_rate)}`}
                 value={formatMoney(estimate.tax_amount)}
@@ -235,7 +305,9 @@ export default function EstimateDetailPage() {
                 </dd>
               </div>
               <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-sm text-ink-700">Approved by the customer</dt>
+                <dt className="text-sm text-ink-700">
+                  Approved by the customer
+                </dt>
                 <dd className="tabular text-sm font-semibold text-emerald-700">
                   {formatMoney(estimate.approved_total)}
                 </dd>
@@ -246,10 +318,18 @@ export default function EstimateDetailPage() {
           <Card>
             <CardHeader title="Decisions" subtitle="One per line" />
             <KeyValueGrid>
-              <KeyValue label="Lines">{formatNumber(estimate.items.length)}</KeyValue>
-              <KeyValue label="Pending">{formatNumber(pending.length)}</KeyValue>
-              <KeyValue label="Approved">{formatNumber(approvedCount)}</KeyValue>
-              <KeyValue label="Declined">{formatNumber(declinedCount)}</KeyValue>
+              <KeyValue label="Lines">
+                {formatNumber(estimate.items.length)}
+              </KeyValue>
+              <KeyValue label="Pending">
+                {formatNumber(pending.length)}
+              </KeyValue>
+              <KeyValue label="Approved">
+                {formatNumber(approvedCount)}
+              </KeyValue>
+              <KeyValue label="Declined">
+                {formatNumber(declinedCount)}
+              </KeyValue>
             </KeyValueGrid>
           </Card>
 
@@ -258,20 +338,32 @@ export default function EstimateDetailPage() {
             <KeyValueGrid>
               <KeyValue label="Valid until">
                 {estimate.is_expired ? (
-                  <span className="text-rose-700">{formatDate(estimate.valid_until)} (expired)</span>
+                  <span className="text-rose-700">
+                    {formatDate(estimate.valid_until)} (expired)
+                  </span>
                 ) : (
                   formatDate(estimate.valid_until)
                 )}
               </KeyValue>
-              <KeyValue label="Sent">{formatDateTime(estimate.sent_at)}</KeyValue>
-              <KeyValue label="Decided">{formatDateTime(estimate.decided_at)}</KeyValue>
+              <KeyValue label="Sent">
+                {formatDateTime(estimate.sent_at)}
+              </KeyValue>
+              <KeyValue label="Decided">
+                {formatDateTime(estimate.decided_at)}
+              </KeyValue>
               {estimate.customer_notes ? (
-                <KeyValue label="Customer notes" className="col-span-2 sm:col-span-3">
+                <KeyValue
+                  label="Customer notes"
+                  className="col-span-2 sm:col-span-3"
+                >
                   {estimate.customer_notes}
                 </KeyValue>
               ) : null}
               {estimate.decline_reason ? (
-                <KeyValue label="Decline reason" className="col-span-2 sm:col-span-3">
+                <KeyValue
+                  label="Decline reason"
+                  className="col-span-2 sm:col-span-3"
+                >
                   {estimate.decline_reason}
                 </KeyValue>
               ) : null}
@@ -287,8 +379,9 @@ export default function EstimateDetailPage() {
 
       {openForDecision && pending.length > 0 ? (
         <Notice tone="info">
-          {pending.length} line{pending.length === 1 ? "" : "s"} still {pending.length === 1 ? "has" : "have"} no
-          decision. Recording one here is the advisor speaking for the customer at the counter.
+          {pending.length} line{pending.length === 1 ? "" : "s"} still{" "}
+          {pending.length === 1 ? "has" : "have"} no decision. Recording one
+          here is the advisor speaking for the customer at the counter.
         </Notice>
       ) : null}
 
@@ -340,8 +433,10 @@ function MoneyRow({ label, value }: { label: string; value: string }) {
 
 /** Why the send button is unavailable, phrased for the person holding the click. */
 function sendBlockReason(estimate: Estimate): string | null {
-  if (estimate.status !== "DRAFT") return `Only a DRAFT estimate can be sent — this one is ${estimate.status}`;
-  if (estimate.items.length === 0) return "Add at least one priced line before sending";
+  if (estimate.status !== "DRAFT")
+    return `Only a DRAFT estimate can be sent — this one is ${estimate.status}`;
+  if (estimate.items.length === 0)
+    return "Add at least one priced line before sending";
   if (estimate.is_expired) return "This estimate has already expired";
   return null;
 }
@@ -365,7 +460,9 @@ function CancelEstimateModal({
   onCancelled: () => void;
 }) {
   const [reason, setReason] = useState("");
-  const cancel = useApiMutation((text: string) => estimatesApi.cancel(estimateId, text || undefined));
+  const cancel = useApiMutation((text: string) =>
+    estimatesApi.cancel(estimateId, text || undefined),
+  );
 
   async function submit() {
     const cancelled = await cancel.run(reason.trim());
@@ -386,7 +483,11 @@ function CancelEstimateModal({
           <Button onClick={onClose} disabled={cancel.pending}>
             Keep it
           </Button>
-          <Button variant="danger" pending={cancel.pending} onClick={() => void submit()}>
+          <Button
+            variant="danger"
+            pending={cancel.pending}
+            onClick={() => void submit()}
+          >
             Cancel estimate
           </Button>
         </>
@@ -401,7 +502,11 @@ function CancelEstimateModal({
       >
         <FormError error={cancel.error} />
         <Field label="Reason" hint="Kept on the record against the estimate">
-          <Textarea rows={3} value={reason} onChange={(event) => setReason(event.target.value)} />
+          <Textarea
+            rows={3}
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
         </Field>
       </form>
     </Modal>
@@ -421,8 +526,9 @@ function DecisionModal({
 }) {
   const [decision, setDecision] = useState<"APPROVED" | "DECLINED">("APPROVED");
   const [notes, setNotes] = useState("");
-  const decide = useApiMutation((choice: "APPROVED" | "DECLINED", note: string) =>
-    estimatesApi.decideItem(estimateId, item.id, choice, note || null),
+  const decide = useApiMutation(
+    (choice: "APPROVED" | "DECLINED", note: string) =>
+      estimatesApi.decideItem(estimateId, item.id, choice, note || null),
   );
 
   async function submit() {
@@ -444,7 +550,11 @@ function DecisionModal({
           <Button onClick={onClose} disabled={decide.pending}>
             Back
           </Button>
-          <Button variant="primary" pending={decide.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={decide.pending}
+            onClick={() => void submit()}
+          >
             Record decision
           </Button>
         </>
@@ -465,18 +575,27 @@ function DecisionModal({
         <Field label="The customer" required>
           <Select
             value={decision}
-            onChange={(event) => setDecision(event.target.value as "APPROVED" | "DECLINED")}
+            onChange={(event) =>
+              setDecision(event.target.value as "APPROVED" | "DECLINED")
+            }
           >
             <option value="APPROVED">approves this line</option>
             <option value="DECLINED">declines this line</option>
           </Select>
         </Field>
-        <Field label="Notes" hint="Recorded against the line, in the customer's words if you have them">
-          <Textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} />
+        <Field
+          label="Notes"
+          hint="Recorded against the line, in the customer's words if you have them"
+        >
+          <Textarea
+            rows={3}
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+          />
         </Field>
         <Notice tone="info">
-          A decision is final on that line, and only approved lines are billed. Other lines on this
-          estimate can still be decided.
+          A decision is final on that line, and only approved lines are billed.
+          Other lines on this estimate can still be decided.
         </Notice>
       </form>
     </Modal>
@@ -497,40 +616,57 @@ function LineItemModal({
   const editing = item !== null;
   const [itemType, setItemType] = useState(item?.item_type ?? "LABOR");
   const [description, setDescription] = useState(item?.description ?? "");
-  const [laborHours, setLaborHours] = useState(item?.labor_hours != null ? String(item.labor_hours) : "");
-  const [laborRate, setLaborRate] = useState(item?.labor_rate != null ? String(item.labor_rate) : "");
+  const [laborHours, setLaborHours] = useState(
+    item?.labor_hours != null ? String(item.labor_hours) : "",
+  );
+  const [laborRate, setLaborRate] = useState(
+    item?.labor_rate != null ? String(item.labor_rate) : "",
+  );
   const [partNumber, setPartNumber] = useState(item?.part_number ?? "");
   const [partName, setPartName] = useState(item?.part_name ?? "");
   const [quantity, setQuantity] = useState(item ? String(item.quantity) : "1");
-  const [unitPrice, setUnitPrice] = useState(item ? String(item.unit_price) : "");
-  const [discount, setDiscount] = useState(item ? String(item.discount_amount) : "");
+  const [unitPrice, setUnitPrice] = useState(
+    item ? String(item.unit_price) : "",
+  );
+  const [discount, setDiscount] = useState(
+    item ? String(item.discount_amount) : "",
+  );
   const [isOptional, setIsOptional] = useState(item?.is_optional ?? false);
   const [notes, setNotes] = useState(item?.notes ?? "");
   const [problems, setProblems] = useState<string[]>([]);
 
-  const addItem = useApiMutation((body: Parameters<typeof estimatesApi.addItem>[1]) =>
-    estimatesApi.addItem(estimateId, body),
+  const addItem = useApiMutation(
+    (body: Parameters<typeof estimatesApi.addItem>[1]) =>
+      estimatesApi.addItem(estimateId, body),
   );
-  const updateItem = useApiMutation((itemId: string, body: Record<string, unknown>) =>
-    estimatesApi.updateItem(estimateId, itemId, body),
+  const updateItem = useApiMutation(
+    (itemId: string, body: Record<string, unknown>) =>
+      estimatesApi.updateItem(estimateId, itemId, body),
   );
 
   const isLabour = itemType === "LABOR";
 
-  const preview =
-    isLabour
-      ? Math.max(toNumber(laborHours) * toNumber(laborRate) - toNumber(discount), 0)
-      : Math.max(toNumber(quantity) * toNumber(unitPrice) - toNumber(discount), 0);
+  const preview = isLabour
+    ? Math.max(
+        toNumber(laborHours) * toNumber(laborRate) - toNumber(discount),
+        0,
+      )
+    : Math.max(
+        toNumber(quantity) * toNumber(unitPrice) - toNumber(discount),
+        0,
+      );
 
   function validate(): string[] {
     const found: string[] = [];
     if (!description.trim()) found.push("The line needs a description");
     if (isLabour) {
-      if (toNumber(laborHours) <= 0) found.push("Labour hours must be above zero");
+      if (toNumber(laborHours) <= 0)
+        found.push("Labour hours must be above zero");
       if (toNumber(laborRate) <= 0) found.push("An hourly rate is required");
     } else {
       if (toNumber(quantity) <= 0) found.push("Quantity must be above zero");
-      if (toNumber(unitPrice) <= 0) found.push("A unit price above zero is required");
+      if (toNumber(unitPrice) <= 0)
+        found.push("A unit price above zero is required");
     }
     return found;
   }
@@ -593,7 +729,11 @@ function LineItemModal({
           <Button onClick={onClose} disabled={mutation.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={mutation.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={mutation.pending}
+            onClick={() => void submit()}
+          >
             {editing ? "Save line" : "Add line"}
           </Button>
         </>
@@ -618,7 +758,11 @@ function LineItemModal({
         ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Type" required hint={editing ? "Fixed on an existing line" : undefined}>
+          <Field
+            label="Type"
+            required
+            hint={editing ? "Fixed on an existing line" : undefined}
+          >
             <Select
               value={itemType}
               disabled={editing}
@@ -632,7 +776,10 @@ function LineItemModal({
             </Select>
           </Field>
           <Field label="Description" required>
-            <Input value={description} onChange={(event) => setDescription(event.target.value)} />
+            <Input
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+            />
           </Field>
         </div>
 
@@ -660,10 +807,16 @@ function LineItemModal({
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Part number">
-              <Input value={partNumber} onChange={(event) => setPartNumber(event.target.value)} />
+              <Input
+                value={partNumber}
+                onChange={(event) => setPartNumber(event.target.value)}
+              />
             </Field>
             <Field label="Part name">
-              <Input value={partName} onChange={(event) => setPartName(event.target.value)} />
+              <Input
+                value={partName}
+                onChange={(event) => setPartName(event.target.value)}
+              />
             </Field>
             <Field label="Quantity" required>
               <Input
@@ -717,7 +870,11 @@ function LineItemModal({
         </label>
 
         <Field label="Notes">
-          <Textarea rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} />
+          <Textarea
+            rows={2}
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+          />
         </Field>
       </form>
     </Modal>

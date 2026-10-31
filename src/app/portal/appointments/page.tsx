@@ -5,10 +5,22 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { portalApi } from "@/lib/api/portal";
 import type { PortalAppointment, PortalVehicle } from "@/lib/api/types";
 import { useApiMutation } from "@/lib/hooks/useApiMutation";
@@ -33,9 +45,13 @@ export default function PortalAppointmentsPage() {
       header: "When",
       render: (a) => (
         <div>
-          <p className="font-medium text-ink-800">{formatDateTime(a.scheduled_start)}</p>
+          <p className="font-medium text-ink-800">
+            {formatDateTime(a.scheduled_start)}
+          </p>
           {a.scheduled_end ? (
-            <p className="text-xs text-ink-500">until {formatDateTime(a.scheduled_end)}</p>
+            <p className="text-xs text-ink-500">
+              until {formatDateTime(a.scheduled_end)}
+            </p>
           ) : null}
         </div>
       ),
@@ -81,7 +97,9 @@ export default function PortalAppointmentsPage() {
           <div className="flex gap-2">
             <Select
               value={upcomingOnly ? "upcoming" : "all"}
-              onChange={(event) => setUpcomingOnly(event.target.value === "upcoming")}
+              onChange={(event) =>
+                setUpcomingOnly(event.target.value === "upcoming")
+              }
               className="w-36"
             >
               <option value="all">All</option>
@@ -99,7 +117,10 @@ export default function PortalAppointmentsPage() {
           <Loading />
         ) : appointments.error ? (
           <div className="p-4">
-            <ErrorState error={appointments.error} onRetry={appointments.refetch} />
+            <ErrorState
+              error={appointments.error}
+              onRetry={appointments.refetch}
+            />
           </div>
         ) : !appointments.data || appointments.data.length === 0 ? (
           <EmptyState
@@ -178,7 +199,11 @@ function BookModal({
           <Button onClick={onClose} disabled={book.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={book.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={book.pending}
+            onClick={() => void submit()}
+          >
             Request this slot
           </Button>
         </>
@@ -200,7 +225,9 @@ function BookModal({
             <option value="">Choose a vehicle…</option>
             {vehicles.map((vehicle) => (
               <option key={vehicle.id} value={vehicle.id}>
-                {[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ")}
+                {[vehicle.year, vehicle.make, vehicle.model]
+                  .filter(Boolean)
+                  .join(" ")}
                 {vehicle.license_plate ? ` (${vehicle.license_plate})` : ""}
               </option>
             ))}
@@ -223,13 +250,17 @@ function BookModal({
             <Input
               type="datetime-local"
               value={form.values.scheduled_start}
-              onChange={(event) => form.set("scheduled_start", event.target.value)}
+              onChange={(event) =>
+                form.set("scheduled_start", event.target.value)
+              }
             />
           </Field>
           <Field label="How long" hint="Roughly — the shop can change it.">
             <Select
               value={form.values.duration_minutes}
-              onChange={(event) => form.set("duration_minutes", event.target.value)}
+              onChange={(event) =>
+                form.set("duration_minutes", event.target.value)
+              }
             >
               <option value="30">30 minutes</option>
               <option value="60">1 hour</option>
@@ -243,7 +274,9 @@ function BookModal({
           <Textarea
             rows={3}
             value={form.values.customer_concern}
-            onChange={(event) => form.set("customer_concern", event.target.value)}
+            onChange={(event) =>
+              form.set("customer_concern", event.target.value)
+            }
           />
         </Field>
         <Notice tone="info">

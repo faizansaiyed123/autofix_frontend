@@ -19,14 +19,19 @@ export function LineChart({
   const width = 720;
   const all = series.flatMap((s) => s.points);
   if (all.length === 0) {
-    return <p className="py-8 text-center text-sm text-ink-500">No data for this period.</p>;
+    return (
+      <p className="py-8 text-center text-sm text-ink-500">
+        No data for this period.
+      </p>
+    );
   }
 
   const max = Math.max(1, ...all.map((p) => p.value));
   const count = Math.max(...series.map((s) => s.points.length));
   const stepX = count > 1 ? width / (count - 1) : width;
   const padY = 12;
-  const scaleY = (value: number) => height - padY - (value / max) * (height - padY * 2);
+  const scaleY = (value: number) =>
+    height - padY - (value / max) * (height - padY * 2);
 
   return (
     <figure>
@@ -50,13 +55,28 @@ export function LineChart({
         ))}
         {series.map((s) => {
           const path = s.points
-            .map((p, i) => `${i === 0 ? "M" : "L"} ${i * stepX} ${scaleY(p.value)}`)
+            .map(
+              (p, i) =>
+                `${i === 0 ? "M" : "L"} ${i * stepX} ${scaleY(p.value)}`,
+            )
             .join(" ");
           return (
             <g key={s.name}>
-              <path d={path} fill="none" stroke={s.color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+              <path
+                d={path}
+                fill="none"
+                stroke={s.color}
+                strokeWidth="2"
+                vectorEffect="non-scaling-stroke"
+              />
               {s.points.map((p, i) => (
-                <circle key={i} cx={i * stepX} cy={scaleY(p.value)} r="2.5" fill={s.color} />
+                <circle
+                  key={i}
+                  cx={i * stepX}
+                  cy={scaleY(p.value)}
+                  r="2.5"
+                  fill={s.color}
+                />
               ))}
             </g>
           );
@@ -65,8 +85,14 @@ export function LineChart({
       <figcaption className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-4">
           {series.map((s) => (
-            <span key={s.name} className="flex items-center gap-1.5 text-xs text-ink-600">
-              <span className="inline-block size-2.5 rounded-full" style={{ background: s.color }} />
+            <span
+              key={s.name}
+              className="flex items-center gap-1.5 text-xs text-ink-600"
+            >
+              <span
+                className="inline-block size-2.5 rounded-full"
+                style={{ background: s.color }}
+              />
               {s.name}
             </span>
           ))}
@@ -93,7 +119,9 @@ export function BarList({
         <li key={item.label}>
           <div className="flex items-baseline justify-between gap-3 text-sm">
             <span className="truncate text-ink-700">{item.label}</span>
-            <span className="tabular shrink-0 font-medium text-ink-900">{format(item.value)}</span>
+            <span className="tabular shrink-0 font-medium text-ink-900">
+              {format(item.value)}
+            </span>
           </div>
           <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink-100">
             <div
@@ -101,7 +129,9 @@ export function BarList({
               style={{ width: `${Math.max(2, (item.value / max) * 100)}%` }}
             />
           </div>
-          {item.hint ? <p className="mt-0.5 text-xs text-ink-500">{item.hint}</p> : null}
+          {item.hint ? (
+            <p className="mt-0.5 text-xs text-ink-500">{item.hint}</p>
+          ) : null}
         </li>
       ))}
     </ul>

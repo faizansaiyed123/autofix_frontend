@@ -5,10 +5,22 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { portalApi } from "@/lib/api/portal";
 import type { PortalServiceRequest, PortalVehicle } from "@/lib/api/types";
 import { useApiMutation } from "@/lib/hooks/useApiMutation";
@@ -46,9 +58,16 @@ export default function PortalServiceRequestsPage() {
         </span>
       ),
     },
-    { key: "sent", header: "Sent", numeric: true, render: (r) => (
-      <span className="text-xs text-ink-500">{formatDateTime(r.created_at)}</span>
-    ) },
+    {
+      key: "sent",
+      header: "Sent",
+      numeric: true,
+      render: (r) => (
+        <span className="text-xs text-ink-500">
+          {formatDateTime(r.created_at)}
+        </span>
+      ),
+    },
   ];
 
   return (
@@ -106,7 +125,9 @@ function NewRequestModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const vehicles = useApiQuery(() => portalApi.vehicles(), [], { enabled: open });
+  const vehicles = useApiQuery(() => portalApi.vehicles(), [], {
+    enabled: open,
+  });
   const form = useForm({
     title: "",
     description: "",
@@ -142,7 +163,11 @@ function NewRequestModal({
           <Button onClick={onClose} disabled={create.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={create.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={create.pending}
+            onClick={() => void submit()}
+          >
             Send
           </Button>
         </>
@@ -156,7 +181,11 @@ function NewRequestModal({
         className="space-y-3"
       >
         <FormError error={create.error} />
-        <Field label="What is it for" required hint="One line — 'Brake noise', 'Annual service'.">
+        <Field
+          label="What is it for"
+          required
+          hint="One line — 'Brake noise', 'Annual service'."
+        >
           <Input
             value={form.values.title}
             onChange={(event) => form.set("title", event.target.value)}
@@ -182,7 +211,10 @@ function NewRequestModal({
               <option value="URGENT">Urgent — please call me</option>
             </Select>
           </Field>
-          <Field label="Which car" hint="Optional if it is not about a specific vehicle.">
+          <Field
+            label="Which car"
+            hint="Optional if it is not about a specific vehicle."
+          >
             <Select
               value={form.values.vehicle_id}
               onChange={(event) => form.set("vehicle_id", event.target.value)}
@@ -190,7 +222,9 @@ function NewRequestModal({
               <option value="">Not about one car</option>
               {(vehicles.data ?? []).map((vehicle: PortalVehicle) => (
                 <option key={vehicle.id} value={vehicle.id}>
-                  {[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ")}
+                  {[vehicle.year, vehicle.make, vehicle.model]
+                    .filter(Boolean)
+                    .join(" ")}
                 </option>
               ))}
             </Select>

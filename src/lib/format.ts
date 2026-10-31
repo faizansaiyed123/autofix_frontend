@@ -17,7 +17,10 @@ function moneyFormatter(currency: string): Intl.NumberFormat {
   return formatter;
 }
 
-export function formatMoney(value: number | null | undefined, currency = CURRENCY): string {
+export function formatMoney(
+  value: number | null | undefined,
+  currency = CURRENCY,
+): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
   return moneyFormatter(currency).format(value);
 }
@@ -30,7 +33,10 @@ export function formatSignedMoney(value: number, currency = CURRENCY): string {
   return formatted;
 }
 
-export function formatNumber(value: number | null | undefined, digits = 0): string {
+export function formatNumber(
+  value: number | null | undefined,
+  digits = 0,
+): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
   return new Intl.NumberFormat(undefined, {
     minimumFractionDigits: digits,
@@ -38,7 +44,10 @@ export function formatNumber(value: number | null | undefined, digits = 0): stri
   }).format(value);
 }
 
-export function formatPercent(value: number | null | undefined, digits = 1): string {
+export function formatPercent(
+  value: number | null | undefined,
+  digits = 1,
+): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
   return `${(value * 100).toFixed(digits)}%`;
 }
@@ -77,7 +86,10 @@ export function formatTime(value: string | null | undefined): string {
   if (!value) return "—";
   const date = parseApiDate(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(date);
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 }
 
 /** "in 3 days" / "2 days ago" — the form a person actually plans around. */
@@ -122,19 +134,28 @@ export function titleCase(value: string | null | undefined): string {
     .join(" ");
 }
 
-export function personName(person: { first_name: string; last_name: string } | null | undefined): string {
+export function personName(
+  person: { first_name: string; last_name: string } | null | undefined,
+): string {
   if (!person) return "—";
   return `${person.first_name} ${person.last_name}`.trim() || "—";
 }
 
-export function vehicleLabel(vehicle: {
-  make: string;
-  model: string;
-  year?: number | null;
-  license_plate?: string | null;
-} | null | undefined): string {
+export function vehicleLabel(
+  vehicle:
+    | {
+        make: string;
+        model: string;
+        year?: number | null;
+        license_plate?: string | null;
+      }
+    | null
+    | undefined,
+): string {
   if (!vehicle) return "—";
-  const base = [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ");
+  const base = [vehicle.year, vehicle.make, vehicle.model]
+    .filter(Boolean)
+    .join(" ");
   return vehicle.license_plate ? `${base} (${vehicle.license_plate})` : base;
 }
 

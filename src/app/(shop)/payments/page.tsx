@@ -8,10 +8,27 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, KeyValue } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
-import { PageHeader, SearchInput, StatTile, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  PageHeader,
+  SearchInput,
+  StatTile,
+  Toolbar,
+} from "@/components/ui/Page";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { invoicesApi, paymentsApi } from "@/lib/api/money";
 import type { Invoice, Payment } from "@/lib/api/types";
@@ -65,7 +82,10 @@ export default function PaymentsPage() {
    * and use the results as a lookup to avoid duplicate requests.
    */
   const invoiceIds = useMemo(
-    () => Array.from(new Set((list.data?.data ?? []).map((payment) => payment.invoice_id))),
+    () =>
+      Array.from(
+        new Set((list.data?.data ?? []).map((payment) => payment.invoice_id)),
+      ),
     [list.data],
   );
   const invoiceKey = invoiceIds.join(",");
@@ -78,7 +98,8 @@ export default function PaymentsPage() {
     { enabled: invoiceIds.length > 0 && can("invoices:read") },
   );
 
-  const selectedPayment = list.data?.data.find((p) => p.id === selected) ?? null;
+  const selectedPayment =
+    list.data?.data.find((p) => p.id === selected) ?? null;
   const totals = summary.data?.totals;
 
   const columns: Column<Payment>[] = [
@@ -86,7 +107,11 @@ export default function PaymentsPage() {
       key: "date",
       header: "Date",
       numeric: true,
-      render: (p) => <span className="text-xs text-ink-600">{formatDate(p.payment_date)}</span>,
+      render: (p) => (
+        <span className="text-xs text-ink-600">
+          {formatDate(p.payment_date)}
+        </span>
+      ),
     },
     {
       key: "invoice",
@@ -110,7 +135,9 @@ export default function PaymentsPage() {
       render: (p) => {
         const invoice = invoices.data?.[p.invoice_id];
         if (!invoice) return <span className="text-ink-400">—</span>;
-        return <span className="text-sm">{customerLabel(invoice.customer_id)}</span>;
+        return (
+          <span className="text-sm">{customerLabel(invoice.customer_id)}</span>
+        );
       },
     },
     {
@@ -119,9 +146,13 @@ export default function PaymentsPage() {
       numeric: true,
       render: (p) =>
         p.status === "VOID" ? (
-          <span className="text-ink-400 line-through">{formatMoney(p.amount)}</span>
+          <span className="text-ink-400 line-through">
+            {formatMoney(p.amount)}
+          </span>
         ) : (
-          <span className="font-semibold text-ink-900">{formatMoney(p.amount)}</span>
+          <span className="font-semibold text-ink-900">
+            {formatMoney(p.amount)}
+          </span>
         ),
     },
     {
@@ -149,7 +180,11 @@ export default function PaymentsPage() {
     {
       key: "by",
       header: "Recorded by",
-      render: (p) => <span className="text-xs text-ink-600">{userName(p.recorded_by_id)}</span>,
+      render: (p) => (
+        <span className="text-xs text-ink-600">
+          {userName(p.recorded_by_id)}
+        </span>
+      ),
     },
   ];
 
@@ -186,7 +221,10 @@ export default function PaymentsPage() {
               hint="What the bank will agree with"
               tone="success"
             />
-            <StatTile label="Payments" value={formatNumber(totals.payment_count)} />
+            <StatTile
+              label="Payments"
+              value={formatNumber(totals.payment_count)}
+            />
             <StatTile
               label="Voids"
               value={formatNumber(totals.void_count)}
@@ -194,9 +232,10 @@ export default function PaymentsPage() {
             />
           </div>
           <Notice tone="info">
-            A voided payment is counted separately, never folded into the received figure: a reversal
-            is something that happened at the till, so a bad afternoon shows up as itself instead of
-            quietly making the day look quieter than it was.
+            A voided payment is counted separately, never folded into the
+            received figure: a reversal is something that happened at the till,
+            so a bad afternoon shows up as itself instead of quietly making the
+            day look quieter than it was.
           </Notice>
         </>
       ) : null}
@@ -295,7 +334,10 @@ export default function PaymentsPage() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader title="By method" subtitle="Received in this period, net of reversals" />
+          <CardHeader
+            title="By method"
+            subtitle="Received in this period, net of reversals"
+          />
           {totals ? (
             Object.keys(totals.by_method).length === 0 ? (
               <EmptyState title="Nothing taken yet" />
@@ -314,19 +356,24 @@ export default function PaymentsPage() {
         </Card>
 
         <Card>
-          <CardHeader title="A payment is an event" subtitle="What the till does and does not do" />
+          <CardHeader
+            title="A payment is an event"
+            subtitle="What the till does and does not do"
+          />
           <ul className="space-y-2 text-sm text-ink-700">
             <li>
-              Nothing here can be edited or deleted. A payment that turns out to be wrong is voided
-              with a reason, and the row stays as the record of what happened.
+              Nothing here can be edited or deleted. A payment that turns out to
+              be wrong is voided with a reason, and the row stays as the record
+              of what happened.
             </li>
             <li>
-              Voiding twice changes nothing — the row is already void, so there is no second reversal
-              to make.
+              Voiding twice changes nothing — the row is already void, so there
+              is no second reversal to make.
             </li>
             <li>
-              A bank transfer or cheque carries a reference. Money that leaves no paper trail cannot
-              be matched to a statement, so the till will not accept it without one.
+              A bank transfer or cheque carries a reference. Money that leaves
+              no paper trail cannot be matched to a statement, so the till will
+              not accept it without one.
             </li>
           </ul>
         </Card>
@@ -407,7 +454,10 @@ function PaymentDetailModal({
         <>
           <Button onClick={onClose}>Close</Button>
           {canRefund && !alreadyVoid ? (
-            <Button variant="danger" onClick={() => onVoidRequested(payment.id)}>
+            <Button
+              variant="danger"
+              onClick={() => onVoidRequested(payment.id)}
+            >
               Void payment
             </Button>
           ) : null}
@@ -417,7 +467,11 @@ function PaymentDetailModal({
       <div className="space-y-4">
         <dl className="grid grid-cols-2 gap-x-6 gap-y-3">
           <KeyValue label="Amount">
-            <span className={alreadyVoid ? "text-ink-400 line-through" : "font-semibold"}>
+            <span
+              className={
+                alreadyVoid ? "text-ink-400 line-through" : "font-semibold"
+              }
+            >
               {formatMoney(payment.amount)}
             </span>
           </KeyValue>
@@ -435,12 +489,16 @@ function PaymentDetailModal({
               </span>
             )}
           </KeyValue>
-          <KeyValue label="Recorded by">{userName(payment.recorded_by_id)}</KeyValue>
+          <KeyValue label="Recorded by">
+            {userName(payment.recorded_by_id)}
+          </KeyValue>
         </dl>
 
         {payment.notes ? (
           <div>
-            <p className="text-xs font-medium tracking-wide text-ink-500 uppercase">Notes</p>
+            <p className="text-xs font-medium tracking-wide text-ink-500 uppercase">
+              Notes
+            </p>
             <p className="mt-1 text-sm text-ink-700">{payment.notes}</p>
           </div>
         ) : null}
@@ -453,18 +511,20 @@ function PaymentDetailModal({
 
         {alreadyVoid ? (
           <Notice tone="info">
-            This payment has already been voided. Voiding it again would change nothing, so the
-            control is not offered.
+            This payment has already been voided. Voiding it again would change
+            nothing, so the control is not offered.
           </Notice>
         ) : !canRefund ? (
           <Notice tone="info">
-            Reversing a payment is a shop decision about what leaves the till, so it is held on its
-            own permission rather than on the one that takes the money.
+            Reversing a payment is a shop decision about what leaves the till,
+            so it is held on its own permission rather than on the one that
+            takes the money.
           </Notice>
         ) : (
           <Notice tone="info">
-            A payment cannot be edited or deleted. If this one is wrong, void it with a reason: the
-            row stays, the money goes back on the invoice&apos;s balance, and the day still counts it.
+            A payment cannot be edited or deleted. If this one is wrong, void it
+            with a reason: the row stays, the money goes back on the
+            invoice&apos;s balance, and the day still counts it.
           </Notice>
         )}
       </div>
@@ -482,7 +542,9 @@ function VoidPaymentModal({
   onVoided: () => void;
 }) {
   const form = useForm({ reason: "" });
-  const voidPayment = useApiMutation((reason: string) => paymentsApi.void(paymentId, reason));
+  const voidPayment = useApiMutation((reason: string) =>
+    paymentsApi.void(paymentId, reason),
+  );
 
   async function submit() {
     if (form.missing(["reason"]).length > 0) return;
@@ -504,7 +566,11 @@ function VoidPaymentModal({
           <Button onClick={onClose} disabled={voidPayment.pending}>
             Cancel
           </Button>
-          <Button variant="danger" pending={voidPayment.pending} onClick={() => void submit()}>
+          <Button
+            variant="danger"
+            pending={voidPayment.pending}
+            onClick={() => void submit()}
+          >
             Void payment
           </Button>
         </>
@@ -518,7 +584,11 @@ function VoidPaymentModal({
         className="space-y-3"
       >
         <FormError error={voidPayment.error} />
-        <Field label="Reason" required hint="Why the payment is being reversed.">
+        <Field
+          label="Reason"
+          required
+          hint="Why the payment is being reversed."
+        >
           <Textarea
             rows={3}
             value={form.values.reason}
@@ -526,8 +596,8 @@ function VoidPaymentModal({
           />
         </Field>
         <Notice tone="info">
-          A payment cannot be edited or deleted. Voiding it is the only reversal there is, and the
-          reason is kept against the row.
+          A payment cannot be edited or deleted. Voiding it is the only reversal
+          there is, and the reason is kept against the row.
         </Notice>
       </form>
     </Modal>

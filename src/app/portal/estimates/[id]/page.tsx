@@ -10,7 +10,12 @@ import { Card, CardHeader, KeyValue, KeyValueGrid } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { portalApi } from "@/lib/api/portal";
 import type { PortalEstimateLine } from "@/lib/api/types";
 import { useApiMutation } from "@/lib/hooks/useApiMutation";
@@ -25,15 +30,20 @@ export default function PortalEstimateDetailPage() {
   const [downloading, setDownloading] = useState(false);
 
   const estimate = useApiQuery(() => portalApi.estimate(id), [id]);
-  const decide = useApiMutation((itemId: string, decision: "APPROVED" | "DECLINED", notes?: string | null) =>
-    portalApi.decideEstimateItem(id, itemId, decision, notes),
+  const decide = useApiMutation(
+    (
+      itemId: string,
+      decision: "APPROVED" | "DECLINED",
+      notes?: string | null,
+    ) => portalApi.decideEstimateItem(id, itemId, decision, notes),
   );
   const decline = useApiMutation((itemId: string, notes: string | null) =>
     portalApi.decideEstimateItem(id, itemId, "DECLINED", notes),
   );
 
   if (estimate.loading && estimate.initial) return <Loading />;
-  if (estimate.error) return <ErrorState error={estimate.error} onRetry={estimate.refetch} />;
+  if (estimate.error)
+    return <ErrorState error={estimate.error} onRetry={estimate.refetch} />;
 
   const record = estimate.data;
   if (!record) return <ErrorState error={new Error("Estimate not found")} />;
@@ -55,8 +65,18 @@ export default function PortalEstimateDetailPage() {
         </div>
       ),
     },
-    { key: "unit", header: "Each", numeric: true, render: (line) => formatMoney(line.unit_price) },
-    { key: "total", header: "Line", numeric: true, render: (line) => formatMoney(line.line_total) },
+    {
+      key: "unit",
+      header: "Each",
+      numeric: true,
+      render: (line) => formatMoney(line.unit_price),
+    },
+    {
+      key: "total",
+      header: "Line",
+      numeric: true,
+      render: (line) => formatMoney(line.line_total),
+    },
     {
       key: "status",
       header: "Decision",
@@ -73,7 +93,11 @@ export default function PortalEstimateDetailPage() {
               size="sm"
               variant="success"
               pending={decide.pending}
-               onClick={() => decide.run(line.id, "APPROVED").then((r) => r && estimate.refetch())}
+              onClick={() =>
+                decide
+                  .run(line.id, "APPROVED")
+                  .then((r) => r && estimate.refetch())
+              }
             >
               Approve
             </Button>
@@ -90,7 +114,11 @@ export default function PortalEstimateDetailPage() {
   return (
     <>
       <PageHeader
-        breadcrumb={<Link href="/portal/estimates" className="hover:underline">Estimates</Link>}
+        breadcrumb={
+          <Link href="/portal/estimates" className="hover:underline">
+            Estimates
+          </Link>
+        }
         title={record.estimate_number}
         subtitle={record.status_view.detail || undefined}
         actions={
@@ -114,36 +142,49 @@ export default function PortalEstimateDetailPage() {
           <CardHeader title="What we think it costs" />
           <KeyValueGrid>
             <KeyValue label="Total">{formatMoney(record.total)}</KeyValue>
-            <KeyValue label="You have approved">{formatMoney(record.approved_total)}</KeyValue>
-            <KeyValue label="Valid until">{formatDate(record.valid_until)}</KeyValue>
+            <KeyValue label="You have approved">
+              {formatMoney(record.approved_total)}
+            </KeyValue>
+            <KeyValue label="Valid until">
+              {formatDate(record.valid_until)}
+            </KeyValue>
           </KeyValueGrid>
           {record.is_expired ? (
             <Notice tone="danger">
-              This estimate has expired, so decisions on it will be refused. Ask the shop for a fresh
-              one.
+              This estimate has expired, so decisions on it will be refused. Ask
+              the shop for a fresh one.
             </Notice>
           ) : pending > 0 ? (
             <Notice tone="info">
-              {pending} line{pending === 1 ? "" : "s"} still need{pending === 1 ? "s" : ""} your
-              decision. Only what you approve is ever charged.
+              {pending} line{pending === 1 ? "" : "s"} still need
+              {pending === 1 ? "s" : ""} your decision. Only what you approve is
+              ever charged.
             </Notice>
           ) : null}
-          {record.notes ? <p className="mt-3 text-sm text-ink-600">{record.notes}</p> : null}
+          {record.notes ? (
+            <p className="mt-3 text-sm text-ink-600">{record.notes}</p>
+          ) : null}
           {record.decline_reason ? (
-            <p className="mt-2 text-sm text-ink-600">You told us: {record.decline_reason}</p>
+            <p className="mt-2 text-sm text-ink-600">
+              You told us: {record.decline_reason}
+            </p>
           ) : null}
         </Card>
 
         <Card>
           <CardHeader title="Status" />
           <StatusBadge status={record.status} />
-          <p className="mt-2 text-sm text-ink-600">{record.status_view.label}</p>
+          <p className="mt-2 text-sm text-ink-600">
+            {record.status_view.label}
+          </p>
         </Card>
       </div>
 
       {decide.error || decline.error ? (
         <div className="mb-3">
-          <Notice tone="danger">{(decide.error ?? decline.error)!.messageForUser}</Notice>
+          <Notice tone="danger">
+            {(decide.error ?? decline.error)!.messageForUser}
+          </Notice>
         </div>
       ) : null}
 
@@ -151,7 +192,11 @@ export default function PortalEstimateDetailPage() {
         {record.items.length === 0 ? (
           <EmptyState title="No lines on this estimate" />
         ) : (
-          <DataTable rows={record.items} columns={columns} rowKey={(line) => line.id} />
+          <DataTable
+            rows={record.items}
+            columns={columns}
+            rowKey={(line) => line.id}
+          />
         )}
       </Card>
 
@@ -192,13 +237,21 @@ function DeclineModal({
       open={line !== null}
       onClose={onClose}
       title="Decline this line"
-      description={line ? `${line.description} — ${formatMoney(line.line_total)}` : undefined}
+      description={
+        line
+          ? `${line.description} — ${formatMoney(line.line_total)}`
+          : undefined
+      }
       footer={
         <>
           <Button onClick={onClose} disabled={pending}>
             Keep it
           </Button>
-          <Button variant="danger" pending={pending} onClick={() => onConfirm(notes || null)}>
+          <Button
+            variant="danger"
+            pending={pending}
+            onClick={() => onConfirm(notes || null)}
+          >
             Decline this line
           </Button>
         </>
@@ -207,8 +260,8 @@ function DeclineModal({
       <div className="space-y-3">
         {error ? <Notice tone="danger">{error.messageForUser}</Notice> : null}
         <p className="text-sm text-ink-600">
-          Declining one line leaves the rest of the estimate open. Tell the shop why if it will save
-          them a phone call.
+          Declining one line leaves the rest of the estimate open. Tell the shop
+          why if it will save them a phone call.
         </p>
         <label className="block">
           <span className="mb-1 block text-xs font-medium tracking-wide text-ink-600 uppercase">

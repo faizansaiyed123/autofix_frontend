@@ -6,10 +6,21 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, StatTile, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { laborApi, repairOrdersApi } from "@/lib/api/work";
 import type { LaborRecord } from "@/lib/api/types";
@@ -50,7 +61,10 @@ export default function LabourPage() {
   const rows = query.data?.data ?? [];
 
   const pageActual = rows.reduce((sum, record) => sum + record.actual_hours, 0);
-  const pageBillable = rows.reduce((sum, record) => sum + record.billable_hours, 0);
+  const pageBillable = rows.reduce(
+    (sum, record) => sum + record.billable_hours,
+    0,
+  );
   const pageCost = rows.reduce((sum, record) => sum + record.labor_cost, 0);
 
   const columns: Column<LaborRecord>[] = [
@@ -80,8 +94,12 @@ export default function LabourPage() {
       header: "Work",
       render: (record) => (
         <div className="min-w-0">
-          <p className="text-sm font-medium text-ink-900">{record.description}</p>
-          {record.notes ? <p className="text-xs text-ink-500">{record.notes}</p> : null}
+          <p className="text-sm font-medium text-ink-900">
+            {record.description}
+          </p>
+          {record.notes ? (
+            <p className="text-xs text-ink-500">{record.notes}</p>
+          ) : null}
         </div>
       ),
     },
@@ -89,7 +107,11 @@ export default function LabourPage() {
       key: "actual",
       header: "Actual h",
       numeric: true,
-      render: (record) => <span className="tabular text-xs">{formatNumber(record.actual_hours, 2)}</span>,
+      render: (record) => (
+        <span className="tabular text-xs">
+          {formatNumber(record.actual_hours, 2)}
+        </span>
+      ),
     },
     {
       key: "billable",
@@ -111,14 +133,20 @@ export default function LabourPage() {
       key: "rate",
       header: "Rate",
       numeric: true,
-      render: (record) => <span className="tabular text-xs">{formatMoney(record.hourly_rate)}</span>,
+      render: (record) => (
+        <span className="tabular text-xs">
+          {formatMoney(record.hourly_rate)}
+        </span>
+      ),
     },
     {
       key: "cost",
       header: "Cost",
       numeric: true,
       render: (record) => (
-        <span className="tabular text-sm font-medium">{formatMoney(record.labor_cost)}</span>
+        <span className="tabular text-sm font-medium">
+          {formatMoney(record.labor_cost)}
+        </span>
       ),
     },
     {
@@ -126,7 +154,9 @@ export default function LabourPage() {
       header: "Performed",
       numeric: true,
       render: (record) => (
-        <span className="text-xs text-ink-500">{formatDateTime(record.performed_at)}</span>
+        <span className="text-xs text-ink-500">
+          {formatDateTime(record.performed_at)}
+        </span>
       ),
     },
   ];
@@ -135,7 +165,9 @@ export default function LabourPage() {
     <>
       <PageHeader
         title="Labour"
-        subtitle={query.data ? `${query.data.meta.total} record(s) on file` : undefined}
+        subtitle={
+          query.data ? `${query.data.meta.total} record(s) on file` : undefined
+        }
       />
 
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
@@ -154,7 +186,11 @@ export default function LabourPage() {
           }
           tone={pageBillable < pageActual ? "warning" : "neutral"}
         />
-        <StatTile label="Cost on this page" value={formatMoney(pageCost)} hint="This page only" />
+        <StatTile
+          label="Cost on this page"
+          value={formatMoney(pageCost)}
+          hint="This page only"
+        />
       </div>
 
       <Card padded={false}>
@@ -178,8 +214,8 @@ export default function LabourPage() {
             </Select>
           </label>
           <p className="text-xs text-ink-500">
-            Hours are logged on a repair order, while it is IN_PROGRESS or ON_HOLD. Open a repair
-            order to log new time.
+            Hours are logged on a repair order, while it is IN_PROGRESS or
+            ON_HOLD. Open a repair order to log new time.
           </p>
         </Toolbar>
 
@@ -200,7 +236,9 @@ export default function LabourPage() {
               rows={rows}
               columns={columns}
               rowKey={(record) => record.id}
-              onRowClick={can("labor:write") ? (record) => setEditing(record) : undefined}
+              onRowClick={
+                can("labor:write") ? (record) => setEditing(record) : undefined
+              }
               dense
             />
             <Pagination
@@ -247,10 +285,14 @@ function EditLabourModal({
 }) {
   const [description, setDescription] = useState(record.description);
   const [actualHours, setActualHours] = useState(String(record.actual_hours));
-  const [billableHours, setBillableHours] = useState(String(record.billable_hours));
+  const [billableHours, setBillableHours] = useState(
+    String(record.billable_hours),
+  );
   const [rate, setRate] = useState(String(record.hourly_rate));
   const [technicianId, setTechnicianId] = useState(record.technician_id ?? "");
-  const [performedAt, setPerformedAt] = useState(record.performed_at.slice(0, 16));
+  const [performedAt, setPerformedAt] = useState(
+    record.performed_at.slice(0, 16),
+  );
   const [notes, setNotes] = useState(record.notes ?? "");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [problems, setProblems] = useState<string[]>([]);
@@ -261,7 +303,8 @@ function EditLabourModal({
   const remove = useApiMutation(() => laborApi.remove(record.id));
 
   // Closed repair orders lock their labour records to preserve the work history.
-  const locked = roStatus !== undefined && !["IN_PROGRESS", "ON_HOLD"].includes(roStatus);
+  const locked =
+    roStatus !== undefined && !["IN_PROGRESS", "ON_HOLD"].includes(roStatus);
   const lockReason =
     roStatus === undefined
       ? null
@@ -272,8 +315,10 @@ function EditLabourModal({
   async function submit() {
     const found: string[] = [];
     if (!description.trim()) found.push("Describe the work that was done");
-    if (Number(actualHours) <= 0) found.push("Actual hours must be greater than zero");
-    if (billableHours && Number(billableHours) < 0) found.push("Billable hours cannot be negative");
+    if (Number(actualHours) <= 0)
+      found.push("Actual hours must be greater than zero");
+    if (billableHours && Number(billableHours) < 0)
+      found.push("Billable hours cannot be negative");
     setProblems(found);
     if (found.length > 0) return;
 
@@ -346,7 +391,10 @@ function EditLabourModal({
         ) : null}
 
         <Field label="Work done" required>
-          <Input value={description} onChange={(event) => setDescription(event.target.value)} />
+          <Input
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+          />
         </Field>
 
         <div className="grid gap-3 sm:grid-cols-3">
@@ -381,7 +429,10 @@ function EditLabourModal({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Technician">
-            <Select value={technicianId} onChange={(event) => setTechnicianId(event.target.value)}>
+            <Select
+              value={technicianId}
+              onChange={(event) => setTechnicianId(event.target.value)}
+            >
               <option value="">Unassigned</option>
               {staff.map((person) => (
                 <option key={person.id} value={person.id}>
@@ -400,7 +451,11 @@ function EditLabourModal({
         </div>
 
         <Field label="Notes">
-          <Textarea rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} />
+          <Textarea
+            rows={2}
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+          />
         </Field>
       </form>
 
@@ -412,19 +467,26 @@ function EditLabourModal({
           description="Deleting removes the evidence that these hours were worked. It cannot be undone from here."
           footer={
             <>
-              <Button onClick={() => setConfirmingDelete(false)} disabled={remove.pending}>
+              <Button
+                onClick={() => setConfirmingDelete(false)}
+                disabled={remove.pending}
+              >
                 Keep it
               </Button>
-              <Button variant="danger" pending={remove.pending} onClick={() => void destroy()}>
+              <Button
+                variant="danger"
+                pending={remove.pending}
+                onClick={() => void destroy()}
+              >
                 Delete the record
               </Button>
             </>
           }
         >
           <Notice tone="danger">
-            {formatNumber(record.actual_hours, 2)}h of {record.description} will no longer be on
-            file for {roNumber ?? "this order"}. If the hours were logged in error, correcting them
-            is the better fix.
+            {formatNumber(record.actual_hours, 2)}h of {record.description} will
+            no longer be on file for {roNumber ?? "this order"}. If the hours
+            were logged in error, correcting them is the better fix.
           </Notice>
         </Modal>
       ) : null}

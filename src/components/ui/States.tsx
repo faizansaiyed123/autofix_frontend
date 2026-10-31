@@ -25,16 +25,26 @@ export function EmptyState({
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
       <p className="text-sm font-medium text-ink-700">{title}</p>
-      {description ? <p className="max-w-md text-sm text-ink-500">{description}</p> : null}
+      {description ? (
+        <p className="max-w-md text-sm text-ink-500">{description}</p>
+      ) : null}
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );
 }
 
 /** Distinguish access-denied and missing-record responses from retryable failures. */
-export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+export function ErrorState({
+  error,
+  onRetry,
+}: {
+  error: unknown;
+  onRetry?: () => void;
+}) {
   const status = (error as { status?: number })?.status ?? 0;
-  const message = (error as { messageForUser?: string })?.messageForUser ?? "Something went wrong.";
+  const message =
+    (error as { messageForUser?: string })?.messageForUser ??
+    "Something went wrong.";
 
   const heading =
     status === 403

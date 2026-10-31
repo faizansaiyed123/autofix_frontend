@@ -53,7 +53,9 @@ export function Modal({
         <header className="flex items-start justify-between gap-4 border-b border-ink-100 px-5 py-4">
           <div>
             <h2 className="text-base font-semibold text-ink-900">{title}</h2>
-            {description ? <p className="mt-0.5 text-sm text-ink-600">{description}</p> : null}
+            {description ? (
+              <p className="mt-0.5 text-sm text-ink-600">{description}</p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -61,7 +63,13 @@ export function Modal({
             aria-label="Close dialog"
             className="rounded-lg p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden
+            >
               <path
                 d="M4 4l8 8M12 4l-8 8"
                 stroke="currentColor"

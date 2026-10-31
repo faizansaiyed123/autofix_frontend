@@ -6,10 +6,22 @@ import { Badge, StatusBadge, YesNo } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, KeyValue } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, SearchInput, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { suppliersApi } from "@/lib/api/stock";
 import type { Supplier } from "@/lib/api/types";
 import { useApiMutation } from "@/lib/hooks/useApiMutation";
@@ -55,7 +67,9 @@ export default function SuppliersPage() {
     {
       key: "contact",
       header: "Contact",
-      render: (s) => <span className="text-sm text-ink-700">{s.contact_name ?? "—"}</span>,
+      render: (s) => (
+        <span className="text-sm text-ink-700">{s.contact_name ?? "—"}</span>
+      ),
     },
     {
       key: "reach",
@@ -64,7 +78,9 @@ export default function SuppliersPage() {
         <div className="text-sm">
           {s.email ? <p>{s.email}</p> : null}
           {s.phone ? <p className="text-xs text-ink-500">{s.phone}</p> : null}
-          {!s.email && !s.phone ? <span className="text-ink-400">—</span> : null}
+          {!s.email && !s.phone ? (
+            <span className="text-ink-400">—</span>
+          ) : null}
         </div>
       ),
     },
@@ -74,19 +90,25 @@ export default function SuppliersPage() {
       numeric: true,
       render: (s) => (
         <span className="text-xs text-ink-600">
-          {s.lead_time_days > 0 ? `${formatNumber(s.lead_time_days)} day(s)` : "—"}
+          {s.lead_time_days > 0
+            ? `${formatNumber(s.lead_time_days)} day(s)`
+            : "—"}
         </span>
       ),
     },
     {
       key: "terms",
       header: "Terms",
-      render: (s) => <span className="text-xs text-ink-600">{s.payment_terms ?? "—"}</span>,
+      render: (s) => (
+        <span className="text-xs text-ink-600">{s.payment_terms ?? "—"}</span>
+      ),
     },
     {
       key: "preferred",
       header: "Preferred",
-      render: (s) => <YesNo value={s.is_preferred} trueLabel="Preferred" falseLabel="" />,
+      render: (s) => (
+        <YesNo value={s.is_preferred} trueLabel="Preferred" falseLabel="" />
+      ),
     },
     {
       key: "status",
@@ -99,7 +121,11 @@ export default function SuppliersPage() {
     <>
       <PageHeader
         title="Suppliers"
-        subtitle={query.data ? `${query.data.meta.total} on the list` : "Who the shop buys from"}
+        subtitle={
+          query.data
+            ? `${query.data.meta.total} on the list`
+            : "Who the shop buys from"
+        }
         actions={
           can("suppliers:write") ? (
             <Button variant="primary" onClick={() => setCreating(true)}>
@@ -155,7 +181,11 @@ export default function SuppliersPage() {
           </div>
         ) : rows.length === 0 ? (
           <EmptyState
-            title={preferredOnly ? "No preferred suppliers" : "No suppliers match that"}
+            title={
+              preferredOnly
+                ? "No preferred suppliers"
+                : "No suppliers match that"
+            }
             description="Suppliers are a parts-department list: the order book and the ledger both quote them."
           />
         ) : (
@@ -252,7 +282,9 @@ function NewSupplierModal({
     payment_terms: "",
     notes: "",
   });
-  const create = useApiMutation((body: Record<string, unknown>) => suppliersApi.create(body));
+  const create = useApiMutation((body: Record<string, unknown>) =>
+    suppliersApi.create(body),
+  );
 
   async function submit() {
     if (form.missing(["name"]).length > 0) return;
@@ -291,7 +323,11 @@ function NewSupplierModal({
           <Button onClick={onClose} disabled={create.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={create.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={create.pending}
+            onClick={() => void submit()}
+          >
             Add supplier
           </Button>
         </>
@@ -384,19 +420,25 @@ function NewSupplierModal({
               step="1"
               min="0"
               value={form.values.lead_time_days}
-              onChange={(event) => form.set("lead_time_days", event.target.value)}
+              onChange={(event) =>
+                form.set("lead_time_days", event.target.value)
+              }
             />
           </Field>
           <Field label="Payment terms" hint="e.g. Net 30">
             <Input
               value={form.values.payment_terms}
-              onChange={(event) => form.set("payment_terms", event.target.value)}
+              onChange={(event) =>
+                form.set("payment_terms", event.target.value)
+              }
             />
           </Field>
           <Field label="Account number">
             <Input
               value={form.values.account_number}
-              onChange={(event) => form.set("account_number", event.target.value)}
+              onChange={(event) =>
+                form.set("account_number", event.target.value)
+              }
             />
           </Field>
         </div>
@@ -431,7 +473,10 @@ function SupplierModal({
 }) {
   const { can } = useSession();
   const query = useApiQuery(() => suppliersApi.get(supplierId), [supplierId]);
-  const summary = useApiQuery(() => suppliersApi.summary(supplierId), [supplierId]);
+  const summary = useApiQuery(
+    () => suppliersApi.summary(supplierId),
+    [supplierId],
+  );
 
   const supplier = query.data as Supplier | null;
 
@@ -553,18 +598,30 @@ function SupplierEditor({
     <div className="space-y-4">
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
         <KeyValue label="Orders">{formatNumber(totalOrders)}</KeyValue>
-        <KeyValue label="Open">{formatNumber(asNumber(summary?.open_orders))}</KeyValue>
+        <KeyValue label="Open">
+          {formatNumber(asNumber(summary?.open_orders))}
+        </KeyValue>
         <KeyValue label="Units received">
           {formatNumber(asNumber(summary?.total_units_received))}
         </KeyValue>
-        <KeyValue label="Spend">{formatMoney(asNumber(summary?.total_spend))}</KeyValue>
-        <KeyValue label="Last order">{formatDate(asText(summary?.last_order_date))}</KeyValue>
-        <KeyValue label="Last received">{formatDate(asText(summary?.last_received_at))}</KeyValue>
+        <KeyValue label="Spend">
+          {formatMoney(asNumber(summary?.total_spend))}
+        </KeyValue>
+        <KeyValue label="Last order">
+          {formatDate(asText(summary?.last_order_date))}
+        </KeyValue>
+        <KeyValue label="Last received">
+          {formatDate(asText(summary?.last_received_at))}
+        </KeyValue>
         <KeyValue label="Status">
           <StatusBadge status={supplier.status} />
         </KeyValue>
         <KeyValue label="Preferred">
-          <YesNo value={supplier.is_preferred} trueLabel="Preferred" falseLabel="" />
+          <YesNo
+            value={supplier.is_preferred}
+            trueLabel="Preferred"
+            falseLabel=""
+          />
         </KeyValue>
       </dl>
 
@@ -572,8 +629,9 @@ function SupplierEditor({
         <Loading label="Reading what the shop has bought…" />
       ) : totalOrders > 0 ? (
         <Notice tone="info">
-          {formatNumber(totalOrders)} order(s) have been placed with this supplier. Spend counts only
-          what actually arrived, so a draft or cancelled order never counts against them.
+          {formatNumber(totalOrders)} order(s) have been placed with this
+          supplier. Spend counts only what actually arrived, so a draft or
+          cancelled order never counts against them.
         </Notice>
       ) : null}
 
@@ -677,21 +735,27 @@ function SupplierEditor({
               min="0"
               value={form.values.lead_time_days}
               disabled={!canWrite}
-              onChange={(event) => form.set("lead_time_days", event.target.value)}
+              onChange={(event) =>
+                form.set("lead_time_days", event.target.value)
+              }
             />
           </Field>
           <Field label="Payment terms">
             <Input
               value={form.values.payment_terms}
               disabled={!canWrite}
-              onChange={(event) => form.set("payment_terms", event.target.value)}
+              onChange={(event) =>
+                form.set("payment_terms", event.target.value)
+              }
             />
           </Field>
           <Field label="Account number">
             <Input
               value={form.values.account_number}
               disabled={!canWrite}
-              onChange={(event) => form.set("account_number", event.target.value)}
+              onChange={(event) =>
+                form.set("account_number", event.target.value)
+              }
             />
           </Field>
         </div>
@@ -727,7 +791,10 @@ function SupplierEditor({
               ))}
             </Select>
           </Field>
-          <Field label="Preferred" hint="Shown first in the parts desk's habits.">
+          <Field
+            label="Preferred"
+            hint="Shown first in the parts desk's habits."
+          >
             <Select
               value={preferred ? "yes" : "no"}
               disabled={!canWrite}
@@ -740,7 +807,12 @@ function SupplierEditor({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button type="submit" variant="primary" pending={update.pending} disabled={!canWrite}>
+          <Button
+            type="submit"
+            variant="primary"
+            pending={update.pending}
+            disabled={!canWrite}
+          >
             Save changes
           </Button>
           {supplier.status === "ACTIVE" ? (
@@ -756,7 +828,11 @@ function SupplierEditor({
             <Badge tone="neutral">Deactivated — takes no new orders</Badge>
           )}
           {deleteBlockedBy ? null : (
-            <Button variant="danger" pending={remove.pending} onClick={() => void deleteSupplier()}>
+            <Button
+              variant="danger"
+              pending={remove.pending}
+              onClick={() => void deleteSupplier()}
+            >
               Delete
             </Button>
           )}
@@ -769,21 +845,27 @@ function SupplierEditor({
         </Notice>
       ) : (
         <Notice tone="info">
-          Nothing has ever been ordered from this supplier, so the record can be removed outright.
-          Once there is an order against it, deactivating is the only way it ends.
+          Nothing has ever been ordered from this supplier, so the record can be
+          removed outright. Once there is an order against it, deactivating is
+          the only way it ends.
         </Notice>
       )}
 
       <Notice tone="info">
-        Deactivating keeps the whole order book and every ledger movement that names this supplier.
-        It simply disappears from the pickers, and new orders against it are refused.
+        Deactivating keeps the whole order book and every ledger movement that
+        names this supplier. It simply disappears from the pickers, and new
+        orders against it are refused.
       </Notice>
     </div>
   );
 }
 
-function deleteBlockedReason(totalOrders: number, allowed: boolean): string | null {
-  if (!allowed) return "Editing suppliers is held on a permission you do not hold.";
+function deleteBlockedReason(
+  totalOrders: number,
+  allowed: boolean,
+): string | null {
+  if (!allowed)
+    return "Editing suppliers is held on a permission you do not hold.";
   if (totalOrders > 0)
     return `The shop has ordered ${formatNumber(totalOrders)} time(s) from them. A supplier with an order book is retired, not removed — those documents quote the name.`;
   return null;

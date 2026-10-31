@@ -9,13 +9,23 @@ import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
 import { Field, Input, Select } from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { auditApi } from "@/lib/api/insight";
 import type { AuditLog, AuditLogSummary } from "@/lib/api/types";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { useSession } from "@/lib/auth/AuthProvider";
-import { formatDateTime, formatNumber, formatRelative, titleCase } from "@/lib/format";
+import {
+  formatDateTime,
+  formatNumber,
+  formatRelative,
+  titleCase,
+} from "@/lib/format";
 
 /**
  * Append-only audit history. The list shows diffs; details include full snapshots.
@@ -33,11 +43,16 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * trusting one and rendering a dropdown with nothing in it.
  */
 function stringList(payload: unknown): string[] {
-  if (Array.isArray(payload)) return payload.filter((value): value is string => typeof value === "string");
+  if (Array.isArray(payload))
+    return payload.filter(
+      (value): value is string => typeof value === "string",
+    );
   if (payload && typeof payload === "object") {
     const values = Object.values(payload as Record<string, unknown>);
     if (values.length === 1 && Array.isArray(values[0])) {
-      return values[0].filter((value): value is string => typeof value === "string");
+      return values[0].filter(
+        (value): value is string => typeof value === "string",
+      );
     }
   }
   return [];
@@ -47,7 +62,8 @@ function stringList(payload: unknown): string[] {
 function showValue(value: unknown): string {
   if (value === null || value === undefined) return "—";
   if (typeof value === "string") return value === "" ? "(empty)" : value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
   return JSON.stringify(value);
 }
 
@@ -76,13 +92,19 @@ export default function AuditPage() {
   const [selected, setSelected] = useState<AuditLogSummary | null>(null);
 
   const permitted = can("audit_logs:read");
-  const filtering = Boolean(actor || action || entityType || entityId || from || to);
+  const filtering = Boolean(
+    actor || action || entityType || entityId || from || to,
+  );
   // A mistyped id would come back as a 422 rather than as an empty list, so the
   // query waits for something that could be an id at all.
   const idUsable = entityId === "" || UUID.test(entityId);
 
-  const actions = useApiQuery(() => auditApi.actions(), [], { enabled: permitted });
-  const entityTypes = useApiQuery(() => auditApi.entityTypes(), [], { enabled: permitted });
+  const actions = useApiQuery(() => auditApi.actions(), [], {
+    enabled: permitted,
+  });
+  const entityTypes = useApiQuery(() => auditApi.entityTypes(), [], {
+    enabled: permitted,
+  });
 
   const query = useApiQuery(
     () =>
@@ -107,8 +129,12 @@ export default function AuditPage() {
       numeric: true,
       render: (entry) => (
         <div className="whitespace-nowrap">
-          <span className="text-sm text-ink-800">{formatDateTime(entry.created_at)}</span>
-          <span className="block text-xs text-ink-500">{formatRelative(entry.created_at)}</span>
+          <span className="text-sm text-ink-800">
+            {formatDateTime(entry.created_at)}
+          </span>
+          <span className="block text-xs text-ink-500">
+            {formatRelative(entry.created_at)}
+          </span>
         </div>
       ),
     },
@@ -119,10 +145,14 @@ export default function AuditPage() {
         <div className="min-w-0">
           <span className="font-medium text-ink-900">{entry.actor_label}</span>
           {entry.actor_email ? (
-            <span className="block truncate text-xs text-ink-500">{entry.actor_email}</span>
+            <span className="block truncate text-xs text-ink-500">
+              {entry.actor_email}
+            </span>
           ) : null}
           {entry.actor_role ? (
-            <span className="block text-xs text-ink-500">{titleCase(entry.actor_role)}</span>
+            <span className="block text-xs text-ink-500">
+              {titleCase(entry.actor_role)}
+            </span>
           ) : null}
         </div>
       ),
@@ -137,9 +167,13 @@ export default function AuditPage() {
       header: "Entity",
       render: (entry) => (
         <div className="min-w-0">
-          <span className="text-sm text-ink-800">{titleCase(entry.entity_type)}</span>
+          <span className="text-sm text-ink-800">
+            {titleCase(entry.entity_type)}
+          </span>
           {entry.entity_label ? (
-            <span className="block truncate text-xs text-ink-500">{entry.entity_label}</span>
+            <span className="block truncate text-xs text-ink-500">
+              {entry.entity_label}
+            </span>
           ) : null}
         </div>
       ),
@@ -148,7 +182,9 @@ export default function AuditPage() {
       key: "summary",
       header: "Summary",
       render: (entry) => (
-        <span className="text-sm text-ink-600">{entry.summary ?? "No summary recorded"}</span>
+        <span className="text-sm text-ink-600">
+          {entry.summary ?? "No summary recorded"}
+        </span>
       ),
     },
   ];
@@ -156,11 +192,14 @@ export default function AuditPage() {
   if (!permitted) {
     return (
       <>
-        <PageHeader title="Audit log" subtitle="What each person did, and when" />
+        <PageHeader
+          title="Audit log"
+          subtitle="What each person did, and when"
+        />
         <Notice tone="danger">
-          The audit log is owner-only. An entry records what one person did to another
-          person&apos;s record, and there is no shop where the front desk is entitled to read
-          it.
+          The audit log is owner-only. An entry records what one person did to
+          another person&apos;s record, and there is no shop where the front
+          desk is entitled to read it.
         </Notice>
       </>
     );
@@ -171,7 +210,9 @@ export default function AuditPage() {
       <PageHeader
         title="Audit log"
         subtitle={
-          query.data ? `${formatNumber(query.data.meta.total)} entry(ies)` : "Who did what, and when"
+          query.data
+            ? `${formatNumber(query.data.meta.total)} entry(ies)`
+            : "Who did what, and when"
         }
       />
 
@@ -236,7 +277,9 @@ export default function AuditPage() {
           <Field
             label="Record id"
             className="w-48"
-            hint={idUsable ? "Optional — one record" : "That is not a record id"}
+            hint={
+              idUsable ? "Optional — one record" : "That is not a record id"
+            }
           >
             <Input
               value={entityId}
@@ -291,7 +334,8 @@ export default function AuditPage() {
         {!idUsable ? (
           <div className="px-4 pt-3">
             <Notice tone="info">
-              A record id is a UUID, so nothing is asked for until this is one or empty.
+              A record id is a UUID, so nothing is asked for until this is one
+              or empty.
             </Notice>
           </div>
         ) : null}
@@ -325,7 +369,9 @@ export default function AuditPage() {
         )}
       </Card>
 
-      {selected ? <EntryModal entryId={selected.id} onClose={() => setSelected(null)} /> : null}
+      {selected ? (
+        <EntryModal entryId={selected.id} onClose={() => setSelected(null)} />
+      ) : null}
     </>
   );
 }
@@ -337,7 +383,13 @@ export default function AuditPage() {
  * change is truncated in `changes` while both full snapshots are kept, so the states
  * are shown underneath rather than left as an unexplained gap.
  */
-function EntryModal({ entryId, onClose }: { entryId: string; onClose: () => void }) {
+function EntryModal({
+  entryId,
+  onClose,
+}: {
+  entryId: string;
+  onClose: () => void;
+}) {
   const [showingHistory, setShowingHistory] = useState(false);
   const query = useApiQuery(() => auditApi.get(entryId), [entryId]);
 
@@ -351,13 +403,20 @@ function EntryModal({ entryId, onClose }: { entryId: string; onClose: () => void
       <Modal
         open
         onClose={onClose}
-        title={entry ? `${entry.action} · ${titleCase(entry.entity_type)}` : "Audit entry"}
+        title={
+          entry
+            ? `${entry.action} · ${titleCase(entry.entity_type)}`
+            : "Audit entry"
+        }
         description={entry?.summary ?? "The full record of one action."}
         width="max-w-3xl"
         footer={
           <>
             {entry && entry.entity_id ? (
-              <Button className="mr-auto" onClick={() => setShowingHistory(true)}>
+              <Button
+                className="mr-auto"
+                onClick={() => setShowingHistory(true)}
+              >
                 Everything about this record
               </Button>
             ) : null}
@@ -374,14 +433,20 @@ function EntryModal({ entryId, onClose }: { entryId: string; onClose: () => void
         ) : (
           <div className="space-y-5">
             <KeyValueGrid>
-              <KeyValue label="When">{formatDateTime(entry.created_at)}</KeyValue>
+              <KeyValue label="When">
+                {formatDateTime(entry.created_at)}
+              </KeyValue>
               <KeyValue label="Actor">
                 {entry.actor_label}
                 {entry.actor_email ? (
-                  <span className="block text-xs text-ink-500">{entry.actor_email}</span>
+                  <span className="block text-xs text-ink-500">
+                    {entry.actor_email}
+                  </span>
                 ) : null}
                 {entry.actor_role ? (
-                  <span className="block text-xs text-ink-500">{titleCase(entry.actor_role)}</span>
+                  <span className="block text-xs text-ink-500">
+                    {titleCase(entry.actor_role)}
+                  </span>
                 ) : null}
               </KeyValue>
               <KeyValue label="Action">
@@ -390,22 +455,32 @@ function EntryModal({ entryId, onClose }: { entryId: string; onClose: () => void
               <KeyValue label="Record">
                 {titleCase(entry.entity_type)}
                 {entry.entity_label ? (
-                  <span className="block text-xs text-ink-500">{entry.entity_label}</span>
+                  <span className="block text-xs text-ink-500">
+                    {entry.entity_label}
+                  </span>
                 ) : null}
                 {entry.entity_id ? (
-                  <span className="block font-mono text-xs text-ink-500">{entry.entity_id}</span>
+                  <span className="block font-mono text-xs text-ink-500">
+                    {entry.entity_id}
+                  </span>
                 ) : null}
               </KeyValue>
-              <KeyValue label="From address">{entry.ip_address ?? "—"}</KeyValue>
+              <KeyValue label="From address">
+                {entry.ip_address ?? "—"}
+              </KeyValue>
               <KeyValue label="Client">{entry.user_agent ?? "—"}</KeyValue>
             </KeyValueGrid>
 
             <section>
-              <CardHeader title="What changed" subtitle="Every changed field: old value, then new" />
+              <CardHeader
+                title="What changed"
+                subtitle="Every changed field: old value, then new"
+              />
               {fields.length === 0 ? (
                 <p className="text-sm text-ink-500">
-                  Nothing was recorded as a field-level change — the record was created or
-                  removed, or this build does not snapshot this kind of record.
+                  Nothing was recorded as a field-level change — the record was
+                  created or removed, or this build does not snapshot this kind
+                  of record.
                 </p>
               ) : (
                 <ul className="space-y-1.5">
@@ -415,21 +490,27 @@ function EntryModal({ entryId, onClose }: { entryId: string; onClose: () => void
                         key={field}
                         className="flex flex-wrap items-baseline gap-x-2 rounded-lg bg-ink-50 px-3 py-2 text-sm"
                       >
-                        <span className="font-mono text-xs text-ink-700">{field}</span>
-                        <span className="text-ink-500">{showValue(change?.from)}</span>
+                        <span className="font-mono text-xs text-ink-700">
+                          {field}
+                        </span>
+                        <span className="text-ink-500">
+                          {showValue(change?.from)}
+                        </span>
                         <span aria-hidden className="text-ink-400">
                           &rarr;
                         </span>
-                        <span className="font-medium text-ink-900">{showValue(change?.to)}</span>
+                        <span className="font-medium text-ink-900">
+                          {showValue(change?.to)}
+                        </span>
                       </li>
                     ),
                   )}
                 </ul>
               )}
               <p className="mt-2 text-xs text-ink-500">
-                <span className="font-mono">updated_at</span> is deliberately excluded from
-                every diff: it moves on every write, so including it would put a meaningless
-                change in every entry.
+                <span className="font-mono">updated_at</span> is deliberately
+                excluded from every diff: it moves on every write, so including
+                it would put a meaningless change in every entry.
                 {truncated
                   ? " This change was wider than a list is worth, so the diff above was cut short — both full states below are still stored."
                   : ""}
@@ -462,14 +543,18 @@ function StatePanel({
   title: string;
   state: Record<string, unknown> | null;
 }) {
-  const fields = state ? Object.entries(state).sort(([a], [b]) => a.localeCompare(b)) : [];
+  const fields = state
+    ? Object.entries(state).sort(([a], [b]) => a.localeCompare(b))
+    : [];
   return (
     <section>
-      <h3 className="mb-2 text-sm font-semibold tracking-wide text-ink-500 uppercase">{title}</h3>
+      <h3 className="mb-2 text-sm font-semibold tracking-wide text-ink-500 uppercase">
+        {title}
+      </h3>
       {fields.length === 0 ? (
         <p className="text-sm text-ink-500">
-          Nothing stored — this build does not know how to read this kind of record, so there
-          was no snapshot to take.
+          Nothing stored — this build does not know how to read this kind of
+          record, so there was no snapshot to take.
         </p>
       ) : (
         <dl className="space-y-1">
@@ -509,7 +594,9 @@ function HistoryModal({
       open
       onClose={onClose}
       title={`History of this ${titleCase(entityType)}`}
-      description={history?.entity_label ?? "Everything that has happened to one record."}
+      description={
+        history?.entity_label ?? "Everything that has happened to one record."
+      }
       width="max-w-3xl"
       footer={<Button onClick={onClose}>Close</Button>}
     >
@@ -525,19 +612,28 @@ function HistoryModal({
       ) : (
         <>
           <p className="mb-3 text-xs text-ink-500">
-            {formatNumber(history.total)} entry(ies), newest first — the same log narrowed to
-            one record.
+            {formatNumber(history.total)} entry(ies), newest first — the same
+            log narrowed to one record.
           </p>
           <ul className="space-y-2">
             {history.entries.map((item) => (
-              <li key={item.id} className="rounded-lg bg-ink-50 px-3 py-2 text-sm">
+              <li
+                key={item.id}
+                className="rounded-lg bg-ink-50 px-3 py-2 text-sm"
+              >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="font-medium text-ink-900">{item.actor_label}</span>
-                  <span className="text-xs text-ink-500">{formatDateTime(item.created_at)}</span>
+                  <span className="font-medium text-ink-900">
+                    {item.actor_label}
+                  </span>
+                  <span className="text-xs text-ink-500">
+                    {formatDateTime(item.created_at)}
+                  </span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <Badge tone="info">{item.action}</Badge>
-                  <span className="text-ink-600">{item.summary ?? "No summary recorded"}</span>
+                  <span className="text-ink-600">
+                    {item.summary ?? "No summary recorded"}
+                  </span>
                 </div>
               </li>
             ))}

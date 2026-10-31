@@ -6,10 +6,22 @@ import { Badge, StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, KeyValue } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, StatTile, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { inventoryApi, purchaseOrdersApi, suppliersApi } from "@/lib/api/stock";
 import type { PurchaseOrder, PurchaseOrderItem } from "@/lib/api/types";
 import { useApiMutation } from "@/lib/hooks/useApiMutation";
@@ -29,11 +41,9 @@ export default function PurchaseOrdersPage() {
   const [creating, setCreating] = useState(false);
 
   const summary = useApiQuery(() => purchaseOrdersApi.summary(), []);
-  const suppliers = useApiQuery(
-    () => suppliersApi.active(),
-    [],
-    { enabled: can("suppliers:read") },
-  );
+  const suppliers = useApiQuery(() => suppliersApi.active(), [], {
+    enabled: can("suppliers:read"),
+  });
 
   const query = useApiQuery(
     () =>
@@ -67,7 +77,9 @@ export default function PurchaseOrdersPage() {
     {
       key: "supplier",
       header: "Supplier",
-      render: (po) => <span className="text-sm">{po.supplier_name ?? "—"}</span>,
+      render: (po) => (
+        <span className="text-sm">{po.supplier_name ?? "—"}</span>
+      ),
     },
     {
       key: "status",
@@ -78,7 +90,11 @@ export default function PurchaseOrdersPage() {
       key: "order_date",
       header: "Ordered",
       numeric: true,
-      render: (po) => <span className="text-xs text-ink-600">{formatDate(po.order_date)}</span>,
+      render: (po) => (
+        <span className="text-xs text-ink-600">
+          {formatDate(po.order_date)}
+        </span>
+      ),
     },
     {
       key: "expected",
@@ -90,7 +106,9 @@ export default function PurchaseOrdersPage() {
             {formatDate(po.expected_delivery_date)} · late
           </span>
         ) : (
-          <span className="text-xs text-ink-600">{formatDate(po.expected_delivery_date)}</span>
+          <span className="text-xs text-ink-600">
+            {formatDate(po.expected_delivery_date)}
+          </span>
         ),
     },
     {
@@ -99,7 +117,8 @@ export default function PurchaseOrdersPage() {
       numeric: true,
       render: (po) => (
         <span className="text-xs text-ink-600">
-          {formatNumber(po.total_units_received)} / {formatNumber(po.total_units_ordered)}
+          {formatNumber(po.total_units_received)} /{" "}
+          {formatNumber(po.total_units_ordered)}
         </span>
       ),
     },
@@ -115,7 +134,11 @@ export default function PurchaseOrdersPage() {
     <>
       <PageHeader
         title="Purchase orders"
-        subtitle={query.data ? `${query.data.meta.total} in the order book` : "What the shop has on order"}
+        subtitle={
+          query.data
+            ? `${query.data.meta.total} in the order book`
+            : "What the shop has on order"
+        }
         actions={
           can("purchase_orders:write") ? (
             <Button variant="primary" onClick={() => setCreating(true)}>
@@ -133,7 +156,10 @@ export default function PurchaseOrdersPage() {
         <Loading label="Reading the order book…" />
       ) : summary.data ? (
         <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <StatTile label="Orders" value={formatNumber(summary.data.total_orders)} />
+          <StatTile
+            label="Orders"
+            value={formatNumber(summary.data.total_orders)}
+          />
           <StatTile
             label="Drafts"
             value={formatNumber(summary.data.draft_orders)}
@@ -163,8 +189,14 @@ export default function PurchaseOrdersPage() {
             tone="success"
             hint="Goods actually booked in"
           />
-          <StatTile label="Received" value={formatNumber(summary.data.received_orders)} />
-          <StatTile label="Cancelled" value={formatNumber(summary.data.cancelled_orders)} />
+          <StatTile
+            label="Received"
+            value={formatNumber(summary.data.received_orders)}
+          />
+          <StatTile
+            label="Cancelled"
+            value={formatNumber(summary.data.cancelled_orders)}
+          />
         </div>
       ) : null}
 
@@ -247,9 +279,10 @@ export default function PurchaseOrdersPage() {
       </Card>
 
       <Notice tone="info">
-        An order has no status picker. SENT is the desk sending it, CANCELLED is the desk calling it
-        off, and PARTIALLY_RECEIVED or RECEIVED are reached only by booking a delivery in — because
-        those two mean goods physically arrived.
+        An order has no status picker. SENT is the desk sending it, CANCELLED is
+        the desk calling it off, and PARTIALLY_RECEIVED or RECEIVED are reached
+        only by booking a delivery in — because those two mean goods physically
+        arrived.
       </Notice>
 
       {creating ? (
@@ -300,19 +333,25 @@ const LINE_COLUMNS: Column<PurchaseOrderItem>[] = [
     key: "line_number",
     header: "#",
     numeric: true,
-    render: (item) => <span className="text-xs text-ink-500">{item.line_number}</span>,
+    render: (item) => (
+      <span className="text-xs text-ink-500">{item.line_number}</span>
+    ),
   },
   {
     key: "part_number",
     header: "Part number",
     render: (item) => (
-      <span className="text-sm font-medium text-ink-900">{item.part_number}</span>
+      <span className="text-sm font-medium text-ink-900">
+        {item.part_number}
+      </span>
     ),
   },
   {
     key: "part_name",
     header: "Part",
-    render: (item) => <span className="text-sm text-ink-700">{item.part_name}</span>,
+    render: (item) => (
+      <span className="text-sm text-ink-700">{item.part_name}</span>
+    ),
   },
   {
     key: "ordered",
@@ -325,7 +364,11 @@ const LINE_COLUMNS: Column<PurchaseOrderItem>[] = [
     header: "Received",
     numeric: true,
     render: (item) => (
-      <span className={item.quantity_received > 0 ? "text-emerald-700" : "text-ink-400"}>
+      <span
+        className={
+          item.quantity_received > 0 ? "text-emerald-700" : "text-ink-400"
+        }
+      >
         {qty(item.quantity_received)}
       </span>
     ),
@@ -336,11 +379,13 @@ const LINE_COLUMNS: Column<PurchaseOrderItem>[] = [
     numeric: true,
     render: (item) =>
       item.quantity_outstanding > 0 ? (
-        <span className="font-medium text-amber-700">{qty(item.quantity_outstanding)}</span>
+        <span className="font-medium text-amber-700">
+          {qty(item.quantity_outstanding)}
+        </span>
       ) : (
         <span className="text-ink-400">0</span>
       ),
-    },
+  },
   {
     key: "unit_cost",
     header: "Unit cost",
@@ -376,7 +421,9 @@ function NewPurchaseOrderModal({
     () => inventoryApi.stockLevels() as Promise<PartOption[]>,
     [],
   );
-  const create = useApiMutation((body: Record<string, unknown>) => purchaseOrdersApi.create(body));
+  const create = useApiMutation((body: Record<string, unknown>) =>
+    purchaseOrdersApi.create(body),
+  );
   const [supplierId, setSupplierId] = useState("");
   const [expectedDate, setExpectedDate] = useState("");
   const [currency, setCurrency] = useState("USD");
@@ -392,34 +439,57 @@ function NewPurchaseOrderModal({
   const hasInvalidLine = lines.some((line) => {
     const quantity = Number(line.quantity_ordered);
     const cost = line.unit_cost === "" ? 0 : Number(line.unit_cost);
-    return !line.part_id || !(quantity > 0) || !Number.isFinite(quantity) || !(cost >= 0) || !Number.isFinite(cost);
+    return (
+      !line.part_id ||
+      !(quantity > 0) ||
+      !Number.isFinite(quantity) ||
+      !(cost >= 0) ||
+      !Number.isFinite(cost)
+    );
   });
-  const duplicateParts = new Set(lines.map((line) => line.part_id).filter(Boolean)).size !== lines.filter((line) => line.part_id).length;
-  const blocked = !supplierId || lines.length === 0 || hasInvalidLine || duplicateParts || create.pending;
+  const duplicateParts =
+    new Set(lines.map((line) => line.part_id).filter(Boolean)).size !==
+    lines.filter((line) => line.part_id).length;
+  const blocked =
+    !supplierId ||
+    lines.length === 0 ||
+    hasInvalidLine ||
+    duplicateParts ||
+    create.pending;
 
   function updateLine(key: number, update: Partial<DraftOrderLine>) {
-    setLines((current) => current.map((line) => line.key === key ? { ...line, ...update } : line));
+    setLines((current) =>
+      current.map((line) => (line.key === key ? { ...line, ...update } : line)),
+    );
   }
 
   function addLine() {
-    setLines((current) => [...current, {
-      key: nextKey,
-      part_id: "",
-      quantity_ordered: "1",
-      unit_cost: "",
-      notes: "",
-    }]);
+    setLines((current) => [
+      ...current,
+      {
+        key: nextKey,
+        part_id: "",
+        quantity_ordered: "1",
+        unit_cost: "",
+        notes: "",
+      },
+    ]);
     setNextKey((value) => value + 1);
   }
 
   async function submit() {
     if (blocked) return;
     const items = lines.map((line) => {
-      const part = catalog.data?.find((option) => option.part_id === line.part_id);
+      const part = catalog.data?.find(
+        (option) => option.part_id === line.part_id,
+      );
       return {
         part_id: line.part_id,
         quantity_ordered: Number(line.quantity_ordered),
-        unit_cost: line.unit_cost === "" ? (part?.unit_cost ?? 0) : Number(line.unit_cost),
+        unit_cost:
+          line.unit_cost === ""
+            ? (part?.unit_cost ?? 0)
+            : Number(line.unit_cost),
         notes: line.notes.trim() || null,
       };
     });
@@ -437,7 +507,11 @@ function NewPurchaseOrderModal({
   }
 
   const availableFor = (line: DraftOrderLine) => {
-    const used = new Set(lines.filter((entry) => entry.key !== line.key).map((entry) => entry.part_id));
+    const used = new Set(
+      lines
+        .filter((entry) => entry.key !== line.key)
+        .map((entry) => entry.part_id),
+    );
     return (catalog.data ?? []).filter((part) => !used.has(part.part_id));
   };
 
@@ -450,7 +524,9 @@ function NewPurchaseOrderModal({
       width="max-w-3xl"
       footer={
         <>
-          <Button onClick={onClose} disabled={create.pending}>Cancel</Button>
+          <Button onClick={onClose} disabled={create.pending}>
+            Cancel
+          </Button>
           <Button
             variant="primary"
             pending={create.pending}
@@ -472,21 +548,33 @@ function NewPurchaseOrderModal({
         <FormError error={create.error} />
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Supplier" required>
-            <Select value={supplierId} onChange={(event) => setSupplierId(event.target.value)}>
+            <Select
+              value={supplierId}
+              onChange={(event) => setSupplierId(event.target.value)}
+            >
               <option value="">Choose supplier</option>
               {suppliers.map((supplier) => (
-                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.name}
+                </option>
               ))}
             </Select>
           </Field>
           <Field label="Expected delivery date">
-            <Input type="date" value={expectedDate} onChange={(event) => setExpectedDate(event.target.value)} />
+            <Input
+              type="date"
+              value={expectedDate}
+              onChange={(event) => setExpectedDate(event.target.value)}
+            />
           </Field>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label="Currency" required>
-            <Select value={currency} onChange={(event) => setCurrency(event.target.value)}>
+            <Select
+              value={currency}
+              onChange={(event) => setCurrency(event.target.value)}
+            >
               <option value="USD">USD</option>
               <option value="GBP">GBP</option>
               <option value="EUR">EUR</option>
@@ -494,64 +582,138 @@ function NewPurchaseOrderModal({
             </Select>
           </Field>
           <Field label="Tax amount">
-            <Input type="number" min="0" step="0.01" value={tax} onChange={(event) => setTax(event.target.value)} />
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={tax}
+              onChange={(event) => setTax(event.target.value)}
+            />
           </Field>
           <Field label="Shipping amount">
-            <Input type="number" min="0" step="0.01" value={shipping} onChange={(event) => setShipping(event.target.value)} />
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={shipping}
+              onChange={(event) => setShipping(event.target.value)}
+            />
           </Field>
         </div>
 
         <div className="space-y-3 rounded-lg border border-ink-200 p-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-ink-900">Order lines</h3>
-              <p className="text-xs text-ink-500">Each part can appear once. Quantity must be greater than zero.</p>
+              <h3 className="text-sm font-semibold text-ink-900">
+                Order lines
+              </h3>
+              <p className="text-xs text-ink-500">
+                Each part can appear once. Quantity must be greater than zero.
+              </p>
             </div>
-            <Button type="button" size="sm" variant="secondary" onClick={addLine}>Add line</Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={addLine}
+            >
+              Add line
+            </Button>
           </div>
           {lines.map((line, index) => (
             <div key={line.key} className="space-y-2 rounded-md bg-ink-50 p-3">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label={`Part ${index + 1}`} required>
-                  <Select value={line.part_id} onChange={(event) => updateLine(line.key, { part_id: event.target.value })}>
+                  <Select
+                    value={line.part_id}
+                    onChange={(event) =>
+                      updateLine(line.key, { part_id: event.target.value })
+                    }
+                  >
                     <option value="">Choose part</option>
                     {availableFor(line).map((part) => (
-                      <option key={part.part_id} value={part.part_id}>{part.part_number} · {part.name}</option>
+                      <option key={part.part_id} value={part.part_id}>
+                        {part.part_number} · {part.name}
+                      </option>
                     ))}
                   </Select>
                 </Field>
                 <Field label="Line notes">
-                  <Input value={line.notes} onChange={(event) => updateLine(line.key, { notes: event.target.value })} />
+                  <Input
+                    value={line.notes}
+                    onChange={(event) =>
+                      updateLine(line.key, { notes: event.target.value })
+                    }
+                  />
                 </Field>
               </div>
               <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
                 <Field label="Quantity" required>
-                  <Input type="number" min="0" step="0.01" value={line.quantity_ordered} onChange={(event) => updateLine(line.key, { quantity_ordered: event.target.value })} />
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={line.quantity_ordered}
+                    onChange={(event) =>
+                      updateLine(line.key, {
+                        quantity_ordered: event.target.value,
+                      })
+                    }
+                  />
                 </Field>
                 <Field label="Unit cost" hint="Blank uses catalog cost.">
-                  <Input type="number" min="0" step="0.01" value={line.unit_cost} onChange={(event) => updateLine(line.key, { unit_cost: event.target.value })} />
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={line.unit_cost}
+                    onChange={(event) =>
+                      updateLine(line.key, { unit_cost: event.target.value })
+                    }
+                  />
                 </Field>
                 <Button
                   type="button"
                   variant="danger"
                   disabled={lines.length === 1}
-                  onClick={() => setLines((current) => current.filter((entry) => entry.key !== line.key))}
+                  onClick={() =>
+                    setLines((current) =>
+                      current.filter((entry) => entry.key !== line.key),
+                    )
+                  }
                 >
                   Remove line
                 </Button>
               </div>
             </div>
           ))}
-          {duplicateParts ? <p className="text-sm text-rose-700">Choose a different part for each line.</p> : null}
-          {hasInvalidLine ? <p className="text-sm text-rose-700">Every line needs a part, a positive quantity and a non-negative unit cost.</p> : null}
+          {duplicateParts ? (
+            <p className="text-sm text-rose-700">
+              Choose a different part for each line.
+            </p>
+          ) : null}
+          {hasInvalidLine ? (
+            <p className="text-sm text-rose-700">
+              Every line needs a part, a positive quantity and a non-negative
+              unit cost.
+            </p>
+          ) : null}
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Supplier-facing notes">
-            <Textarea rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} />
+            <Textarea
+              rows={2}
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+            />
           </Field>
           <Field label="Internal notes">
-            <Textarea rows={2} value={internalNotes} onChange={(event) => setInternalNotes(event.target.value)} />
+            <Textarea
+              rows={2}
+              value={internalNotes}
+              onChange={(event) => setInternalNotes(event.target.value)}
+            />
           </Field>
         </div>
       </form>
@@ -576,7 +738,9 @@ function EditPurchaseOrderHeaderModal({
     notes: order.notes ?? "",
     internal_notes: order.internal_notes ?? "",
   });
-  const update = useApiMutation((body: Record<string, unknown>) => purchaseOrdersApi.update(order.id, body));
+  const update = useApiMutation((body: Record<string, unknown>) =>
+    purchaseOrdersApi.update(order.id, body),
+  );
 
   async function submit() {
     const saved = await update.run({
@@ -598,25 +762,62 @@ function EditPurchaseOrderHeaderModal({
       description="Header details are editable only while the order is a draft."
       footer={
         <>
-          <Button onClick={onClose} disabled={update.pending}>Cancel</Button>
-          <Button variant="primary" pending={update.pending} onClick={() => void submit()}>Save details</Button>
+          <Button onClick={onClose} disabled={update.pending}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            pending={update.pending}
+            onClick={() => void submit()}
+          >
+            Save details
+          </Button>
         </>
       }
     >
-      <form onSubmit={(event) => { event.preventDefault(); void submit(); }} className="space-y-3">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submit();
+        }}
+        className="space-y-3"
+      >
         <FormError error={update.error} />
         <Field label="Expected delivery date">
-          <Input type="date" value={form.values.expected_delivery_date} onChange={(event) => form.set("expected_delivery_date", event.target.value)} />
+          <Input
+            type="date"
+            value={form.values.expected_delivery_date}
+            onChange={(event) =>
+              form.set("expected_delivery_date", event.target.value)
+            }
+          />
         </Field>
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label="Tax amount">
-            <Input type="number" min="0" step="0.01" value={form.values.tax_amount} onChange={(event) => form.set("tax_amount", event.target.value)} />
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.values.tax_amount}
+              onChange={(event) => form.set("tax_amount", event.target.value)}
+            />
           </Field>
           <Field label="Shipping amount">
-            <Input type="number" min="0" step="0.01" value={form.values.shipping_amount} onChange={(event) => form.set("shipping_amount", event.target.value)} />
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.values.shipping_amount}
+              onChange={(event) =>
+                form.set("shipping_amount", event.target.value)
+              }
+            />
           </Field>
           <Field label="Currency">
-            <Select value={form.values.currency} onChange={(event) => form.set("currency", event.target.value)}>
+            <Select
+              value={form.values.currency}
+              onChange={(event) => form.set("currency", event.target.value)}
+            >
               <option value="USD">USD</option>
               <option value="GBP">GBP</option>
               <option value="EUR">EUR</option>
@@ -625,10 +826,18 @@ function EditPurchaseOrderHeaderModal({
           </Field>
         </div>
         <Field label="Supplier-facing notes">
-          <Textarea rows={2} value={form.values.notes} onChange={(event) => form.set("notes", event.target.value)} />
+          <Textarea
+            rows={2}
+            value={form.values.notes}
+            onChange={(event) => form.set("notes", event.target.value)}
+          />
         </Field>
         <Field label="Internal notes">
-          <Textarea rows={2} value={form.values.internal_notes} onChange={(event) => form.set("internal_notes", event.target.value)} />
+          <Textarea
+            rows={2}
+            value={form.values.internal_notes}
+            onChange={(event) => form.set("internal_notes", event.target.value)}
+          />
         </Field>
       </form>
     </Modal>
@@ -659,7 +868,8 @@ function OrderModal({
     purchaseOrdersApi.removeItem(orderId, itemId),
   );
 
-  const canSend = !!order && writable && order.status === "DRAFT" && order.item_count > 0;
+  const canSend =
+    !!order && writable && order.status === "DRAFT" && order.item_count > 0;
   const canCancel = !!order && writable && !order.is_terminal;
   const canBookIn = canReceive(order);
 
@@ -749,27 +959,39 @@ function OrderModal({
               <Badge tone="info">Draft — the lines can still be changed</Badge>
             ) : (
               <Badge tone="neutral">
-                {order.status === "SENT" || order.status === "PARTIALLY_RECEIVED"
+                {order.status === "SENT" ||
+                order.status === "PARTIALLY_RECEIVED"
                   ? "Sent — the lines are frozen"
                   : "Closed"}
               </Badge>
             )}
-            {order.is_overdue ? <Badge tone="danger">Past the expected date</Badge> : null}
+            {order.is_overdue ? (
+              <Badge tone="danger">Past the expected date</Badge>
+            ) : null}
           </div>
 
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
-            <KeyValue label="Subtotal">{formatMoney(order.subtotal, order.currency)}</KeyValue>
-            <KeyValue label="Tax">{formatMoney(order.tax_amount, order.currency)}</KeyValue>
+            <KeyValue label="Subtotal">
+              {formatMoney(order.subtotal, order.currency)}
+            </KeyValue>
+            <KeyValue label="Tax">
+              {formatMoney(order.tax_amount, order.currency)}
+            </KeyValue>
             <KeyValue label="Shipping">
               {formatMoney(order.shipping_amount, order.currency)}
             </KeyValue>
             <KeyValue label="Total">
-              <span className="font-semibold">{formatMoney(order.total_amount, order.currency)}</span>
+              <span className="font-semibold">
+                {formatMoney(order.total_amount, order.currency)}
+              </span>
             </KeyValue>
-            <KeyValue label="Expected">{formatDate(order.expected_delivery_date)}</KeyValue>
+            <KeyValue label="Expected">
+              {formatDate(order.expected_delivery_date)}
+            </KeyValue>
             <KeyValue label="Sent">{formatDate(order.sent_at)}</KeyValue>
             <KeyValue label="Units received">
-              {formatNumber(order.total_units_received)} / {formatNumber(order.total_units_ordered)}
+              {formatNumber(order.total_units_received)} /{" "}
+              {formatNumber(order.total_units_ordered)}
             </KeyValue>
             <KeyValue label="Lines">{formatNumber(order.item_count)}</KeyValue>
           </dl>
@@ -779,8 +1001,9 @@ function OrderModal({
           ) : null}
 
           <Notice tone="info">
-            Only a draft is editable. Once sent, the supplier may already hold the goods, so a
-            correction is cancelling the order and raising another rather than editing this one.
+            Only a draft is editable. Once sent, the supplier may already hold
+            the goods, so a correction is cancelling the order and raising
+            another rather than editing this one.
           </Notice>
 
           <div>
@@ -789,7 +1012,11 @@ function OrderModal({
               subtitle={`${order.items.length} line(s)`}
               actions={
                 order.is_editable && writable ? (
-                  <Button size="sm" variant="primary" onClick={() => setAddingLine(true)}>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => setAddingLine(true)}
+                  >
                     Add a line
                   </Button>
                 ) : null
@@ -817,7 +1044,9 @@ function OrderModal({
                               className="text-xs text-rose-700 hover:underline"
                               disabled={removeItem.pending}
                               onClick={() =>
-                                void removeItem.run(item.id).then(() => query.refetch())
+                                void removeItem
+                                  .run(item.id)
+                                  .then(() => query.refetch())
                               }
                             >
                               Remove
@@ -887,15 +1116,18 @@ function OrderModal({
 
 function canReceive(order: PurchaseOrder | null): boolean {
   if (!order) return false;
-  if (order.status !== "SENT" && order.status !== "PARTIALLY_RECEIVED") return false;
+  if (order.status !== "SENT" && order.status !== "PARTIALLY_RECEIVED")
+    return false;
   return order.items.some((item) => item.quantity_outstanding > 0);
 }
 
 function receiveBlockedReason(order: PurchaseOrder | null): string {
   if (!order) return "Nothing loaded.";
-  if (order.status === "DRAFT") return "Send the order to the supplier before booking anything in.";
+  if (order.status === "DRAFT")
+    return "Send the order to the supplier before booking anything in.";
   if (order.status === "RECEIVED") return "This order is fully received.";
-  if (order.status === "CANCELLED") return "A cancelled order takes no delivery.";
+  if (order.status === "CANCELLED")
+    return "A cancelled order takes no delivery.";
   if (!order.items.some((item) => item.quantity_outstanding > 0))
     return "Every line on this order has already been received.";
   return "Book a delivery in against this order";
@@ -914,7 +1146,12 @@ function AddLineModal({
     () => inventoryApi.stockLevels() as Promise<PartOption[]>,
     [],
   );
-  const form = useForm({ part_id: "", quantity_ordered: "1", unit_cost: "", notes: "" });
+  const form = useForm({
+    part_id: "",
+    quantity_ordered: "1",
+    unit_cost: "",
+    notes: "",
+  });
   const addItem = useApiMutation((body: Record<string, unknown>) =>
     purchaseOrdersApi.addItem(order.id, body),
   );
@@ -922,7 +1159,9 @@ function AddLineModal({
   // The same part twice would make the receipt maths ambiguous, so the parts
   // already on the order are not offered.
   const taken = new Set(order.items.map((item) => item.part_id));
-  const options = (catalog.data ?? []).filter((part) => !taken.has(part.part_id));
+  const options = (catalog.data ?? []).filter(
+    (part) => !taken.has(part.part_id),
+  );
   const chosen = options.find((part) => part.part_id === form.values.part_id);
   const quantity = Number(form.values.quantity_ordered);
 
@@ -999,12 +1238,18 @@ function AddLineModal({
               step="0.01"
               min="0"
               value={form.values.quantity_ordered}
-              onChange={(event) => form.set("quantity_ordered", event.target.value)}
+              onChange={(event) =>
+                form.set("quantity_ordered", event.target.value)
+              }
             />
           </Field>
           <Field
             label="Unit cost"
-            hint={chosen ? `Catalog cost ${formatMoney(chosen.unit_cost)}.` : "What the supplier quoted."}
+            hint={
+              chosen
+                ? `Catalog cost ${formatMoney(chosen.unit_cost)}.`
+                : "What the supplier quoted."
+            }
           >
             <Input
               type="number"
@@ -1025,9 +1270,9 @@ function AddLineModal({
         </Field>
 
         <Notice tone="info">
-          The unit cost here is what this supplier quoted, not the catalog cost. A purchase order is
-          an agreement with one supplier at one price, and the catalog is a separate fact that the
-          order must not overwrite.
+          The unit cost here is what this supplier quoted, not the catalog cost.
+          A purchase order is an agreement with one supplier at one price, and
+          the catalog is a separate fact that the order must not overwrite.
         </Notice>
       </form>
     </Modal>
@@ -1067,7 +1312,11 @@ function CancelModal({
           <Button onClick={onClose} disabled={cancel.pending}>
             Keep the order
           </Button>
-          <Button variant="danger" pending={cancel.pending} onClick={() => void submit()}>
+          <Button
+            variant="danger"
+            pending={cancel.pending}
+            onClick={() => void submit()}
+          >
             Cancel order
           </Button>
         </>
@@ -1081,7 +1330,10 @@ function CancelModal({
         className="space-y-3"
       >
         <FormError error={cancel.error} />
-        <Field label="Reason" hint="Optional, but it is what the next person will read.">
+        <Field
+          label="Reason"
+          hint="Optional, but it is what the next person will read."
+        >
           <Textarea
             rows={3}
             value={form.values.reason}
@@ -1089,8 +1341,9 @@ function CancelModal({
           />
         </Field>
         <Notice tone="info">
-          Cancelling a partly received order does not un-buy what is already on the shelf: those
-          parts were paid for and the ledger keeps them. Only the order closes.
+          Cancelling a partly received order does not un-buy what is already on
+          the shelf: those parts were paid for and the ledger keeps them. Only
+          the order closes.
         </Notice>
       </form>
     </Modal>
@@ -1106,13 +1359,18 @@ function ReceiveModal({
   onClose: () => void;
   onReceived: () => void;
 }) {
-  const outstanding = order.items.filter((item) => item.quantity_outstanding > 0);
+  const outstanding = order.items.filter(
+    (item) => item.quantity_outstanding > 0,
+  );
   const [quantities, setQuantities] = useState<Record<string, string>>({});
   const [costs, setCosts] = useState<Record<string, string>>({});
   const notesForm = useForm({ notes: "" });
   const receive = useApiMutation(
     (items: { item_id: string; quantity: number; unit_cost?: number }[]) =>
-      purchaseOrdersApi.receive(order.id, { items, notes: notesForm.values.notes || null }),
+      purchaseOrdersApi.receive(order.id, {
+        items,
+        notes: notesForm.values.notes || null,
+      }),
   );
 
   function quantityFor(item: PurchaseOrderItem): number {
@@ -1127,7 +1385,11 @@ function ReceiveModal({
   const negative = outstanding.find((item) => quantityFor(item) < 0);
   const anyQuantity = outstanding.some((item) => quantityFor(item) > 0);
   const blocked =
-    outstanding.length === 0 || !anyQuantity || !!overOrdered || !!negative || receive.pending;
+    outstanding.length === 0 ||
+    !anyQuantity ||
+    !!overOrdered ||
+    !!negative ||
+    receive.pending;
 
   async function submit() {
     if (blocked) return;
@@ -1138,7 +1400,9 @@ function ReceiveModal({
         return {
           item_id: item.id,
           quantity: Number(quantityFor(item).toFixed(2)),
-          ...(cost === undefined || cost === "" ? {} : { unit_cost: Number(cost) || 0 }),
+          ...(cost === undefined || cost === ""
+            ? {}
+            : { unit_cost: Number(cost) || 0 }),
         };
       });
     if (items.length === 0) return;
@@ -1158,7 +1422,12 @@ function ReceiveModal({
           <Button onClick={onClose} disabled={receive.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={receive.pending} disabled={blocked} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={receive.pending}
+            disabled={blocked}
+            onClick={() => void submit()}
+          >
             Receive
           </Button>
         </>
@@ -1181,8 +1450,8 @@ function ReceiveModal({
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="text-sm text-ink-900">{item.part_name}</p>
                   <p className="text-xs text-ink-500">
-                    {item.part_number} · {qty(item.quantity_outstanding)} outstanding of{" "}
-                    {qty(item.quantity_ordered)}
+                    {item.part_number} · {qty(item.quantity_outstanding)}{" "}
+                    outstanding of {qty(item.quantity_ordered)}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-end gap-2">
@@ -1202,7 +1471,9 @@ function ReceiveModal({
                       step="0.01"
                       min="0"
                       max={item.quantity_outstanding}
-                      value={quantities[item.id] ?? String(item.quantity_outstanding)}
+                      value={
+                        quantities[item.id] ?? String(item.quantity_outstanding)
+                      }
                       onChange={(event) =>
                         setQuantities((current) => ({
                           ...current,
@@ -1223,7 +1494,10 @@ function ReceiveModal({
                       placeholder="Same as the order"
                       value={costs[item.id] ?? ""}
                       onChange={(event) =>
-                        setCosts((current) => ({ ...current, [item.id]: event.target.value }))
+                        setCosts((current) => ({
+                          ...current,
+                          [item.id]: event.target.value,
+                        }))
                       }
                     />
                   </Field>
@@ -1233,7 +1507,10 @@ function ReceiveModal({
           })}
         </ul>
 
-        <Field label="Notes" hint="Optional — a delivery note number, a discrepancy.">
+        <Field
+          label="Notes"
+          hint="Optional — a delivery note number, a discrepancy."
+        >
           <Input
             value={notesForm.values.notes}
             onChange={(event) => notesForm.set("notes", event.target.value)}
@@ -1241,12 +1518,13 @@ function ReceiveModal({
         </Field>
 
         <Notice tone="info">
-          A receipt may quote a different unit cost from the order: prices move, and what arrived is a
-          fact. The catalog is left alone — only the ledger carries the cost of this delivery.
+          A receipt may quote a different unit cost from the order: prices move,
+          and what arrived is a fact. The catalog is left alone — only the
+          ledger carries the cost of this delivery.
         </Notice>
         <Notice tone="info">
-          Receiving books one ledger receipt per line, all in one transaction. If any line cannot be
-          booked in, no stock moves at all.
+          Receiving books one ledger receipt per line, all in one transaction.
+          If any line cannot be booked in, no stock moves at all.
         </Notice>
       </form>
     </Modal>

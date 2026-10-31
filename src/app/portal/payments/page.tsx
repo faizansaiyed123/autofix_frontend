@@ -21,16 +21,25 @@ export default function PortalPaymentsPage() {
       key: "invoice",
       header: "Against",
       render: (p) => (
-        <Link href="/portal/invoices" className="font-medium text-brand-700 hover:underline">
+        <Link
+          href="/portal/invoices"
+          className="font-medium text-brand-700 hover:underline"
+        >
           {p.invoice_number}
         </Link>
       ),
     },
-    { key: "method", header: "Method", render: (p) => p.method.replace("_", " ").toLowerCase() },
+    {
+      key: "method",
+      header: "Method",
+      render: (p) => p.method.replace("_", " ").toLowerCase(),
+    },
     {
       key: "reference",
       header: "Reference",
-      render: (p) => <span className="text-xs text-ink-600">{p.reference ?? "—"}</span>,
+      render: (p) => (
+        <span className="text-xs text-ink-600">{p.reference ?? "—"}</span>
+      ),
     },
     {
       key: "amount",
@@ -38,16 +47,21 @@ export default function PortalPaymentsPage() {
       numeric: true,
       render: (p) =>
         p.status === "VOID" ? (
-          <span className="text-ink-400 line-through">{formatMoney(p.amount)}</span>
+          <span className="text-ink-400 line-through">
+            {formatMoney(p.amount)}
+          </span>
         ) : (
-          <span className="font-medium text-ink-900">{formatMoney(p.amount)}</span>
+          <span className="font-medium text-ink-900">
+            {formatMoney(p.amount)}
+          </span>
         ),
     },
     { key: "status", header: "Status", render: (p) => p.status },
   ];
 
   if (payments.loading && payments.initial) return <Loading />;
-  if (payments.error) return <ErrorState error={payments.error} onRetry={payments.refetch} />;
+  if (payments.error)
+    return <ErrorState error={payments.error} onRetry={payments.refetch} />;
 
   return (
     <>
@@ -66,7 +80,12 @@ export default function PortalPaymentsPage() {
               rowKey={(p) => p.id}
               empty={<EmptyState title="No payments yet" />}
             />
-            <Pagination page={1} pages={1} total={payments.data.length} onPage={() => undefined} />
+            <Pagination
+              page={1}
+              pages={1}
+              total={payments.data.length}
+              onPage={() => undefined}
+            />
           </>
         )}
       </Card>

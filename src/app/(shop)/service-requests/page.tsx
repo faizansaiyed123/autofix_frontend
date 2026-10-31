@@ -7,10 +7,22 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, KeyValue, KeyValueGrid } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { appointmentsApi, serviceRequestsApi } from "@/lib/api/shop";
 import type { ServiceRequest, ServiceRequestCreate } from "@/lib/api/types";
@@ -20,7 +32,13 @@ import { useSession } from "@/lib/auth/AuthProvider";
 import { formatRelative, titleCase, toApiDateTime } from "@/lib/format";
 
 /** Use API-supported statuses and transitions; the shared status list includes unsupported values. */
-const REQUEST_STATUSES = ["NEW", "IN_REVIEW", "APPROVED", "REJECTED", "CONVERTED"];
+const REQUEST_STATUSES = [
+  "NEW",
+  "IN_REVIEW",
+  "APPROVED",
+  "REJECTED",
+  "CONVERTED",
+];
 
 const REQUEST_TRANSITIONS: Record<string, string[]> = {
   NEW: ["IN_REVIEW", "REJECTED"],
@@ -95,7 +113,9 @@ export default function ServiceRequestsPage() {
         <div className="min-w-0">
           <p className="font-medium text-ink-800">{r.title}</p>
           {r.description ? (
-            <p className="mt-0.5 line-clamp-2 text-xs text-ink-500">{r.description}</p>
+            <p className="mt-0.5 line-clamp-2 text-xs text-ink-500">
+              {r.description}
+            </p>
           ) : null}
         </div>
       ),
@@ -103,14 +123,20 @@ export default function ServiceRequestsPage() {
     {
       key: "customer",
       header: "Customer",
-      render: (r) => <span className="text-sm text-ink-700">{customerLabel(r.customer_id)}</span>,
+      render: (r) => (
+        <span className="text-sm text-ink-700">
+          {customerLabel(r.customer_id)}
+        </span>
+      ),
     },
     {
       key: "vehicle",
       header: "Vehicle",
       render: (r) =>
         r.vehicle_id ? (
-          <span className="text-sm text-ink-700">{vehicleLabel(r.vehicle_id)}</span>
+          <span className="text-sm text-ink-700">
+            {vehicleLabel(r.vehicle_id)}
+          </span>
         ) : (
           <span className="text-ink-400">—</span>
         ),
@@ -120,12 +146,20 @@ export default function ServiceRequestsPage() {
       header: "Priority",
       render: (r) => <StatusBadge status={r.priority} />,
     },
-    { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status} /> },
+    {
+      key: "status",
+      header: "Status",
+      render: (r) => <StatusBadge status={r.status} />,
+    },
     {
       key: "received",
       header: "Received",
       numeric: true,
-      render: (r) => <span className="text-xs text-ink-500">{formatRelative(r.created_at)}</span>,
+      render: (r) => (
+        <span className="text-xs text-ink-500">
+          {formatRelative(r.created_at)}
+        </span>
+      ),
     },
   ];
 
@@ -133,7 +167,9 @@ export default function ServiceRequestsPage() {
     <>
       <PageHeader
         title="Service requests"
-        subtitle={list.data ? `${list.data.meta.total} in the queue` : undefined}
+        subtitle={
+          list.data ? `${list.data.meta.total} in the queue` : undefined
+        }
         actions={
           can("service_requests:write") ? (
             <Button variant="primary" onClick={() => setCreating(true)}>
@@ -246,8 +282,12 @@ function RequestDetailModal({
   const { customerLabel, vehicleLabel } = useReferences();
   const [converting, setConverting] = useState(false);
 
-  const detail = useApiQuery(() => serviceRequestsApi.get(id ?? ""), [id], { enabled: id !== null });
-  const setStatus = useApiMutation((status: string) => serviceRequestsApi.setStatus(id ?? "", status));
+  const detail = useApiQuery(() => serviceRequestsApi.get(id ?? ""), [id], {
+    enabled: id !== null,
+  });
+  const setStatus = useApiMutation((status: string) =>
+    serviceRequestsApi.setStatus(id ?? "", status),
+  );
 
   const record = id ? detail.data : null;
   const allowed = record ? (REQUEST_TRANSITIONS[record.status] ?? []) : [];
@@ -258,7 +298,9 @@ function RequestDetailModal({
       onClose={onClose}
       title={record ? record.title : "Service request"}
       width="max-w-2xl"
-      description={record ? `Received ${formatRelative(record.created_at)}` : undefined}
+      description={
+        record ? `Received ${formatRelative(record.created_at)}` : undefined
+      }
     >
       {detail.loading && detail.initial ? (
         <Loading />
@@ -274,9 +316,13 @@ function RequestDetailModal({
           </div>
 
           <KeyValueGrid>
-            <KeyValue label="Customer">{customerLabel(record.customer_id)}</KeyValue>
+            <KeyValue label="Customer">
+              {customerLabel(record.customer_id)}
+            </KeyValue>
             <KeyValue label="Vehicle">
-              {record.vehicle_id ? vehicleLabel(record.vehicle_id) : "None named"}
+              {record.vehicle_id
+                ? vehicleLabel(record.vehicle_id)
+                : "None named"}
             </KeyValue>
           </KeyValueGrid>
 
@@ -315,7 +361,8 @@ function RequestDetailModal({
               </p>
               {allowed.length === 0 ? (
                 <Notice tone="info">
-                  {record.status} is final. The API refuses any further change of status.
+                  {record.status} is final. The API refuses any further change
+                  of status.
                 </Notice>
               ) : (
                 <>
@@ -356,7 +403,9 @@ function RequestDetailModal({
                   </div>
                   {setStatus.error ? (
                     <div className="mt-2">
-                      <Notice tone="danger">{setStatus.error.messageForUser}</Notice>
+                      <Notice tone="danger">
+                        {setStatus.error.messageForUser}
+                      </Notice>
                     </div>
                   ) : null}
                 </>
@@ -384,11 +433,18 @@ function RequestDetailModal({
  * It is seeded from the record so clearing the box actually clears the note,
  * which a `value || recordValue` fallback would quietly undo.
  */
-function AdvisorNotes({ request, onSaved }: { request: ServiceRequest; onSaved: () => void }) {
+function AdvisorNotes({
+  request,
+  onSaved,
+}: {
+  request: ServiceRequest;
+  onSaved: () => void;
+}) {
   const [value, setValue] = useState(request.service_advisor_notes ?? "");
   const [seededFor, setSeededFor] = useState(request.id);
-  const save = useApiMutation((body: { service_advisor_notes: string | null }) =>
-    serviceRequestsApi.update(request.id, body),
+  const save = useApiMutation(
+    (body: { service_advisor_notes: string | null }) =>
+      serviceRequestsApi.update(request.id, body),
   );
 
   // The modal stays mounted between records, so the draft is re-seeded when a
@@ -407,7 +463,10 @@ function AdvisorNotes({ request, onSaved }: { request: ServiceRequest; onSaved: 
 
   return (
     <div>
-      <Field label="Advisor notes" hint="Internal — never shown to the customer on their portal">
+      <Field
+        label="Advisor notes"
+        hint="Internal — never shown to the customer on their portal"
+      >
         <Textarea
           rows={3}
           maxLength={2000}
@@ -416,7 +475,12 @@ function AdvisorNotes({ request, onSaved }: { request: ServiceRequest; onSaved: 
         />
       </Field>
       <div className="mt-2 flex justify-end">
-        <Button size="sm" pending={save.pending} disabled={!dirty} onClick={() => void saveNotes()}>
+        <Button
+          size="sm"
+          pending={save.pending}
+          disabled={!dirty}
+          onClick={() => void saveNotes()}
+        >
           Save notes
         </Button>
       </div>
@@ -488,7 +552,11 @@ function ConvertModal({
           <Button onClick={onClose} disabled={convert.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={convert.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={convert.pending}
+            onClick={() => void submit()}
+          >
             Convert
           </Button>
         </>
@@ -507,13 +575,17 @@ function ConvertModal({
             <Input
               type="datetime-local"
               value={form.values.scheduled_start}
-              onChange={(event) => form.set("scheduled_start", event.target.value)}
+              onChange={(event) =>
+                form.set("scheduled_start", event.target.value)
+              }
             />
           </Field>
           <Field label="How long">
             <Select
               value={form.values.duration_minutes}
-              onChange={(event) => form.set("duration_minutes", event.target.value)}
+              onChange={(event) =>
+                form.set("duration_minutes", event.target.value)
+              }
             >
               {DURATIONS.map(([value, label]) => (
                 <option key={value} value={value}>
@@ -525,12 +597,21 @@ function ConvertModal({
         </div>
 
         {!request.vehicle_id ? (
-          <Field label="Which vehicle" required hint="The request did not name one">
-            <Select value={vehicleId} onChange={(event) => setVehicleId(event.target.value)}>
+          <Field
+            label="Which vehicle"
+            required
+            hint="The request did not name one"
+          >
+            <Select
+              value={vehicleId}
+              onChange={(event) => setVehicleId(event.target.value)}
+            >
               <option value="">Choose a vehicle…</option>
               {owned.map((vehicle) => (
                 <option key={vehicle.id} value={vehicle.id}>
-                  {[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ")}
+                  {[vehicle.year, vehicle.make, vehicle.model]
+                    .filter(Boolean)
+                    .join(" ")}
                 </option>
               ))}
             </Select>
@@ -560,7 +641,9 @@ function ConvertModal({
           <Field label="Technician" hint="Optional">
             <Select
               value={form.values.technician_id}
-              onChange={(event) => form.set("technician_id", event.target.value)}
+              onChange={(event) =>
+                form.set("technician_id", event.target.value)
+              }
             >
               <option value="">Unassigned</option>
               {staff.map((person) => (
@@ -587,8 +670,9 @@ function ConvertModal({
         </Field>
 
         <Notice tone="info">
-          The slot is checked for clashes as it is booked. If the technician, bay or vehicle is
-          already taken the conversion is refused and this request stays APPROVED.
+          The slot is checked for clashes as it is booked. If the technician,
+          bay or vehicle is already taken the conversion is refused and this
+          request stays APPROVED.
         </Notice>
       </form>
     </Modal>
@@ -613,7 +697,9 @@ function NewRequestModal({
     vehicle_id: "",
     service_advisor_notes: "",
   });
-  const create = useApiMutation((body: ServiceRequestCreate) => serviceRequestsApi.create(body));
+  const create = useApiMutation((body: ServiceRequestCreate) =>
+    serviceRequestsApi.create(body),
+  );
 
   const owned = vehiclesFor(form.values.customer_id);
 
@@ -644,7 +730,11 @@ function NewRequestModal({
           <Button onClick={onClose} disabled={create.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={create.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={create.pending}
+            onClick={() => void submit()}
+          >
             Raise request
           </Button>
         </>
@@ -674,7 +764,11 @@ function NewRequestModal({
             ))}
           </Select>
         </Field>
-        <Field label="What is it about" required hint="One line, up to 200 characters">
+        <Field
+          label="What is it about"
+          required
+          hint="One line, up to 200 characters"
+        >
           <Input
             maxLength={200}
             value={form.values.title}
@@ -705,7 +799,9 @@ function NewRequestModal({
           </Field>
           <Field
             label="Vehicle"
-            hint={form.values.customer_id ? "Optional" : "Choose the customer first"}
+            hint={
+              form.values.customer_id ? "Optional" : "Choose the customer first"
+            }
           >
             <Select
               value={form.values.vehicle_id}
@@ -715,7 +811,9 @@ function NewRequestModal({
               <option value="">Not vehicle-specific</option>
               {owned.map((vehicle) => (
                 <option key={vehicle.id} value={vehicle.id}>
-                  {[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ")}
+                  {[vehicle.year, vehicle.make, vehicle.model]
+                    .filter(Boolean)
+                    .join(" ")}
                 </option>
               ))}
             </Select>
@@ -726,11 +824,14 @@ function NewRequestModal({
             rows={2}
             maxLength={2000}
             value={form.values.service_advisor_notes}
-            onChange={(event) => form.set("service_advisor_notes", event.target.value)}
+            onChange={(event) =>
+              form.set("service_advisor_notes", event.target.value)
+            }
           />
         </Field>
         <Notice tone="info">
-          A new request starts as NEW. Approve it before converting, or the shop will not schedule it.
+          A new request starts as NEW. Approve it before converting, or the shop
+          will not schedule it.
         </Notice>
       </form>
     </Modal>

@@ -8,10 +8,22 @@ import { Badge, StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, StatTile } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { invoicesApi, paymentsApi } from "@/lib/api/money";
 import { repairOrdersApi } from "@/lib/api/work";
@@ -42,16 +54,22 @@ export default function InvoiceDetailPage() {
 
   const repairOrderId = invoice?.repair_order_id ?? null;
   const repairOrder = useApiQuery<RepairOrder | null>(
-    () => (repairOrderId ? repairOrdersApi.get(repairOrderId) : Promise.resolve(null)),
+    () =>
+      repairOrderId
+        ? repairOrdersApi.get(repairOrderId)
+        : Promise.resolve(null),
     [repairOrderId],
     { enabled: !!repairOrderId && can("repair_orders:read") },
   );
 
   const issue = useApiMutation(() => invoicesApi.issue(invoiceId));
-  const removeItem = useApiMutation((itemId: string) => invoicesApi.removeItem(invoiceId, itemId));
+  const removeItem = useApiMutation((itemId: string) =>
+    invoicesApi.removeItem(invoiceId, itemId),
+  );
 
   const repairOrderCanBeBilled =
-    repairOrder.data?.status === "QC_PASSED" || repairOrder.data?.status === "DELIVERED";
+    repairOrder.data?.status === "QC_PASSED" ||
+    repairOrder.data?.status === "DELIVERED";
   const canIssue =
     can("invoices:manage") &&
     isDraft &&
@@ -94,7 +112,9 @@ export default function InvoiceDetailPage() {
         item.part_number ? (
           <div className="text-sm">
             <p>{item.part_number}</p>
-            {item.part_name ? <p className="text-xs text-ink-500">{item.part_name}</p> : null}
+            {item.part_name ? (
+              <p className="text-xs text-ink-500">{item.part_name}</p>
+            ) : null}
           </div>
         ) : (
           <span className="text-ink-400">—</span>
@@ -118,7 +138,9 @@ export default function InvoiceDetailPage() {
       numeric: true,
       render: (item) =>
         item.discount_amount > 0 ? (
-          <span className="text-ink-600">-{formatMoney(item.discount_amount)}</span>
+          <span className="text-ink-600">
+            -{formatMoney(item.discount_amount)}
+          </span>
         ) : (
           <span className="text-ink-400">—</span>
         ),
@@ -164,8 +186,10 @@ export default function InvoiceDetailPage() {
     },
   ];
 
-  if (query.loading && query.initial) return <Loading label="Reading the invoice…" />;
-  if (query.error) return <ErrorState error={query.error} onRetry={query.refetch} />;
+  if (query.loading && query.initial)
+    return <Loading label="Reading the invoice…" />;
+  if (query.error)
+    return <ErrorState error={query.error} onRetry={query.refetch} />;
   if (!invoice) return <ErrorState error={new Error("No invoice data")} />;
 
   return (
@@ -185,7 +209,11 @@ export default function InvoiceDetailPage() {
               <Button
                 variant="primary"
                 disabled={!canIssue}
-                title={canIssue ? "Send this bill to the customer" : issueBlockedReason(invoice, repairOrder.data)}
+                title={
+                  canIssue
+                    ? "Send this bill to the customer"
+                    : issueBlockedReason(invoice, repairOrder.data)
+                }
                 pending={issue.pending}
                 onClick={() => void issue.run().then(() => query.refetch())}
               >
@@ -197,7 +225,9 @@ export default function InvoiceDetailPage() {
                 <Button
                   variant="danger"
                   disabled={!!voidBlockedBy}
-                  title={voidBlockedBy ?? "Write this invoice off, with a reason"}
+                  title={
+                    voidBlockedBy ?? "Write this invoice off, with a reason"
+                  }
                   onClick={() => setVoiding(true)}
                 >
                   Void
@@ -220,13 +250,14 @@ export default function InvoiceDetailPage() {
 
       {isDraft ? (
         <Notice tone="info">
-          This invoice has not been issued, so its lines can still be changed and the balance is not
-          yet owed.
+          This invoice has not been issued, so its lines can still be changed
+          and the balance is not yet owed.
         </Notice>
       ) : (
         <Notice tone="info">
-          This invoice has been issued. The lines are the copy the customer is holding and are frozen;
-          only shop-added manual charges were ever editable, and that window closed at issue.
+          This invoice has been issued. The lines are the copy the customer is
+          holding and are frozen; only shop-added manual charges were ever
+          editable, and that window closed at issue.
         </Notice>
       )}
 
@@ -252,7 +283,8 @@ export default function InvoiceDetailPage() {
             <Row label="Due date">
               {invoice.is_overdue ? (
                 <span className="font-medium text-rose-700">
-                  {formatDate(invoice.due_date)} · {invoice.days_overdue} day(s) late
+                  {formatDate(invoice.due_date)} · {invoice.days_overdue} day(s)
+                  late
                 </span>
               ) : (
                 formatDate(invoice.due_date)
@@ -260,7 +292,9 @@ export default function InvoiceDetailPage() {
             </Row>
             <Row label="Issued">{formatDate(invoice.issued_at)}</Row>
             <Row label="Paid">{formatDate(invoice.paid_at)}</Row>
-            {invoice.void_reason ? <Row label="Void reason">{invoice.void_reason}</Row> : null}
+            {invoice.void_reason ? (
+              <Row label="Void reason">{invoice.void_reason}</Row>
+            ) : null}
             {invoice.notes ? <Row label="Notes">{invoice.notes}</Row> : null}
           </dl>
         </Card>
@@ -271,7 +305,11 @@ export default function InvoiceDetailPage() {
             subtitle="As the server calculates it — never re-added from the lines below"
           />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <StatTile label="Subtotal" value={formatMoney(invoice.subtotal)} hint="The charges" />
+            <StatTile
+              label="Subtotal"
+              value={formatMoney(invoice.subtotal)}
+              hint="The charges"
+            />
             <StatTile
               label="Discount"
               value={formatMoney(invoice.discount_amount)}
@@ -282,7 +320,11 @@ export default function InvoiceDetailPage() {
               value={formatMoney(invoice.tax_amount)}
               hint={`${formatPercent(invoice.tax_rate, 2)} on the discounted amount`}
             />
-            <StatTile label="Total" value={formatMoney(invoice.total)} tone="info" />
+            <StatTile
+              label="Total"
+              value={formatMoney(invoice.total)}
+              tone="info"
+            />
             <StatTile
               label="Paid"
               value={formatMoney(invoice.amount_paid)}
@@ -297,9 +339,10 @@ export default function InvoiceDetailPage() {
             />
           </div>
           <p className="mt-4 text-xs text-ink-500">
-            There is no status control for payment state on purpose: an invoice becomes part-paid or
-            paid only by a payment being recorded against it. Take the money at the till, or void a
-            payment that was wrong — a bill is never marked paid by hand.
+            There is no status control for payment state on purpose: an invoice
+            becomes part-paid or paid only by a payment being recorded against
+            it. Take the money at the till, or void a payment that was wrong — a
+            bill is never marked paid by hand.
           </p>
         </Card>
       </div>
@@ -310,7 +353,11 @@ export default function InvoiceDetailPage() {
           subtitle={`${invoice.items.length} line(s)`}
           actions={
             manualEditable ? (
-              <Button size="sm" variant="primary" onClick={() => setAddingItem(true)}>
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => setAddingItem(true)}
+              >
                 Add a charge
               </Button>
             ) : null
@@ -318,9 +365,10 @@ export default function InvoiceDetailPage() {
         />
         <div className="px-5 pb-4">
           <Notice tone="info">
-            Lines marked ESTIMATE were copied from the estimate the customer approved. They cannot be
-            edited or removed — the customer agreed to those figures. Lines marked MANUAL were added
-            by the shop and can be corrected while this invoice is a draft.
+            Lines marked ESTIMATE were copied from the estimate the customer
+            approved. They cannot be edited or removed — the customer agreed to
+            those figures. Lines marked MANUAL were added by the shop and can be
+            corrected while this invoice is a draft.
           </Notice>
         </div>
         {invoice.items.length === 0 ? (
@@ -329,7 +377,12 @@ export default function InvoiceDetailPage() {
             description="An invoice cannot be issued with nothing on it."
           />
         ) : (
-          <DataTable rows={invoice.items} columns={columns} rowKey={(item) => item.id} dense />
+          <DataTable
+            rows={invoice.items}
+            columns={columns}
+            rowKey={(item) => item.id}
+            dense
+          />
         )}
       </Card>
 
@@ -394,13 +447,19 @@ function issueBlockedReason(
   invoice: Invoice,
   repairOrder: RepairOrder | null | undefined,
 ): string {
-  if (invoice.status !== "DRAFT") return "This invoice has already been issued.";
+  if (invoice.status !== "DRAFT")
+    return "This invoice has already been issued.";
   if (!repairOrder) return "Checking the repair order status before issuing.";
-  if (repairOrder.status !== "QC_PASSED" && repairOrder.status !== "DELIVERED") {
+  if (
+    repairOrder.status !== "QC_PASSED" &&
+    repairOrder.status !== "DELIVERED"
+  ) {
     return `The repair order is ${repairOrder.status}; quality control must pass before this invoice can be issued.`;
   }
-  if (invoice.items.length === 0) return "Add at least one charge line before issuing.";
-  if (invoice.total <= 0) return "A zero invoice has nothing to charge, so it cannot be issued.";
+  if (invoice.items.length === 0)
+    return "Add at least one charge line before issuing.";
+  if (invoice.total <= 0)
+    return "A zero invoice has nothing to charge, so it cannot be issued.";
   return "Ready to issue.";
 }
 
@@ -417,7 +476,8 @@ function voidBlockedReason(invoice: Invoice | null): string | null {
 function paymentBlockedReason(invoice: Invoice | null): string | null {
   if (!invoice) return "Nothing loaded.";
   if (invoice.status === "VOID") return "A voided bill cannot take money.";
-  if (invoice.status === "DRAFT") return "Issue the invoice first — a draft is not yet owed.";
+  if (invoice.status === "DRAFT")
+    return "Issue the invoice first — a draft is not yet owed.";
   if (invoice.status === "PAID" || invoice.balance <= 0)
     return "This bill is settled — there is no balance to take.";
   return null;
@@ -464,7 +524,9 @@ function ItemModal({
       description: form.values.description.trim(),
       quantity: isDiscount ? 1 : Number(form.values.quantity) || 0,
       unit_price: Number(form.values.unit_price) || 0,
-      discount_amount: isDiscount ? 0 : Number(form.values.discount_amount) || 0,
+      discount_amount: isDiscount
+        ? 0
+        : Number(form.values.discount_amount) || 0,
       part_number: form.values.part_number || null,
       part_name: form.values.part_name || null,
       notes: form.values.notes || null,
@@ -487,7 +549,11 @@ function ItemModal({
           <Button onClick={onClose} disabled={save.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={save.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={save.pending}
+            onClick={() => void submit()}
+          >
             {editing ? "Save the line" : "Add the line"}
           </Button>
         </>
@@ -502,7 +568,10 @@ function ItemModal({
       >
         <FormError error={save.error} />
 
-        <Field label="Charge type" hint={editing ? "Fixed once the line exists." : undefined}>
+        <Field
+          label="Charge type"
+          hint={editing ? "Fixed once the line exists." : undefined}
+        >
           <Select
             value={form.values.item_type}
             disabled={editing}
@@ -526,7 +595,9 @@ function ItemModal({
         <div className="grid gap-3 sm:grid-cols-3">
           <Field
             label="Quantity"
-            hint={isDiscount ? "A discount is always a quantity of one." : undefined}
+            hint={
+              isDiscount ? "A discount is always a quantity of one." : undefined
+            }
           >
             <Input
               type="number"
@@ -547,7 +618,10 @@ function ItemModal({
             />
           </Field>
           {isDiscount ? (
-            <Field label="Discount" hint="A discount line cannot carry its own discount.">
+            <Field
+              label="Discount"
+              hint="A discount line cannot carry its own discount."
+            >
               <Input value="—" disabled readOnly />
             </Field>
           ) : (
@@ -557,7 +631,9 @@ function ItemModal({
                 step="0.01"
                 min="0"
                 value={form.values.discount_amount}
-                onChange={(event) => form.set("discount_amount", event.target.value)}
+                onChange={(event) =>
+                  form.set("discount_amount", event.target.value)
+                }
               />
             </Field>
           )}
@@ -587,8 +663,9 @@ function ItemModal({
         </Field>
 
         <Notice tone="info">
-          Changing a line recalculates the invoice totals on the server. The figures on this page are
-          always the server&apos;s, never a sum of what is shown here.
+          Changing a line recalculates the invoice totals on the server. The
+          figures on this page are always the server&apos;s, never a sum of what
+          is shown here.
         </Notice>
       </form>
     </Modal>
@@ -605,7 +682,9 @@ function VoidModal({
   onVoided: () => void;
 }) {
   const form = useForm({ reason: "" });
-  const voidInvoice = useApiMutation((reason: string) => invoicesApi.void(invoice.id, reason));
+  const voidInvoice = useApiMutation((reason: string) =>
+    invoicesApi.void(invoice.id, reason),
+  );
 
   async function submit() {
     if (form.missing(["reason"]).length > 0) return;
@@ -627,7 +706,11 @@ function VoidModal({
           <Button onClick={onClose} disabled={voidInvoice.pending}>
             Cancel
           </Button>
-          <Button variant="danger" pending={voidInvoice.pending} onClick={() => void submit()}>
+          <Button
+            variant="danger"
+            pending={voidInvoice.pending}
+            onClick={() => void submit()}
+          >
             Void invoice
           </Button>
         </>
@@ -641,7 +724,11 @@ function VoidModal({
         className="space-y-3"
       >
         <FormError error={voidInvoice.error} />
-        <Field label="Reason" required hint="Why the bill is being written off.">
+        <Field
+          label="Reason"
+          required
+          hint="Why the bill is being written off."
+        >
           <Textarea
             rows={3}
             value={form.values.reason}
@@ -649,8 +736,8 @@ function VoidModal({
           />
         </Field>
         <Notice tone="info">
-          A voided invoice can never be reopened and takes no further money. If the work was still
-          done, raise a new invoice against the repair order.
+          A voided invoice can never be reopened and takes no further money. If
+          the work was still done, raise a new invoice against the repair order.
         </Notice>
       </form>
     </Modal>
@@ -673,8 +760,9 @@ function RecordPaymentModal({
     reference: "",
     notes: "",
   });
-  const record = useApiMutation((body: Parameters<typeof paymentsApi.record>[0]) =>
-    paymentsApi.record(body),
+  const record = useApiMutation(
+    (body: Parameters<typeof paymentsApi.record>[0]) =>
+      paymentsApi.record(body),
   );
 
   const needsReference = REFERENCE_REQUIRED_METHODS.has(form.values.method);
@@ -713,7 +801,11 @@ function RecordPaymentModal({
           <Button
             variant="primary"
             pending={record.pending}
-            disabled={underOneCent || overBalance || (needsReference && !form.values.reference.trim())}
+            disabled={
+              underOneCent ||
+              overBalance ||
+              (needsReference && !form.values.reference.trim())
+            }
             onClick={() => void submit()}
           >
             Record payment
@@ -784,7 +876,9 @@ function RecordPaymentModal({
         >
           <Input
             value={form.values.reference}
-            placeholder={needsReference ? "Bank reference or cheque number" : "Optional"}
+            placeholder={
+              needsReference ? "Bank reference or cheque number" : "Optional"
+            }
             onChange={(event) => form.set("reference", event.target.value)}
           />
         </Field>
@@ -798,9 +892,10 @@ function RecordPaymentModal({
         </Field>
 
         <Notice tone="info">
-          <Badge tone="info">No status control</Badge> Recording this is the only thing that moves
-          the invoice to PARTIALLY_PAID or PAID. If it was recorded in error, void the payment at the
-          till rather than editing the bill.
+          <Badge tone="info">No status control</Badge> Recording this is the
+          only thing that moves the invoice to PARTIALLY_PAID or PAID. If it was
+          recorded in error, void the payment at the till rather than editing
+          the bill.
         </Notice>
       </form>
     </Modal>

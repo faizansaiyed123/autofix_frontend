@@ -7,7 +7,14 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, Toolbar } from "@/components/ui/Page";
 import { EmptyState, ErrorState, Loading } from "@/components/ui/States";
@@ -27,7 +34,8 @@ import { formatDate, formatNumber, titleCase } from "@/lib/format";
  */
 export default function InspectionsPage() {
   const router = useRouter();
-  const { customerLabel, userName, vehicleLabel, staff, vehicles, customers } = useReferences();
+  const { customerLabel, userName, vehicleLabel, staff, vehicles, customers } =
+    useReferences();
   const { can } = useSession();
   const [creating, setCreating] = useState(false);
   const [status, setStatus] = useState("");
@@ -51,19 +59,29 @@ export default function InspectionsPage() {
     {
       key: "vehicle",
       header: "Vehicle",
-      render: (i) => <span className="font-medium text-ink-800">{vehicleLabel(i.vehicle_id)}</span>,
+      render: (i) => (
+        <span className="font-medium text-ink-800">
+          {vehicleLabel(i.vehicle_id)}
+        </span>
+      ),
     },
     {
       key: "customer",
       header: "Customer",
-      render: (i) => <span className="text-sm text-ink-700">{customerLabel(i.customer_id)}</span>,
+      render: (i) => (
+        <span className="text-sm text-ink-700">
+          {customerLabel(i.customer_id)}
+        </span>
+      ),
     },
     {
       key: "technician",
       header: "Technician",
       render: (i) =>
         i.technician_id ? (
-          <span className="text-sm text-ink-700">{userName(i.technician_id)}</span>
+          <span className="text-sm text-ink-700">
+            {userName(i.technician_id)}
+          </span>
         ) : (
           <span className="text-ink-400">—</span>
         ),
@@ -83,9 +101,15 @@ export default function InspectionsPage() {
       key: "date",
       header: "Date",
       numeric: true,
-      render: (i) => <span className="text-xs text-ink-500">{formatDate(i.created_at)}</span>,
+      render: (i) => (
+        <span className="text-xs text-ink-500">{formatDate(i.created_at)}</span>
+      ),
     },
-    { key: "status", header: "Status", render: (i) => <StatusBadge status={i.status} /> },
+    {
+      key: "status",
+      header: "Status",
+      render: (i) => <StatusBadge status={i.status} />,
+    },
   ];
 
   return (
@@ -132,7 +156,9 @@ export default function InspectionsPage() {
             <option value="">Any vehicle</option>
             {vehicles.map((vehicle) => (
               <option key={vehicle.id} value={vehicle.id}>
-                {[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ")}
+                {[vehicle.year, vehicle.make, vehicle.model]
+                  .filter(Boolean)
+                  .join(" ")}
               </option>
             ))}
           </Select>
@@ -188,7 +214,9 @@ export default function InspectionsPage() {
           vehicles={vehicles}
           staff={staff}
           onClose={() => setCreating(false)}
-          onCreated={(inspection) => router.push(`/inspections/${inspection.id}`)}
+          onCreated={(inspection) =>
+            router.push(`/inspections/${inspection.id}`)
+          }
         />
       ) : null}
     </>
@@ -202,9 +230,25 @@ function NewInspectionModal({
   onClose,
   onCreated,
 }: {
-  customers: Array<{ id: string; first_name: string; last_name: string; company_name?: string | null }>;
-  vehicles: Array<{ id: string; customer_id: string; make: string; model: string; year: number | null }>;
-  staff: Array<{ id: string; first_name: string; last_name: string; roles?: string[] }>;
+  customers: Array<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    company_name?: string | null;
+  }>;
+  vehicles: Array<{
+    id: string;
+    customer_id: string;
+    make: string;
+    model: string;
+    year: number | null;
+  }>;
+  staff: Array<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    roles?: string[];
+  }>;
   onClose: () => void;
   onCreated: (inspection: Inspection) => void;
 }) {
@@ -215,12 +259,18 @@ function NewInspectionModal({
     mileage: "",
     overall_notes: "",
   });
-  const create = useApiMutation((body: InspectionCreate) => inspectionsApi.create(body));
-  const customerVehicles = vehicles.filter((vehicle) => vehicle.customer_id === form.values.customer_id);
+  const create = useApiMutation((body: InspectionCreate) =>
+    inspectionsApi.create(body),
+  );
+  const customerVehicles = vehicles.filter(
+    (vehicle) => vehicle.customer_id === form.values.customer_id,
+  );
 
   async function submit() {
     if (form.missing(["customer_id", "vehicle_id"]).length > 0) return;
-    const vehicle = customerVehicles.find((candidate) => candidate.id === form.values.vehicle_id);
+    const vehicle = customerVehicles.find(
+      (candidate) => candidate.id === form.values.vehicle_id,
+    );
     if (!vehicle) return;
     const created = await create.run({
       customer_id: form.values.customer_id,
@@ -245,7 +295,9 @@ function NewInspectionModal({
       width="max-w-2xl"
       footer={
         <>
-          <Button onClick={onClose} disabled={create.pending}>Cancel</Button>
+          <Button onClick={onClose} disabled={create.pending}>
+            Cancel
+          </Button>
           <Button
             variant="primary"
             pending={create.pending}
@@ -277,7 +329,8 @@ function NewInspectionModal({
             <option value="">Choose a customer</option>
             {customers.map((customer) => (
               <option key={customer.id} value={customer.id}>
-                {customer.first_name} {customer.last_name}{customer.company_name ? ` · ${customer.company_name}` : ""}
+                {customer.first_name} {customer.last_name}
+                {customer.company_name ? ` · ${customer.company_name}` : ""}
               </option>
             ))}
           </Select>
@@ -291,12 +344,16 @@ function NewInspectionModal({
             <option value="">Choose a vehicle</option>
             {customerVehicles.map((vehicle) => (
               <option key={vehicle.id} value={vehicle.id}>
-                {[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ")}
+                {[vehicle.year, vehicle.make, vehicle.model]
+                  .filter(Boolean)
+                  .join(" ")}
               </option>
             ))}
           </Select>
           {form.values.customer_id && customerVehicles.length === 0 ? (
-            <p className="mt-1 text-xs text-amber-700">This customer has no registered vehicles.</p>
+            <p className="mt-1 text-xs text-amber-700">
+              This customer has no registered vehicles.
+            </p>
           ) : null}
         </Field>
         <Field label="Technician">

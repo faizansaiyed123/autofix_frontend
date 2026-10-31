@@ -8,10 +8,22 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, KeyValue, KeyValueGrid } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { inspectionsApi } from "@/lib/api/shop";
 import type { Inspection, InspectionItem } from "@/lib/api/types";
@@ -29,7 +41,13 @@ import { formatDateTime, formatNumber, titleCase } from "@/lib/format";
  * RECOMMENDED; offering the array's spelling would be rejected on every save, so
  * the values the API accepts are listed here.
  */
-const ITEM_STATUSES = ["GOOD", "ATTENTION", "RECOMMENDED", "URGENT", "NOT_CHECKED"];
+const ITEM_STATUSES = [
+  "GOOD",
+  "ATTENTION",
+  "RECOMMENDED",
+  "URGENT",
+  "NOT_CHECKED",
+];
 
 /** `InspectionRecommendation`, a closed set the API validates against. */
 const RECOMMENDATIONS = [
@@ -84,20 +102,29 @@ export default function InspectionDetailPage() {
   const [draft, setDraft] = useState<ItemDraft | null>(null);
 
   const inspection = useApiQuery(() => inspectionsApi.get(id), [id]);
-  const setStatus = useApiMutation((status: string) => inspectionsApi.setStatus(id, status));
-  const addItem = useApiMutation((body: InspectionItem) => inspectionsApi.addItem(id, body));
-  const updateItem = useApiMutation(
-    (itemId: string, body: ItemDraft) => inspectionsApi.updateItem(id, itemId, body),
+  const setStatus = useApiMutation((status: string) =>
+    inspectionsApi.setStatus(id, status),
   );
-  const removeItem = useApiMutation((itemId: string) => inspectionsApi.removeItem(id, itemId));
+  const addItem = useApiMutation((body: InspectionItem) =>
+    inspectionsApi.addItem(id, body),
+  );
+  const updateItem = useApiMutation((itemId: string, body: ItemDraft) =>
+    inspectionsApi.updateItem(id, itemId, body),
+  );
+  const removeItem = useApiMutation((itemId: string) =>
+    inspectionsApi.removeItem(id, itemId),
+  );
 
-  if (inspection.loading && inspection.initial) return <Loading label="Opening the inspection…" />;
-  if (inspection.error) return <ErrorState error={inspection.error} onRetry={inspection.refetch} />;
+  if (inspection.loading && inspection.initial)
+    return <Loading label="Opening the inspection…" />;
+  if (inspection.error)
+    return <ErrorState error={inspection.error} onRetry={inspection.refetch} />;
 
   const record = inspection.data;
   if (!record) return <ErrorState error={new Error("Inspection not found")} />;
 
-  const writable = can("inspections:write") && !FROZEN_STATUSES.has(record.status);
+  const writable =
+    can("inspections:write") && !FROZEN_STATUSES.has(record.status);
   const allowed = INSPECTION_TRANSITIONS[record.status] ?? [];
 
   function refresh() {
@@ -118,7 +145,11 @@ export default function InspectionDetailPage() {
   return (
     <>
       <PageHeader
-        breadcrumb={<Link href="/inspections" className="hover:underline">Inspections</Link>}
+        breadcrumb={
+          <Link href="/inspections" className="hover:underline">
+            Inspections
+          </Link>
+        }
         title={vehicleLabel(record.vehicle_id)}
         subtitle={`${formatNumber(record.items.length)} item(s) · inspected ${formatDateTime(record.created_at)}`}
         actions={
@@ -126,7 +157,11 @@ export default function InspectionDetailPage() {
             <StatusBadge status={record.status} />
             <StatusBadge status={record.overall_condition} />
             {can("inspections:write") ? (
-              <Button variant="primary" onClick={() => setAdding(true)} disabled={!writable}>
+              <Button
+                variant="primary"
+                onClick={() => setAdding(true)}
+                disabled={!writable}
+              >
                 Add item
               </Button>
             ) : null}
@@ -138,40 +173,55 @@ export default function InspectionDetailPage() {
         <Card className="lg:col-span-2">
           <CardHeader title="Inspection" subtitle="Who, what and how far" />
           <KeyValueGrid>
-            <KeyValue label="Vehicle">{vehicleLabel(record.vehicle_id)}</KeyValue>
-            <KeyValue label="Customer">{customerLabel(record.customer_id)}</KeyValue>
+            <KeyValue label="Vehicle">
+              {vehicleLabel(record.vehicle_id)}
+            </KeyValue>
+            <KeyValue label="Customer">
+              {customerLabel(record.customer_id)}
+            </KeyValue>
             <KeyValue label="Technician">
               {record.technician_id ? userName(record.technician_id) : "—"}
             </KeyValue>
-            <KeyValue label="Mileage">{formatNumber(record.mileage)} mi</KeyValue>
+            <KeyValue label="Mileage">
+              {formatNumber(record.mileage)} mi
+            </KeyValue>
             <KeyValue label="Condition">
               <StatusBadge status={record.overall_condition} />
             </KeyValue>
-            <KeyValue label="From a check-in">{record.checkin_id ? "Yes" : "No"}</KeyValue>
+            <KeyValue label="From a check-in">
+              {record.checkin_id ? "Yes" : "No"}
+            </KeyValue>
           </KeyValueGrid>
           {record.overall_notes ? (
             <div className="mt-4 border-t border-ink-100 pt-3">
               <p className="text-xs font-medium tracking-wide text-ink-500 uppercase">
                 Overall notes
               </p>
-              <p className="mt-0.5 text-sm whitespace-pre-line text-ink-700">{record.overall_notes}</p>
+              <p className="mt-0.5 text-sm whitespace-pre-line text-ink-700">
+                {record.overall_notes}
+              </p>
             </div>
           ) : null}
         </Card>
 
         <Card>
-          <CardHeader title="Progress" subtitle="What this inspection may do next" />
+          <CardHeader
+            title="Progress"
+            subtitle="What this inspection may do next"
+          />
           {can("inspections:write") ? (
             <>
               {allowed.length === 0 ? (
                 <Notice tone="info">
-                  {record.status} is final. The API refuses any further transition.
+                  {record.status} is final. The API refuses any further
+                  transition.
                 </Notice>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {INSPECTION_STATUSES.map((option) => {
                     const reachable = allowed.includes(option);
-                    const blocked = option === "COMPLETED" && record.items.length === 0;
+                    const blocked =
+                      option === "COMPLETED" && record.items.length === 0;
                     return (
                       <Button
                         key={option}
@@ -200,24 +250,29 @@ export default function InspectionDetailPage() {
               )}
               {record.items.length === 0 ? (
                 <p className="mt-3 text-xs text-ink-500">
-                  Record at least one item before completing — the API refuses an empty inspection.
+                  Record at least one item before completing — the API refuses
+                  an empty inspection.
                 </p>
               ) : null}
               {setStatus.error ? (
                 <div className="mt-3">
-                  <Notice tone="danger">{setStatus.error.messageForUser}</Notice>
+                  <Notice tone="danger">
+                    {setStatus.error.messageForUser}
+                  </Notice>
                 </div>
               ) : null}
             </>
           ) : (
-            <Notice tone="info">You do not have permission to change this inspection.</Notice>
+            <Notice tone="info">
+              You do not have permission to change this inspection.
+            </Notice>
           )}
 
           {!writable && can("inspections:write") ? (
             <div className="mt-3">
               <Notice tone="info">
-                This inspection is {record.status}. Its items are frozen — the API refuses any
-                change once an inspection reaches a final state.
+                This inspection is {record.status}. Its items are frozen — the
+                API refuses any change once an inspection reaches a final state.
               </Notice>
             </div>
           ) : null}
@@ -248,7 +303,8 @@ export default function InspectionDetailPage() {
         }}
         onDelete={(item) => {
           if (!item.id) return;
-          if (!confirm(`Remove "${item.item_name}" from this inspection?`)) return;
+          if (!confirm(`Remove "${item.item_name}" from this inspection?`))
+            return;
           void removeItem.run(item.id).then(() => {
             refresh();
           });
@@ -389,12 +445,16 @@ function itemColumns({
       key: "status",
       header: "Status",
       render: (item) => {
-        if (!writable || item.id !== editingItemId) return <StatusBadge status={item.status} />;
+        if (!writable || item.id !== editingItemId)
+          return <StatusBadge status={item.status} />;
         return (
           <Select
             value={draft?.status ?? item.status}
             onChange={(event) =>
-              setDraft({ ...(draft ?? EMPTY_DRAFT), status: event.target.value })
+              setDraft({
+                ...(draft ?? EMPTY_DRAFT),
+                status: event.target.value,
+              })
             }
             className="min-w-36"
             aria-label="Item status"
@@ -413,14 +473,23 @@ function itemColumns({
       header: "Measurement",
       render: (item) => {
         if (!writable || item.id !== editingItemId) {
-          return <span className="text-sm text-ink-700">{item.measurement ?? "—"}</span>;
+          return (
+            <span className="text-sm text-ink-700">
+              {item.measurement ?? "—"}
+            </span>
+          );
         }
         return (
           <Input
             className="min-w-32"
             maxLength={100}
             value={draft?.measurement ?? ""}
-            onChange={(event) => setDraft({ ...(draft ?? EMPTY_DRAFT), measurement: event.target.value })}
+            onChange={(event) =>
+              setDraft({
+                ...(draft ?? EMPTY_DRAFT),
+                measurement: event.target.value,
+              })
+            }
           />
         );
       },
@@ -430,13 +499,20 @@ function itemColumns({
       header: "Recommendation",
       render: (item) => {
         if (!writable || item.id !== editingItemId) {
-          return <span className="text-sm text-ink-700">{item.recommendation ?? "—"}</span>;
+          return (
+            <span className="text-sm text-ink-700">
+              {item.recommendation ?? "—"}
+            </span>
+          );
         }
         return (
           <Select
             value={draft?.recommendation ?? ""}
             onChange={(event) =>
-              setDraft({ ...(draft ?? EMPTY_DRAFT), recommendation: event.target.value })
+              setDraft({
+                ...(draft ?? EMPTY_DRAFT),
+                recommendation: event.target.value,
+              })
             }
             className="min-w-40"
             aria-label="Recommendation"
@@ -456,14 +532,18 @@ function itemColumns({
       header: "Notes",
       render: (item) => {
         if (!writable || item.id !== editingItemId) {
-          return <span className="text-sm text-ink-700">{item.notes ?? "—"}</span>;
+          return (
+            <span className="text-sm text-ink-700">{item.notes ?? "—"}</span>
+          );
         }
         return (
           <Textarea
             rows={1}
             maxLength={2000}
             value={draft?.notes ?? ""}
-            onChange={(event) => setDraft({ ...(draft ?? EMPTY_DRAFT), notes: event.target.value })}
+            onChange={(event) =>
+              setDraft({ ...(draft ?? EMPTY_DRAFT), notes: event.target.value })
+            }
           />
         );
       },
@@ -505,7 +585,12 @@ function itemColumns({
             >
               Cancel
             </button>
-            <Button size="sm" variant="primary" pending={pending} onClick={() => onSave(itemId)}>
+            <Button
+              size="sm"
+              variant="primary"
+              pending={pending}
+              onClick={() => onSave(itemId)}
+            >
               Save
             </Button>
           </div>
@@ -515,7 +600,9 @@ function itemColumns({
   ];
 }
 
-function groupByCategory(items: InspectionItem[]): { category: string; items: InspectionItem[] }[] {
+function groupByCategory(
+  items: InspectionItem[],
+): { category: string; items: InspectionItem[] }[] {
   const buckets = new Map<string, InspectionItem[]>();
   const order: string[] = [];
 
@@ -529,8 +616,12 @@ function groupByCategory(items: InspectionItem[]): { category: string; items: In
 
   // Categories the shop's own list knows come first, in their documented order;
   // anything else the shop typed itself follows rather than disappearing.
-  const known = INSPECTION_CATEGORIES.filter((category) => buckets.has(category));
-  const custom = order.filter((category) => !INSPECTION_CATEGORIES.includes(category));
+  const known = INSPECTION_CATEGORIES.filter((category) =>
+    buckets.has(category),
+  );
+  const custom = order.filter(
+    (category) => !INSPECTION_CATEGORIES.includes(category),
+  );
 
   return [...known, ...custom].map((category) => ({
     category,
@@ -596,7 +687,11 @@ function AddItemModal({
           <Button onClick={onClose} disabled={pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={pending}
+            onClick={() => void submit()}
+          >
             Add item
           </Button>
         </>
@@ -611,7 +706,11 @@ function AddItemModal({
       >
         <FormError error={error} />
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Category" required hint="Drives the grouping in the customer report">
+          <Field
+            label="Category"
+            required
+            hint="Drives the grouping in the customer report"
+          >
             <Select
               value={form.values.category}
               onChange={(event) => form.set("category", event.target.value)}
@@ -653,10 +752,15 @@ function AddItemModal({
               placeholder="4 mm"
             />
           </Field>
-          <Field label="Recommendation" hint="Optional — the API only accepts these values">
+          <Field
+            label="Recommendation"
+            hint="Optional — the API only accepts these values"
+          >
             <Select
               value={form.values.recommendation}
-              onChange={(event) => form.set("recommendation", event.target.value)}
+              onChange={(event) =>
+                form.set("recommendation", event.target.value)
+              }
             >
               <option value="">None</option>
               {RECOMMENDATIONS.map((option) => (
@@ -687,7 +791,9 @@ function AddItemModal({
             <Input
               maxLength={200}
               value={form.values.photo_caption}
-              onChange={(event) => form.set("photo_caption", event.target.value)}
+              onChange={(event) =>
+                form.set("photo_caption", event.target.value)
+              }
             />
           </Field>
         </div>

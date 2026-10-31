@@ -8,10 +8,21 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { inspectionsApi } from "@/lib/api/shop";
 import { estimatesApi } from "@/lib/api/work";
@@ -20,7 +31,12 @@ import { useApiMutation } from "@/lib/hooks/useApiMutation";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { useSession } from "@/lib/auth/AuthProvider";
 import { ESTIMATE_STATUSES } from "@/lib/status";
-import { formatDate, formatDateTime, formatMoney, formatPercent } from "@/lib/format";
+import {
+  formatDate,
+  formatDateTime,
+  formatMoney,
+  formatPercent,
+} from "@/lib/format";
 
 /** Estimate list showing proposed totals separately from amounts the customer approved. */
 export default function EstimatesPage() {
@@ -50,7 +66,10 @@ export default function EstimatesPage() {
       key: "number",
       header: "Estimate",
       render: (e) => (
-        <Link href={`/estimates/${e.id}`} className="font-medium text-brand-700 hover:underline">
+        <Link
+          href={`/estimates/${e.id}`}
+          className="font-medium text-brand-700 hover:underline"
+        >
           {e.estimate_number}
         </Link>
       ),
@@ -58,12 +77,16 @@ export default function EstimatesPage() {
     {
       key: "customer",
       header: "Customer",
-      render: (e) => <span className="text-sm">{customerLabel(e.customer_id)}</span>,
+      render: (e) => (
+        <span className="text-sm">{customerLabel(e.customer_id)}</span>
+      ),
     },
     {
       key: "vehicle",
       header: "Vehicle",
-      render: (e) => <span className="text-sm">{vehicleLabel(e.vehicle_id)}</span>,
+      render: (e) => (
+        <span className="text-sm">{vehicleLabel(e.vehicle_id)}</span>
+      ),
     },
     {
       key: "status",
@@ -79,14 +102,18 @@ export default function EstimatesPage() {
       key: "total",
       header: "Total",
       numeric: true,
-      render: (e) => <span className="font-medium">{formatMoney(e.total)}</span>,
+      render: (e) => (
+        <span className="font-medium">{formatMoney(e.total)}</span>
+      ),
     },
     {
       key: "approved",
       header: "Approved",
       numeric: true,
       render: (e) => (
-        <span className={e.approved_total > 0 ? "text-emerald-700" : "text-ink-400"}>
+        <span
+          className={e.approved_total > 0 ? "text-emerald-700" : "text-ink-400"}
+        >
           {formatMoney(e.approved_total)}
         </span>
       ),
@@ -96,7 +123,11 @@ export default function EstimatesPage() {
       header: "Valid until",
       numeric: true,
       render: (e) => (
-        <span className={e.is_expired ? "text-xs font-medium text-rose-700" : "text-xs"}>
+        <span
+          className={
+            e.is_expired ? "text-xs font-medium text-rose-700" : "text-xs"
+          }
+        >
           {formatDate(e.valid_until)}
         </span>
       ),
@@ -105,7 +136,11 @@ export default function EstimatesPage() {
       key: "sent_at",
       header: "Sent",
       numeric: true,
-      render: (e) => <span className="text-xs text-ink-500">{formatDateTime(e.sent_at)}</span>,
+      render: (e) => (
+        <span className="text-xs text-ink-500">
+          {formatDateTime(e.sent_at)}
+        </span>
+      ),
     },
   ];
 
@@ -176,7 +211,11 @@ export default function EstimatesPage() {
           />
         ) : (
           <>
-            <DataTable rows={query.data.data} columns={columns} rowKey={(e) => e.id} />
+            <DataTable
+              rows={query.data.data}
+              columns={columns}
+              rowKey={(e) => e.id}
+            />
             <Pagination
               page={query.data.meta.page}
               pages={query.data.meta.pages}
@@ -211,7 +250,11 @@ function CustomerFilter({
   return (
     <label className="block">
       <span className="sr-only">Customer</span>
-      <Select value={value} onChange={(event) => onChange(event.target.value)} className="w-56">
+      <Select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-56"
+      >
         <option value="">Any customer</option>
         {customers.map((customer) => (
           <option key={customer.id} value={customer.id}>
@@ -236,11 +279,17 @@ function VehicleFilter({
   return (
     <label className="block">
       <span className="sr-only">Vehicle</span>
-      <Select value={value} onChange={(event) => onChange(event.target.value)} className="w-56">
+      <Select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-56"
+      >
         <option value="">Any vehicle</option>
         {vehiclesFor(customerId).map((vehicle) => (
           <option key={vehicle.id} value={vehicle.id}>
-            {[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ")}
+            {[vehicle.year, vehicle.make, vehicle.model]
+              .filter(Boolean)
+              .join(" ")}
           </option>
         ))}
       </Select>
@@ -317,12 +366,16 @@ function previewLineTotal(draft: LineDraft): number {
 function lineProblem(draft: LineDraft): string | null {
   if (!draft.description.trim()) return "every line needs a description";
   if (draft.item_type === "LABOR") {
-    if (toNumber(draft.labor_hours) <= 0) return `"${draft.description}" needs labour hours above zero`;
-    if (toNumber(draft.labor_rate) <= 0) return `"${draft.description}" needs an hourly rate above zero`;
+    if (toNumber(draft.labor_hours) <= 0)
+      return `"${draft.description}" needs labour hours above zero`;
+    if (toNumber(draft.labor_rate) <= 0)
+      return `"${draft.description}" needs an hourly rate above zero`;
     return null;
   }
-  if (toNumber(draft.quantity) <= 0) return `"${draft.description}" needs a quantity above zero`;
-  if (toNumber(draft.unit_price) <= 0) return `"${draft.description}" needs a unit price above zero`;
+  if (toNumber(draft.quantity) <= 0)
+    return `"${draft.description}" needs a quantity above zero`;
+  if (toNumber(draft.unit_price) <= 0)
+    return `"${draft.description}" needs a unit price above zero`;
   return null;
 }
 
@@ -363,7 +416,9 @@ function LineEditor({
   onChange: (next: LineDraft[]) => void;
 }) {
   function patch(key: string, values: Partial<LineDraft>) {
-    onChange(lines.map((line) => (line.key === key ? { ...line, ...values } : line)));
+    onChange(
+      lines.map((line) => (line.key === key ? { ...line, ...values } : line)),
+    );
   }
 
   return (
@@ -371,13 +426,15 @@ function LineEditor({
       <p className="text-xs font-medium tracking-wide text-ink-600 uppercase">
         Lines
         <span className="ml-2 font-normal text-ink-500 normal-case">
-          Labour bills hours x rate; parts, fees and services bill quantity x unit price.
+          Labour bills hours x rate; parts, fees and services bill quantity x
+          unit price.
         </span>
       </p>
 
       {lines.length === 0 ? (
         <p className="rounded-lg bg-ink-50 px-3 py-4 text-center text-sm text-ink-500">
-          No lines yet. An estimate cannot be sent to the customer until it has at least one.
+          No lines yet. An estimate cannot be sent to the customer until it has
+          at least one.
         </p>
       ) : null}
 
@@ -386,13 +443,17 @@ function LineEditor({
         return (
           <div key={line.key} className="rounded-lg border border-ink-200 p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold text-ink-700">Line {index + 1}</p>
+              <p className="text-xs font-semibold text-ink-700">
+                Line {index + 1}
+              </p>
               <div className="flex items-center gap-2">
                 <label className="flex items-center gap-1.5 text-xs text-ink-600">
                   <input
                     type="checkbox"
                     checked={line.is_optional}
-                    onChange={(event) => patch(line.key, { is_optional: event.target.checked })}
+                    onChange={(event) =>
+                      patch(line.key, { is_optional: event.target.checked })
+                    }
                     className="size-3.5 rounded border-ink-300"
                   />
                   Optional
@@ -400,7 +461,9 @@ function LineEditor({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => onChange(lines.filter((l) => l.key !== line.key))}
+                  onClick={() =>
+                    onChange(lines.filter((l) => l.key !== line.key))
+                  }
                 >
                   Remove
                 </Button>
@@ -411,7 +474,9 @@ function LineEditor({
               <Field label="Type">
                 <Select
                   value={line.item_type}
-                  onChange={(event) => patch(line.key, { item_type: event.target.value })}
+                  onChange={(event) =>
+                    patch(line.key, { item_type: event.target.value })
+                  }
                 >
                   {ITEM_TYPES.map((type) => (
                     <option key={type.value} value={type.value}>
@@ -423,7 +488,9 @@ function LineEditor({
               <Field label="Description" required>
                 <Input
                   value={line.description}
-                  onChange={(event) => patch(line.key, { description: event.target.value })}
+                  onChange={(event) =>
+                    patch(line.key, { description: event.target.value })
+                  }
                 />
               </Field>
             </div>
@@ -436,7 +503,9 @@ function LineEditor({
                     min="0"
                     step="0.1"
                     value={line.labor_hours}
-                    onChange={(event) => patch(line.key, { labor_hours: event.target.value })}
+                    onChange={(event) =>
+                      patch(line.key, { labor_hours: event.target.value })
+                    }
                   />
                 </Field>
                 <Field label="Hourly rate" required>
@@ -445,7 +514,9 @@ function LineEditor({
                     min="0"
                     step="0.01"
                     value={line.labor_rate}
-                    onChange={(event) => patch(line.key, { labor_rate: event.target.value })}
+                    onChange={(event) =>
+                      patch(line.key, { labor_rate: event.target.value })
+                    }
                   />
                 </Field>
                 <Field label="Line preview">
@@ -459,13 +530,17 @@ function LineEditor({
                 <Field label="Part number">
                   <Input
                     value={line.part_number}
-                    onChange={(event) => patch(line.key, { part_number: event.target.value })}
+                    onChange={(event) =>
+                      patch(line.key, { part_number: event.target.value })
+                    }
                   />
                 </Field>
                 <Field label="Part name">
                   <Input
                     value={line.part_name}
-                    onChange={(event) => patch(line.key, { part_name: event.target.value })}
+                    onChange={(event) =>
+                      patch(line.key, { part_name: event.target.value })
+                    }
                   />
                 </Field>
                 <Field label="Quantity" required>
@@ -474,7 +549,9 @@ function LineEditor({
                     min="0"
                     step="0.01"
                     value={line.quantity}
-                    onChange={(event) => patch(line.key, { quantity: event.target.value })}
+                    onChange={(event) =>
+                      patch(line.key, { quantity: event.target.value })
+                    }
                   />
                 </Field>
                 <Field label="Unit price" required>
@@ -483,7 +560,9 @@ function LineEditor({
                     min="0"
                     step="0.01"
                     value={line.unit_price}
-                    onChange={(event) => patch(line.key, { unit_price: event.target.value })}
+                    onChange={(event) =>
+                      patch(line.key, { unit_price: event.target.value })
+                    }
                   />
                 </Field>
               </div>
@@ -496,7 +575,9 @@ function LineEditor({
                   min="0"
                   step="0.01"
                   value={line.discount_amount}
-                  onChange={(event) => patch(line.key, { discount_amount: event.target.value })}
+                  onChange={(event) =>
+                    patch(line.key, { discount_amount: event.target.value })
+                  }
                 />
               </Field>
               <Field label="Line preview" className="sm:col-span-2">
@@ -513,7 +594,9 @@ function LineEditor({
               <Textarea
                 rows={2}
                 value={line.notes}
-                onChange={(event) => patch(line.key, { notes: event.target.value })}
+                onChange={(event) =>
+                  patch(line.key, { notes: event.target.value })
+                }
               />
             </Field>
 
@@ -524,7 +607,9 @@ function LineEditor({
         );
       })}
 
-      <Button onClick={() => onChange([...lines, blankLine()])}>Add line</Button>
+      <Button onClick={() => onChange([...lines, blankLine()])}>
+        Add line
+      </Button>
     </div>
   );
 }
@@ -559,8 +644,9 @@ function NewEstimateModal({
     { enabled: Boolean(vehicleId) && open },
   );
 
-  const create = useApiMutation((body: Parameters<typeof estimatesApi.create>[0]) =>
-    estimatesApi.create(body),
+  const create = useApiMutation(
+    (body: Parameters<typeof estimatesApi.create>[0]) =>
+      estimatesApi.create(body),
   );
 
   const vehicles = customerId ? vehiclesFor(customerId) : [];
@@ -609,7 +695,11 @@ function NewEstimateModal({
           <Button onClick={onClose} disabled={create.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={create.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={create.pending}
+            onClick={() => void submit()}
+          >
             Create draft
           </Button>
         </>
@@ -655,7 +745,11 @@ function NewEstimateModal({
           <Field
             label="Vehicle"
             required
-            hint={customerId ? undefined : "Pick a customer first — the backend refuses a vehicle that is not theirs."}
+            hint={
+              customerId
+                ? undefined
+                : "Pick a customer first — the backend refuses a vehicle that is not theirs."
+            }
           >
             <Select
               value={vehicleId}
@@ -678,21 +772,37 @@ function NewEstimateModal({
         <div className="grid gap-3 sm:grid-cols-3">
           <Field
             label="Inspection"
-            hint={vehicleId ? "Optional — what the estimate came out of" : undefined}
+            hint={
+              vehicleId ? "Optional — what the estimate came out of" : undefined
+            }
           >
-            <Select value={inspectionId} onChange={(event) => setInspectionId(event.target.value)}>
+            <Select
+              value={inspectionId}
+              onChange={(event) => setInspectionId(event.target.value)}
+            >
               <option value="">None</option>
               {(inspections.data ?? []).map((inspection) => (
                 <option key={inspection.id} value={inspection.id}>
-                  {formatDate(inspection.created_at)} — {inspection.overall_condition}
+                  {formatDate(inspection.created_at)} —{" "}
+                  {inspection.overall_condition}
                 </option>
               ))}
             </Select>
           </Field>
-          <Field label="Valid until" hint="After this date the estimate expires">
-            <Input type="date" value={validUntil} onChange={(event) => setValidUntil(event.target.value)} />
+          <Field
+            label="Valid until"
+            hint="After this date the estimate expires"
+          >
+            <Input
+              type="date"
+              value={validUntil}
+              onChange={(event) => setValidUntil(event.target.value)}
+            />
           </Field>
-          <Field label="Tax rate" hint={`A rate from 0 to 1 — ${formatPercent(0.08, 0)} for eight per cent`}>
+          <Field
+            label="Tax rate"
+            hint={`A rate from 0 to 1 — ${formatPercent(0.08, 0)} for eight per cent`}
+          >
             <Input
               type="number"
               min="0"
@@ -705,7 +815,11 @@ function NewEstimateModal({
         </div>
 
         <Field label="Notes">
-          <Textarea rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} />
+          <Textarea
+            rows={2}
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+          />
         </Field>
 
         <LineEditor lines={lines} onChange={setLines} />

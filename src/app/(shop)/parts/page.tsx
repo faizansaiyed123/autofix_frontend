@@ -6,10 +6,22 @@ import { Badge, StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, KeyValue } from "@/components/ui/Card";
 import { DataTable, Pagination, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader, SearchInput, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { inventoryApi, partsApi } from "@/lib/api/stock";
 import type { InventoryTransaction, Part, PartCreate } from "@/lib/api/types";
 import { useApiMutation } from "@/lib/hooks/useApiMutation";
@@ -68,17 +80,23 @@ export default function PartsPage() {
     {
       key: "category",
       header: "Category",
-      render: (p) => <span className="text-xs text-ink-600">{titleCase(p.category)}</span>,
+      render: (p) => (
+        <span className="text-xs text-ink-600">{titleCase(p.category)}</span>
+      ),
     },
     {
       key: "brand",
       header: "Brand",
-      render: (p) => <span className="text-xs text-ink-600">{p.brand ?? "—"}</span>,
+      render: (p) => (
+        <span className="text-xs text-ink-600">{p.brand ?? "—"}</span>
+      ),
     },
     {
       key: "location",
       header: "Location",
-      render: (p) => <span className="text-xs text-ink-600">{p.location ?? "—"}</span>,
+      render: (p) => (
+        <span className="text-xs text-ink-600">{p.location ?? "—"}</span>
+      ),
     },
     {
       key: "on_hand",
@@ -101,14 +119,18 @@ export default function PartsPage() {
       key: "reorder_level",
       header: "Reorder at",
       numeric: true,
-      render: (p) => <span className="text-ink-600">{qty(p.reorder_level)}</span>,
+      render: (p) => (
+        <span className="text-ink-600">{qty(p.reorder_level)}</span>
+      ),
     },
     {
       key: "unit_cost",
       header: "Cost",
       numeric: true,
       headerClassName: "text-ink-700",
-      render: (p) => <span className="text-ink-700">{formatMoney(p.unit_cost)}</span>,
+      render: (p) => (
+        <span className="text-ink-700">{formatMoney(p.unit_cost)}</span>
+      ),
     },
     {
       key: "unit_price",
@@ -132,7 +154,11 @@ export default function PartsPage() {
     <>
       <PageHeader
         title="Parts"
-        subtitle={query.data ? `${query.data.meta.total} in the catalog` : "The parts catalog"}
+        subtitle={
+          query.data
+            ? `${query.data.meta.total} in the catalog`
+            : "The parts catalog"
+        }
         actions={
           can("parts:write") ? (
             <Button variant="primary" onClick={() => setCreating(true)}>
@@ -143,9 +169,10 @@ export default function PartsPage() {
       />
 
       <Notice tone="info">
-        Cost and margin are staff figures: the parts desk needs them to price anything, and the
-        customer-facing portal is a separate module that never carries what the shop paid. Nothing on
-        this screen is ever shown to a customer.
+        Cost and margin are staff figures: the parts desk needs them to price
+        anything, and the customer-facing portal is a separate module that never
+        carries what the shop paid. Nothing on this screen is ever shown to a
+        customer.
       </Notice>
 
       <Card className="mt-4" padded={false}>
@@ -210,7 +237,11 @@ export default function PartsPage() {
           </div>
         ) : !query.data || query.data.data.length === 0 ? (
           <EmptyState
-            title={lowStock ? "Nothing is below its reorder level" : "No parts match that"}
+            title={
+              lowStock
+                ? "Nothing is below its reorder level"
+                : "No parts match that"
+            }
             description="A new catalog line starts with no stock; it is stocked in with a RECEIPT on the inventory ledger."
           />
         ) : (
@@ -278,7 +309,11 @@ const HISTORY_COLUMNS: Column<InventoryTransaction>[] = [
     key: "when",
     header: "When",
     numeric: true,
-    render: (m) => <span className="text-xs text-ink-600">{formatDateTime(m.created_at)}</span>,
+    render: (m) => (
+      <span className="text-xs text-ink-600">
+        {formatDateTime(m.created_at)}
+      </span>
+    ),
   },
   {
     key: "type",
@@ -308,12 +343,16 @@ const HISTORY_COLUMNS: Column<InventoryTransaction>[] = [
   {
     key: "reference",
     header: "Reference",
-    render: (m) => <span className="text-xs text-ink-600">{m.reference ?? "—"}</span>,
+    render: (m) => (
+      <span className="text-xs text-ink-600">{m.reference ?? "—"}</span>
+    ),
   },
   {
     key: "reason",
     header: "Reason",
-    render: (m) => <span className="text-xs text-ink-500">{m.reason ?? "—"}</span>,
+    render: (m) => (
+      <span className="text-xs text-ink-500">{m.reason ?? "—"}</span>
+    ),
   },
 ];
 
@@ -373,7 +412,11 @@ function NewPartModal({
           <Button onClick={onClose} disabled={create.pending}>
             Cancel
           </Button>
-          <Button variant="primary" pending={create.pending} onClick={() => void submit()}>
+          <Button
+            variant="primary"
+            pending={create.pending}
+            onClick={() => void submit()}
+          >
             Add to catalog
           </Button>
         </>
@@ -389,7 +432,11 @@ function NewPartModal({
         <FormError error={create.error} />
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Part number" required hint="The manufacturer's number, e.g. BOS0986A.">
+          <Field
+            label="Part number"
+            required
+            hint="The manufacturer's number, e.g. BOS0986A."
+          >
             <Input
               value={form.values.part_number}
               onChange={(event) => form.set("part_number", event.target.value)}
@@ -462,7 +509,9 @@ function NewPartModal({
               step="0.01"
               min="0"
               value={form.values.reorder_level}
-              onChange={(event) => form.set("reorder_level", event.target.value)}
+              onChange={(event) =>
+                form.set("reorder_level", event.target.value)
+              }
             />
           </Field>
         </div>
@@ -563,8 +612,9 @@ function PartEditor({
   });
   const [status, setStatus] = useState<string>(part.status);
 
-  const update = useApiMutation((body: Partial<PartCreate> & { status?: string }) =>
-    partsApi.update(part.id, body),
+  const update = useApiMutation(
+    (body: Partial<PartCreate> & { status?: string }) =>
+      partsApi.update(part.id, body),
   );
   const remove = useApiMutation(() => partsApi.remove(part.id));
 
@@ -598,13 +648,17 @@ function PartEditor({
     <div className="space-y-4">
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
         <KeyValue label="On hand">
-          <span className={part.is_low_stock ? "font-semibold text-amber-700" : ""}>
+          <span
+            className={part.is_low_stock ? "font-semibold text-amber-700" : ""}
+          >
             {qty(part.quantity_on_hand)}{" "}
             <span className="text-xs text-ink-500">{part.stock_status}</span>
           </span>
         </KeyValue>
         <KeyValue label="Reorder at">{qty(part.reorder_level)}</KeyValue>
-        <KeyValue label="Stock at cost">{formatMoney(part.stock_value)}</KeyValue>
+        <KeyValue label="Stock at cost">
+          {formatMoney(part.stock_value)}
+        </KeyValue>
         <KeyValue label="Margin">{formatMoney(part.margin)}</KeyValue>
       </dl>
 
@@ -656,7 +710,10 @@ function PartEditor({
               onChange={(event) => form.set("location", event.target.value)}
             />
           </Field>
-          <Field label="Trading status" hint="Discontinued keeps the number resolvable.">
+          <Field
+            label="Trading status"
+            hint="Discontinued keeps the number resolvable."
+          >
             <Select
               value={status}
               disabled={!canWrite}
@@ -696,7 +753,9 @@ function PartEditor({
               min="0"
               value={form.values.reorder_level}
               disabled={!canWrite}
-              onChange={(event) => form.set("reorder_level", event.target.value)}
+              onChange={(event) =>
+                form.set("reorder_level", event.target.value)
+              }
             />
           </Field>
         </div>
@@ -711,9 +770,10 @@ function PartEditor({
         </Field>
 
         <Notice tone="info">
-          The part number and SKU are fixed: renumbering a line would orphan the history already
-          filed against the old number. On hand is not editable here either — it is the balance of
-          the ledger and moves only through a stock movement.
+          The part number and SKU are fixed: renumbering a line would orphan the
+          history already filed against the old number. On hand is not editable
+          here either — it is the balance of the ledger and moves only through a
+          stock movement.
         </Notice>
 
         {canWrite ? (
@@ -722,7 +782,11 @@ function PartEditor({
               Save changes
             </Button>
             {blockedBy ? null : (
-              <Button variant="danger" pending={remove.pending} onClick={() => void deletePart()}>
+              <Button
+                variant="danger"
+                pending={remove.pending}
+                onClick={() => void deletePart()}
+              >
                 Delete line
               </Button>
             )}
@@ -736,14 +800,18 @@ function PartEditor({
         </Notice>
       ) : (
         <Notice tone="info">
-          This line has never moved and is retired with nothing on the shelf, so it can be deleted
-          outright. Any part that has moved is discontinued instead, which keeps its number resolvable
-          on every document that quoted it.
+          This line has never moved and is retired with nothing on the shelf, so
+          it can be deleted outright. Any part that has moved is discontinued
+          instead, which keeps its number resolvable on every document that
+          quoted it.
         </Notice>
       )}
 
       <div>
-        <CardHeader title="Ledger history" subtitle="Every movement of this part, newest first" />
+        <CardHeader
+          title="Ledger history"
+          subtitle="Every movement of this part, newest first"
+        />
         {historyLoading ? (
           <Loading />
         ) : historyError ? (
@@ -754,7 +822,12 @@ function PartEditor({
             description="The opening balance has not been booked in yet — record a RECEIPT on the inventory ledger."
           />
         ) : (
-          <DataTable rows={movements} columns={HISTORY_COLUMNS} rowKey={(m) => m.id} dense />
+          <DataTable
+            rows={movements}
+            columns={HISTORY_COLUMNS}
+            rowKey={(m) => m.id}
+            dense
+          />
         )}
       </div>
     </div>
@@ -766,7 +839,8 @@ function deleteBlockedReason(
   movements: InventoryTransaction[],
   allowed: boolean,
 ): string | null {
-  if (!allowed) return "Deleting a catalog line is held on a permission above parts:write.";
+  if (!allowed)
+    return "Deleting a catalog line is held on a permission above parts:write.";
   if (part.status !== "DISCONTINUED")
     return `It is ${part.status}; retire it (DISCONTINUED) before it can be deleted.`;
   if (part.quantity_on_hand !== 0)

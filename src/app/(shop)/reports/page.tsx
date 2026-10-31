@@ -9,7 +9,12 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, Input } from "@/components/ui/Form";
 import { PageHeader, StatTile } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { reportsApi } from "@/lib/api/insight";
 import type {
   CustomerRetentionReport,
@@ -46,7 +51,8 @@ const TABS = [
     key: "technicians",
     label: "Technicians",
     permission: "reports:analytics",
-    restrictedTo: "Owner only — reports:analytics is deliberately not given to a service advisor",
+    restrictedTo:
+      "Owner only — reports:analytics is deliberately not given to a service advisor",
   },
   {
     key: "stock",
@@ -58,7 +64,8 @@ const TABS = [
     key: "retention",
     label: "Customer retention",
     permission: "reports:analytics",
-    restrictedTo: "Owner only — reports:analytics is deliberately not given to a service advisor",
+    restrictedTo:
+      "Owner only — reports:analytics is deliberately not given to a service advisor",
   },
 ] as const;
 
@@ -95,7 +102,8 @@ export default function ReportsPage() {
 
       {!allowed ? (
         <Notice tone="danger">
-          Reading the shop&apos;s reports is restricted. Ask the owner for reports access.
+          Reading the shop&apos;s reports is restricted. Ask the owner for
+          reports access.
         </Notice>
       ) : null}
 
@@ -143,7 +151,11 @@ export default function ReportsPage() {
         ) : null}
       </Card>
 
-      <div role="tablist" aria-label="Reports" className="mb-4 flex flex-wrap gap-2">
+      <div
+        role="tablist"
+        aria-label="Reports"
+        className="mb-4 flex flex-wrap gap-2"
+      >
         {TABS.map((tab) => {
           const permitted = can(tab.permission);
           const selected = active === tab.key;
@@ -166,7 +178,9 @@ export default function ReportsPage() {
               }`}
             >
               {tab.label}
-              {permitted ? null : <span className="ml-1.5 text-xs">locked</span>}
+              {permitted ? null : (
+                <span className="ml-1.5 text-xs">locked</span>
+              )}
             </button>
           );
         })}
@@ -178,7 +192,9 @@ export default function ReportsPage() {
           {locked.map((tab, index) => (
             <span key={tab.key}>
               {index > 0 ? " · " : ""}
-              <span className="font-medium text-ink-700">{tab.label}</span> — {tab.restrictedTo}
+              <span className="font-medium text-ink-700">
+                {tab.label}
+              </span> — {tab.restrictedTo}
             </span>
           ))}
         </p>
@@ -193,7 +209,11 @@ export default function ReportsPage() {
         </Card>
       ) : (
         <>
-          <section id={`report-${active}`} role="tabpanel" aria-label={activeLabel}>
+          <section
+            id={`report-${active}`}
+            role="tabpanel"
+            aria-label={activeLabel}
+          >
             {active === "revenue" ? (
               <RevenuePanel start={start} end={end} />
             ) : active === "orders" ? (
@@ -207,8 +227,8 @@ export default function ReportsPage() {
             )}
           </section>
           <p className="mt-3 text-xs text-ink-500">
-            A report is a reading taken when you asked for it. Nothing on this page is
-            stored, and nothing here can be edited.
+            A report is a reading taken when you asked for it. Nothing on this
+            page is stored, and nothing here can be edited.
           </p>
         </>
       )}
@@ -219,10 +239,7 @@ export default function ReportsPage() {
 function LockedPanel({ who }: { who: string }) {
   return (
     <Card>
-      <EmptyState
-        title="Not open to your account"
-        description={who}
-      />
+      <EmptyState title="Not open to your account" description={who} />
     </Card>
   );
 }
@@ -249,11 +266,26 @@ function RevenuePanel({ start, end }: { start: string; end: string }) {
       <LockedPanel who="Reading money taken needs reports access, which your roles do not carry." />
     );
   }
-  if (query.loading && query.initial) return <Card><Loading label="Summing invoices…" /></Card>;
-  if (query.error) return <Card><ErrorState error={query.error} onRetry={query.refetch} /></Card>;
+  if (query.loading && query.initial)
+    return (
+      <Card>
+        <Loading label="Summing invoices…" />
+      </Card>
+    );
+  if (query.error)
+    return (
+      <Card>
+        <ErrorState error={query.error} onRetry={query.refetch} />
+      </Card>
+    );
 
   const report = query.data;
-  if (!report) return <Card><ErrorState error={new Error("No revenue figures")} /></Card>;
+  if (!report)
+    return (
+      <Card>
+        <ErrorState error={new Error("No revenue figures")} />
+      </Card>
+    );
 
   const byStatus = Object.entries(report.invoiced_by_status).sort(
     (a, b) => b[1] - a[1],
@@ -271,7 +303,11 @@ function RevenuePanel({ start, end }: { start: string; end: string }) {
           label="Collected"
           value={formatMoney(report.collected_total)}
           hint={`${formatNumber(report.payment_count)} recorded payment(s), net of voids`}
-          tone={report.collected_total >= report.invoiced_total ? "success" : "warning"}
+          tone={
+            report.collected_total >= report.invoiced_total
+              ? "success"
+              : "warning"
+          }
         />
         <StatTile
           label="Voided"
@@ -301,9 +337,10 @@ function RevenuePanel({ start, end }: { start: string; end: string }) {
       </div>
 
       <Notice tone="info">
-        Outstanding and overdue are balances, not flows, so they are not scoped to the
-        window above. A bill from eleven months ago that nobody has paid is still owed
-        today, and filtering it by date would hide exactly the oldest debts.
+        Outstanding and overdue are balances, not flows, so they are not scoped
+        to the window above. A bill from eleven months ago that nobody has paid
+        is still owed today, and filtering it by date would hide exactly the
+        oldest debts.
       </Notice>
 
       <Card>
@@ -351,9 +388,9 @@ function RevenuePanel({ start, end }: { start: string; end: string }) {
               }))}
             />
             <p className="mt-3 text-xs text-ink-500">
-              Deliberately unfiltered by status: a manager asking why the month looks
-              short is owed the drafts and the write-offs that are holding the number
-              back, not a total that quietly excludes them.
+              Deliberately unfiltered by status: a manager asking why the month
+              looks short is owed the drafts and the write-offs that are holding
+              the number back, not a total that quietly excludes them.
             </p>
           </>
         )}
@@ -383,13 +420,30 @@ function RepairOrdersPanel({ start, end }: { start: string; end: string }) {
       <LockedPanel who="Reading repair-order throughput needs reports access, which your roles do not carry." />
     );
   }
-  if (query.loading && query.initial) return <Card><Loading label="Counting the board…" /></Card>;
-  if (query.error) return <Card><ErrorState error={query.error} onRetry={query.refetch} /></Card>;
+  if (query.loading && query.initial)
+    return (
+      <Card>
+        <Loading label="Counting the board…" />
+      </Card>
+    );
+  if (query.error)
+    return (
+      <Card>
+        <ErrorState error={query.error} onRetry={query.refetch} />
+      </Card>
+    );
 
   const report = query.data;
-  if (!report) return <Card><ErrorState error={new Error("No repair-order figures")} /></Card>;
+  if (!report)
+    return (
+      <Card>
+        <ErrorState error={new Error("No repair-order figures")} />
+      </Card>
+    );
 
-  const statuses = Object.entries(report.status_counts).sort((a, b) => b[1] - a[1]);
+  const statuses = Object.entries(report.status_counts).sort(
+    (a, b) => b[1] - a[1],
+  );
 
   return (
     <div className="space-y-4">
@@ -399,14 +453,22 @@ function RepairOrdersPanel({ start, end }: { start: string; end: string }) {
           value={formatNumber(report.total_orders)}
           hint="Repair orders created in the period"
         />
-        <StatTile label="Opened" value={formatNumber(report.opened)} hint="Work started in the period" />
+        <StatTile
+          label="Opened"
+          value={formatNumber(report.opened)}
+          hint="Work started in the period"
+        />
         <StatTile
           label="Completed"
           value={formatNumber(report.completed)}
           hint="Work finished in the period"
           tone="success"
         />
-        <StatTile label="Delivered" value={formatNumber(report.delivered)} hint="Handed back to a customer" />
+        <StatTile
+          label="Delivered"
+          value={formatNumber(report.delivered)}
+          hint="Handed back to a customer"
+        />
         <StatTile
           label="Cancelled"
           value={formatNumber(report.cancelled)}
@@ -473,9 +535,9 @@ function RepairOrdersPanel({ start, end }: { start: string; end: string }) {
               ))}
             </div>
             <p className="mt-3 text-xs text-ink-500">
-              Counts every repair order that exists. A COMPLETED order here is still
-              awaiting quality control — finishing the work is not the same as having
-              somebody check it.
+              Counts every repair order that exists. A COMPLETED order here is
+              still awaiting quality control — finishing the work is not the
+              same as having somebody check it.
             </p>
           </>
         )}
@@ -498,7 +560,11 @@ type WorkshopRow =
 
 /** The totals row is emphasised, so every column asks the row what kind it is. */
 function emphasise(row: WorkshopRow, value: ReactNode): ReactNode {
-  return row.kind === "total" ? <span className="font-semibold text-ink-900">{value}</span> : value;
+  return row.kind === "total" ? (
+    <span className="font-semibold text-ink-900">{value}</span>
+  ) : (
+    value
+  );
 }
 
 const workshopColumns: Column<WorkshopRow>[] = [
@@ -506,7 +572,8 @@ const workshopColumns: Column<WorkshopRow>[] = [
     key: "rank",
     header: "#",
     numeric: true,
-    render: (row) => emphasise(row, row.kind === "person" ? formatNumber(row.rank) : "—"),
+    render: (row) =>
+      emphasise(row, row.kind === "person" ? formatNumber(row.rank) : "—"),
   },
   {
     key: "name",
@@ -514,7 +581,9 @@ const workshopColumns: Column<WorkshopRow>[] = [
     render: (row) =>
       emphasise(
         row,
-        row.kind === "person" ? row.technician.name : `Whole workshop (${formatNumber(row.technicians)})`,
+        row.kind === "person"
+          ? row.technician.name
+          : `Whole workshop (${formatNumber(row.technicians)})`,
       ),
   },
   {
@@ -522,7 +591,12 @@ const workshopColumns: Column<WorkshopRow>[] = [
     header: "ROs assigned",
     numeric: true,
     render: (row) =>
-      emphasise(row, row.kind === "person" ? formatNumber(row.technician.repair_orders_assigned) : "—"),
+      emphasise(
+        row,
+        row.kind === "person"
+          ? formatNumber(row.technician.repair_orders_assigned)
+          : "—",
+      ),
   },
   {
     key: "completed",
@@ -589,7 +663,12 @@ const workshopColumns: Column<WorkshopRow>[] = [
     header: "Avg cycle hours",
     numeric: true,
     render: (row) =>
-      emphasise(row, row.kind === "person" ? formatNumber(row.technician.average_cycle_hours, 2) : "—"),
+      emphasise(
+        row,
+        row.kind === "person"
+          ? formatNumber(row.technician.average_cycle_hours, 2)
+          : "—",
+      ),
   },
 ];
 
@@ -614,11 +693,26 @@ function TechniciansPanel({ start, end }: { start: string; end: string }) {
       <LockedPanel who="This report ranks named people, so it sits on reports:analytics. That permission is the owner's alone and is deliberately withheld from every other role." />
     );
   }
-  if (query.loading && query.initial) return <Card><Loading label="Reading the workshop…" /></Card>;
-  if (query.error) return <Card><ErrorState error={query.error} onRetry={query.refetch} /></Card>;
+  if (query.loading && query.initial)
+    return (
+      <Card>
+        <Loading label="Reading the workshop…" />
+      </Card>
+    );
+  if (query.error)
+    return (
+      <Card>
+        <ErrorState error={query.error} onRetry={query.refetch} />
+      </Card>
+    );
 
   const report = query.data;
-  if (!report) return <Card><ErrorState error={new Error("No technician figures")} /></Card>;
+  if (!report)
+    return (
+      <Card>
+        <ErrorState error={new Error("No technician figures")} />
+      </Card>
+    );
 
   const rows: WorkshopRow[] = [
     ...report.technicians.map((technician, index) => ({
@@ -640,9 +734,9 @@ function TechniciansPanel({ start, end }: { start: string; end: string }) {
   return (
     <div className="space-y-4">
       <Notice tone="info">
-        This report ranks named colleagues and is management&apos;s to read — it is held on
-        reports:analytics, which the owner holds and no other role is given. Ordered by
-        labour revenue, then completed repair orders.
+        This report ranks named colleagues and is management&apos;s to read — it
+        is held on reports:analytics, which the owner holds and no other role is
+        given. Ordered by labour revenue, then completed repair orders.
       </Notice>
 
       <Card padded={false}>
@@ -661,14 +755,19 @@ function TechniciansPanel({ start, end }: { start: string; end: string }) {
           <DataTable
             rows={rows}
             columns={workshopColumns}
-            rowKey={(row, index) => (row.kind === "person" ? row.technician.technician_id : `total-${index}`)}
+            rowKey={(row, index) =>
+              row.kind === "person"
+                ? row.technician.technician_id
+                : `total-${index}`
+            }
             dense
           />
         )}
       </Card>
       <p className="text-xs text-ink-500">
-        Average cycle hours is a per-technician mean over the orders each of them
-        finished, so it has no meaningful workshop total and is left blank there.
+        Average cycle hours is a per-technician mean over the orders each of
+        them finished, so it has no meaningful workshop total and is left blank
+        there.
       </p>
     </div>
   );
@@ -696,19 +795,39 @@ function InventoryValuePanel({ start, end }: { start: string; end: string }) {
       <LockedPanel who="These figures are the shop's own purchase cost per part, so they are gated on inventory:read rather than reports:read. Ask for inventory access to open this report." />
     );
   }
-  if (query.loading && query.initial) return <Card><Loading label="Counting the shelves…" /></Card>;
-  if (query.error) return <Card><ErrorState error={query.error} onRetry={query.refetch} /></Card>;
+  if (query.loading && query.initial)
+    return (
+      <Card>
+        <Loading label="Counting the shelves…" />
+      </Card>
+    );
+  if (query.error)
+    return (
+      <Card>
+        <ErrorState error={query.error} onRetry={query.refetch} />
+      </Card>
+    );
 
   const report = query.data;
-  if (!report) return <Card><ErrorState error={new Error("No stock figures")} /></Card>;
+  if (!report)
+    return (
+      <Card>
+        <ErrorState error={new Error("No stock figures")} />
+      </Card>
+    );
 
-  const lowStockColumns: Column<InventoryValueReport["low_stock_items"][number]>[] = [
+  const lowStockColumns: Column<
+    InventoryValueReport["low_stock_items"][number]
+  >[] = [
     {
       key: "part",
       header: "Part",
       render: (item) => (
         <div className="min-w-0">
-          <Link href={`/parts/${item.part_id}`} className="font-medium text-brand-700 hover:underline">
+          <Link
+            href={`/parts/${item.part_id}`}
+            className="font-medium text-brand-700 hover:underline"
+          >
             {item.name}
           </Link>
           <p className="text-xs text-ink-500">{item.part_number}</p>
@@ -746,7 +865,10 @@ function InventoryValuePanel({ start, end }: { start: string; end: string }) {
       header: "Part",
       render: (mover) => (
         <div className="min-w-0">
-          <Link href={`/parts/${mover.part_id}`} className="font-medium text-brand-700 hover:underline">
+          <Link
+            href={`/parts/${mover.part_id}`}
+            className="font-medium text-brand-700 hover:underline"
+          >
             {mover.name}
           </Link>
           <p className="text-xs text-ink-500">{mover.part_number}</p>
@@ -770,9 +892,10 @@ function InventoryValuePanel({ start, end }: { start: string; end: string }) {
   return (
     <div className="space-y-4">
       <Notice tone="info">
-        Cost and retail here are the shop&apos;s own figures, which is why this report is
-        gated separately from the operational reports. Nothing below can be exported or
-        edited — it is read from the catalog and the ledger as they stand.
+        Cost and retail here are the shop&apos;s own figures, which is why this
+        report is gated separately from the operational reports. Nothing below
+        can be exported or edited — it is read from the catalog and the ledger
+        as they stand.
       </Notice>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -781,14 +904,24 @@ function InventoryValuePanel({ start, end }: { start: string; end: string }) {
           value={formatMoney(report.cost_value)}
           hint={`Valued at today's catalog cost, as of ${formatDate(report.as_of)}`}
         />
-        <StatTile label="Stock at retail" value={formatMoney(report.retail_value)} />
+        <StatTile
+          label="Stock at retail"
+          value={formatMoney(report.retail_value)}
+        />
         <StatTile
           label="Potential margin"
           value={formatMoney(report.potential_margin)}
           hint="Retail less cost, if all of it sold"
         />
-        <StatTile label="Parts" value={formatNumber(report.part_count)} hint="Lines on the catalog" />
-        <StatTile label="Units on hand" value={formatNumber(report.units_on_hand, 2)} />
+        <StatTile
+          label="Parts"
+          value={formatNumber(report.part_count)}
+          hint="Lines on the catalog"
+        />
+        <StatTile
+          label="Units on hand"
+          value={formatNumber(report.units_on_hand, 2)}
+        />
         <StatTile
           label="Low stock"
           value={formatNumber(report.low_stock_count)}
@@ -804,7 +937,10 @@ function InventoryValuePanel({ start, end }: { start: string; end: string }) {
       </div>
 
       <Card>
-        <CardHeader title="Value by category" subtitle="At cost, across the catalog" />
+        <CardHeader
+          title="Value by category"
+          subtitle="At cost, across the catalog"
+        />
         {report.by_category.length === 0 ? (
           <EmptyState title="Nothing on the shelves" />
         ) : (
@@ -823,10 +959,16 @@ function InventoryValuePanel({ start, end }: { start: string; end: string }) {
 
       <Card padded={false}>
         <div className="px-5 pt-5">
-          <CardHeader title="At or below the reorder point" subtitle="Raise these before a job needs them" />
+          <CardHeader
+            title="At or below the reorder point"
+            subtitle="Raise these before a job needs them"
+          />
         </div>
         {report.low_stock_items.length === 0 ? (
-          <EmptyState title="Nothing is running low" description="Every line is above its reorder point." />
+          <EmptyState
+            title="Nothing is running low"
+            description="Every line is above its reorder point."
+          />
         ) : (
           <DataTable
             rows={report.low_stock_items}
@@ -880,32 +1022,62 @@ function RetentionPanel({ start, end }: { start: string; end: string }) {
       <LockedPanel who="Customers ranked by what they are worth is management's judgement, not a report anybody may read. reports:analytics is the owner's alone." />
     );
   }
-  if (query.loading && query.initial) return <Card><Loading label="Reading the customer book…" /></Card>;
-  if (query.error) return <Card><ErrorState error={query.error} onRetry={query.refetch} /></Card>;
+  if (query.loading && query.initial)
+    return (
+      <Card>
+        <Loading label="Reading the customer book…" />
+      </Card>
+    );
+  if (query.error)
+    return (
+      <Card>
+        <ErrorState error={query.error} onRetry={query.refetch} />
+      </Card>
+    );
 
   const report = query.data;
-  if (!report) return <Card><ErrorState error={new Error("No retention figures")} /></Card>;
+  if (!report)
+    return (
+      <Card>
+        <ErrorState error={new Error("No retention figures")} />
+      </Card>
+    );
 
-  const topColumns: Column<CustomerRetentionReport["top_customers"][number]>[] = [
-    {
-      key: "name",
-      header: "Customer",
-      render: (row) => (
-        <Link href={`/customers/${row.customer_id}`} className="font-medium text-brand-700 hover:underline">
-          {row.name}
-        </Link>
-      ),
-    },
-    { key: "invoices", header: "Settled bills", numeric: true, render: (row) => formatNumber(row.invoice_count) },
-    { key: "revenue", header: "Settled revenue", numeric: true, render: (row) => formatMoney(row.revenue) },
-  ];
+  const topColumns: Column<CustomerRetentionReport["top_customers"][number]>[] =
+    [
+      {
+        key: "name",
+        header: "Customer",
+        render: (row) => (
+          <Link
+            href={`/customers/${row.customer_id}`}
+            className="font-medium text-brand-700 hover:underline"
+          >
+            {row.name}
+          </Link>
+        ),
+      },
+      {
+        key: "invoices",
+        header: "Settled bills",
+        numeric: true,
+        render: (row) => formatNumber(row.invoice_count),
+      },
+      {
+        key: "revenue",
+        header: "Settled revenue",
+        numeric: true,
+        render: (row) => formatMoney(row.revenue),
+      },
+    ];
 
   return (
     <div className="space-y-4">
       <Notice tone="info">
-        Retention here is lifetime: a customer counts as retained once they have settled
-        more than one bill ever, not more than one inside this window. A customer who came
-        back after a year away is exactly who this report is looking for.
+        Retention here is lifetime: a customer counts as retained once they have
+        settled more than one bill ever, not more than one inside this window. A
+        customer who came back after a year away is exactly who this report is
+        looking for.
       </Notice>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -943,7 +1115,10 @@ function RetentionPanel({ start, end }: { start: string; end: string }) {
 
       <Card padded={false}>
         <div className="px-5 pt-5">
-          <CardHeader title="Who came back most" subtitle="By settled revenue in the period" />
+          <CardHeader
+            title="Who came back most"
+            subtitle="By settled revenue in the period"
+          />
         </div>
         {report.top_customers.length === 0 ? (
           <EmptyState title="Nobody settled a bill in this period" />

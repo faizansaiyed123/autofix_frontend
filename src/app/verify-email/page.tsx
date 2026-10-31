@@ -11,7 +11,13 @@ import { authApi } from "@/lib/api/auth";
 import { useSession } from "@/lib/auth/AuthProvider";
 import { COMPANY_NAME } from "@/lib/config";
 
-type ViewState = "loading" | "ready" | "verifying" | "missing" | "failed" | "resent";
+type ViewState =
+  | "loading"
+  | "ready"
+  | "verifying"
+  | "missing"
+  | "failed"
+  | "resent";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -88,8 +94,13 @@ export default function VerifyEmailPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f5f7fb] px-5 py-10">
       <div className="w-full max-w-[460px]">
-        <Link href="/" className="mb-8 flex items-center justify-center gap-3 text-ink-900">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-ink-950 text-white">⚒</span>
+        <Link
+          href="/"
+          className="mb-8 flex items-center justify-center gap-3 text-ink-900"
+        >
+          <span className="flex size-10 items-center justify-center rounded-xl bg-ink-950 text-white">
+            ⚒
+          </span>
           <span className="text-sm font-semibold">{COMPANY_NAME}</span>
         </Link>
         <section className="rounded-2xl border border-ink-200/80 bg-white p-6 shadow-xl shadow-ink-900/5 sm:p-8">
@@ -99,7 +110,9 @@ export default function VerifyEmailPage() {
                 <span className="size-5 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
               </span>
               <h1 className="mt-5 text-2xl font-semibold tracking-tight">
-                {state === "loading" ? "Preparing your verification link" : "Verifying your email"}
+                {state === "loading"
+                  ? "Preparing your verification link"
+                  : "Verifying your email"}
               </h1>
               <p className="mt-3 text-sm leading-6 text-ink-500">
                 {state === "loading"
@@ -109,11 +122,16 @@ export default function VerifyEmailPage() {
             </div>
           ) : state === "ready" ? (
             <>
-              <span className="flex size-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">✉</span>
-              <h1 className="mt-5 text-2xl font-semibold tracking-tight">Confirm your email address</h1>
+              <span className="flex size-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                ✉
+              </span>
+              <h1 className="mt-5 text-2xl font-semibold tracking-tight">
+                Confirm your email address
+              </h1>
               <p className="mt-3 text-sm leading-6 text-ink-500">
-                Your verification link is ready. Select the button below to activate your account.
-                This extra step prevents automatic email scanners from consuming the one-time link.
+                Your verification link is ready. Select the button below to
+                activate your account. This extra step prevents automatic email
+                scanners from consuming the one-time link.
               </p>
               <Button
                 type="button"
@@ -129,7 +147,14 @@ export default function VerifyEmailPage() {
             </>
           ) : (
             <>
-              <span className={"flex size-12 items-center justify-center rounded-2xl " + (state === "resent" ? "bg-emerald-50 text-emerald-700" : "bg-brand-50 text-brand-700")}>
+              <span
+                className={
+                  "flex size-12 items-center justify-center rounded-2xl " +
+                  (state === "resent"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-brand-50 text-brand-700")
+                }
+              >
                 {state === "resent" ? "✓" : "✉"}
               </span>
               <h1 className="mt-5 text-2xl font-semibold tracking-tight">
@@ -146,7 +171,11 @@ export default function VerifyEmailPage() {
                     ? "Open the verification link from your email, or request another message below."
                     : "The link may have expired or already been used. Request another verification email below."}
               </p>
-              {error ? <div className="mt-4"><FormError error={error} /></div> : null}
+              {error ? (
+                <div className="mt-4">
+                  <FormError error={error} />
+                </div>
+              ) : null}
               <form onSubmit={resend} className="mt-6 space-y-4">
                 <Field label="Email address" required>
                   <Input
@@ -159,15 +188,29 @@ export default function VerifyEmailPage() {
                     className="min-h-11 rounded-xl"
                   />
                 </Field>
-                <Button type="submit" pending={pending} className="min-h-11 w-full rounded-xl">
+                <Button
+                  type="submit"
+                  pending={pending}
+                  className="min-h-11 w-full rounded-xl"
+                >
                   Resend verification email
                 </Button>
                 <FormError error={resendError} />
               </form>
               <div className="mt-5 border-t border-ink-100 pt-4 text-center text-sm text-ink-500">
-                <Link href="/register" className="font-semibold text-brand-700 hover:text-brand-900">Create a new account</Link>
+                <Link
+                  href="/register"
+                  className="font-semibold text-brand-700 hover:text-brand-900"
+                >
+                  Create a new account
+                </Link>
                 <span className="mx-2 text-ink-300">·</span>
-                <Link href="/login" className="font-semibold text-brand-700 hover:text-brand-900">Sign in</Link>
+                <Link
+                  href="/login"
+                  className="font-semibold text-brand-700 hover:text-brand-900"
+                >
+                  Sign in
+                </Link>
               </div>
             </>
           )}

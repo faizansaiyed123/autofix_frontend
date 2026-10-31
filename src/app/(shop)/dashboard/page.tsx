@@ -23,8 +23,10 @@ export default function DashboardPage() {
     enabled: can("reports:read"),
   });
 
-  if (dashboard.loading && dashboard.initial) return <Loading label="Reading the day…" />;
-  if (dashboard.error) return <ErrorState error={dashboard.error} onRetry={dashboard.refetch} />;
+  if (dashboard.loading && dashboard.initial)
+    return <Loading label="Reading the day…" />;
+  if (dashboard.error)
+    return <ErrorState error={dashboard.error} onRetry={dashboard.refetch} />;
 
   const report = dashboard.data;
   if (!report) return <ErrorState error={new Error("No dashboard data")} />;
@@ -48,7 +50,11 @@ export default function DashboardPage() {
           label="Collected"
           value={formatMoney(money.collected_total)}
           hint="Recorded at the till, net of voids"
-          tone={money.collected_total >= money.invoiced_total ? "success" : "warning"}
+          tone={
+            money.collected_total >= money.invoiced_total
+              ? "success"
+              : "warning"
+          }
         />
         <StatTile
           label="Outstanding"
@@ -94,7 +100,9 @@ export default function DashboardPage() {
               ]}
             />
           ) : (
-            <ErrorState error={revenue.error ?? new Error("No revenue series")} />
+            <ErrorState
+              error={revenue.error ?? new Error("No revenue series")}
+            />
           )}
         </Card>
 
@@ -107,11 +115,16 @@ export default function DashboardPage() {
               ["Part paid", counts.invoices_partially_paid, "Settled in part"],
               ["Paid", counts.invoices_paid, "Settled in full"],
             ].map(([label, value, hint]) => (
-              <div key={String(label)} className="flex items-baseline justify-between gap-3">
+              <div
+                key={String(label)}
+                className="flex items-baseline justify-between gap-3"
+              >
                 <dt className="text-sm text-ink-700">
                   {label} <span className="text-xs text-ink-500">· {hint}</span>
                 </dt>
-                <dd className="tabular text-sm font-semibold text-ink-900">{formatNumber(Number(value))}</dd>
+                <dd className="tabular text-sm font-semibold text-ink-900">
+                  {formatNumber(Number(value))}
+                </dd>
               </div>
             ))}
           </dl>
@@ -123,10 +136,20 @@ export default function DashboardPage() {
           <CardHeader
             title="On the floor"
             subtitle="A snapshot of right now, not of the period"
-            actions={<Link href="/repair-orders" className="text-sm text-brand-700 hover:underline">Repair orders</Link>}
+            actions={
+              <Link
+                href="/repair-orders"
+                className="text-sm text-brand-700 hover:underline"
+              >
+                Repair orders
+              </Link>
+            }
           />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <StatTile label="Open" value={formatNumber(work.repair_orders_open)} />
+            <StatTile
+              label="Open"
+              value={formatNumber(work.repair_orders_open)}
+            />
             <StatTile
               label="In progress"
               value={formatNumber(work.repair_orders_in_progress)}
@@ -143,7 +166,10 @@ export default function DashboardPage() {
               hint="Finished, nobody has inspected"
               tone={work.repair_orders_awaiting_qc > 0 ? "warning" : "neutral"}
             />
-            <StatTile label="Completed" value={formatNumber(work.completed_in_period)} />
+            <StatTile
+              label="Completed"
+              value={formatNumber(work.completed_in_period)}
+            />
             <StatTile
               label="Part requests"
               value={formatNumber(work.part_requests_pending)}
@@ -158,15 +184,24 @@ export default function DashboardPage() {
             subtitle="Today, and what is below its reorder point"
             actions={
               can("inventory:read") ? (
-                <Link href="/inventory" className="text-sm text-brand-700 hover:underline">
+                <Link
+                  href="/inventory"
+                  className="text-sm text-brand-700 hover:underline"
+                >
                   Inventory
                 </Link>
               ) : null
             }
           />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <StatTile label="Appointments today" value={formatNumber(operations.appointments_today)} />
-            <StatTile label="Vehicles in shop" value={formatNumber(operations.vehicles_in_shop)} />
+            <StatTile
+              label="Appointments today"
+              value={formatNumber(operations.appointments_today)}
+            />
+            <StatTile
+              label="Vehicles in shop"
+              value={formatNumber(operations.vehicles_in_shop)}
+            />
             <StatTile
               label="Low stock"
               value={formatNumber(operations.low_stock_count)}

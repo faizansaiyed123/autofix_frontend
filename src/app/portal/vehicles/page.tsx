@@ -19,7 +19,10 @@ export default function PortalVehiclesPage() {
       key: "vehicle",
       header: "Vehicle",
       render: (v) => (
-        <Link href={`/portal/vehicles/${v.id}`} className="font-medium text-brand-700 hover:underline">
+        <Link
+          href={`/portal/vehicles/${v.id}`}
+          className="font-medium text-brand-700 hover:underline"
+        >
           {[v.year, v.make, v.model].filter(Boolean).join(" ")}
         </Link>
       ),
@@ -34,7 +37,12 @@ export default function PortalVehiclesPage() {
         </span>
       ),
     },
-    { key: "mileage", header: "Mileage", numeric: true, render: (v) => formatNumber(v.mileage) },
+    {
+      key: "mileage",
+      header: "Mileage",
+      numeric: true,
+      render: (v) => formatNumber(v.mileage),
+    },
     {
       key: "status",
       header: "Status",
@@ -48,7 +56,12 @@ export default function PortalVehiclesPage() {
 
   if (vehicles.loading && vehicles.initial) return <Loading />;
   if (vehicles.error) {
-    return <ErrorState error={vehicles.error} onRetry={vehicles.error.status === 404 ? undefined : vehicles.refetch} />;
+    return (
+      <ErrorState
+        error={vehicles.error}
+        onRetry={vehicles.error.status === 404 ? undefined : vehicles.refetch}
+      />
+    );
   }
 
   return (

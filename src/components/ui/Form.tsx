@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type {
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from "react";
 
 import { ApiError } from "@/lib/api/client";
 
@@ -27,8 +32,12 @@ export function Field({
         {required ? <span className="text-rose-600">*</span> : null}
       </span>
       {children}
-      {hint && !error ? <span className="mt-1 block text-xs text-ink-500">{hint}</span> : null}
-      {error ? <span className="mt-1 block text-xs text-rose-700">{error}</span> : null}
+      {hint && !error ? (
+        <span className="mt-1 block text-xs text-ink-500">{hint}</span>
+      ) : null}
+      {error ? (
+        <span className="mt-1 block text-xs text-rose-700">{error}</span>
+      ) : null}
     </label>
   );
 }
@@ -36,7 +45,10 @@ export function Field({
 const controlClasses =
   "w-full rounded-lg bg-white px-3 py-2 text-sm text-ink-900 ring-1 ring-ink-200 placeholder:text-ink-400 focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:bg-ink-50 disabled:text-ink-500";
 
-export function Input({ className = "", ...rest }: InputHTMLAttributes<HTMLInputElement>) {
+export function Input({
+  className = "",
+  ...rest
+}: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...rest} className={`${controlClasses} ${className}`} />;
 }
 
@@ -52,7 +64,10 @@ export function Select({
   );
 }
 
-export function Textarea({ className = "", ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea({
+  className = "",
+  ...rest
+}: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea {...rest} className={`${controlClasses} ${className}`} />;
 }
 
@@ -61,13 +76,20 @@ export function FormError({ error }: { error: ApiError | null }) {
   if (!error) return null;
   const fields = error.fieldErrors;
   return (
-    <div role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-rose-200 ring-inset">
-      <p className="font-medium">{fields.length > 0 ? "Check these fields" : "Could not save"}</p>
+    <div
+      role="alert"
+      className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-rose-200 ring-inset"
+    >
+      <p className="font-medium">
+        {fields.length > 0 ? "Check these fields" : "Could not save"}
+      </p>
       <ul className="mt-1 list-disc space-y-0.5 pl-4">
         {fields.length > 0 ? (
           fields.map((f, index) => (
             <li key={`${f.field}-${index}`}>
-              {f.field ? <span className="font-medium">{f.field}: </span> : null}
+              {f.field ? (
+                <span className="font-medium">{f.field}: </span>
+              ) : null}
               {f.message}
             </li>
           ))
@@ -98,7 +120,9 @@ export function useForm<T extends Record<string, unknown>>(initial: T) {
   function missing(keys: (keyof T)[]): (keyof T)[] {
     return keys.filter((key) => {
       const value = values[key];
-      return value === undefined || value === null || String(value).trim() === "";
+      return (
+        value === undefined || value === null || String(value).trim() === ""
+      );
     });
   }
 

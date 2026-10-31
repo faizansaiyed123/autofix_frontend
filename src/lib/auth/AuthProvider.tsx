@@ -46,13 +46,21 @@ export interface SessionValue {
 
 const SessionContext = createContext<SessionValue | null>(null);
 
-const ALL_ROLES = ["OWNER", "SERVICE_ADVISOR", "TECHNICIAN", "PARTS_STAFF", "CUSTOMER"];
+const ALL_ROLES = [
+  "OWNER",
+  "SERVICE_ADVISOR",
+  "TECHNICIAN",
+  "PARTS_STAFF",
+  "CUSTOMER",
+];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [status, setStatus] = useState<SessionStatus>(() =>
     // No stored token means anonymous; a stored token must be verified with the API.
-    typeof window !== "undefined" && !hasStoredSession() ? "anonymous" : "loading",
+    typeof window !== "undefined" && !hasStoredSession()
+      ? "anonymous"
+      : "loading",
   );
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);
@@ -63,7 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadProfile = useCallback(async () => {
     const epoch = sessionEpoch.current;
-    const [me, bundle] = await Promise.all([authApi.me(), authApi.permissions()]);
+    const [me, bundle] = await Promise.all([
+      authApi.me(),
+      authApi.permissions(),
+    ]);
     if (epoch !== sessionEpoch.current || !hasStoredSession()) {
       throw new Error("Session changed while loading the profile");
     }
@@ -162,7 +173,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isCustomer,
       isStaff: recognised.length > 0 && !isCustomer,
       can: (permission) => permissions.includes(permission),
-      canAny: (...needed) => needed.some((permission) => permissions.includes(permission)),
+      canAny: (...needed) =>
+        needed.some((permission) => permissions.includes(permission)),
       hasRole: (role) => roles.includes(role),
       login,
       acceptTokens,
@@ -170,13 +182,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       reload: loadProfile,
       invalidateSession: reset,
     };
-  }, [status, user, permissions, roles, login, acceptTokens, logout, loadProfile, reset]);
+  }, [
+    status,
+    user,
+    permissions,
+    roles,
+    login,
+    acceptTokens,
+    logout,
+    loadProfile,
+    reset,
+  ]);
 
-  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+  return (
+    <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
+  );
 }
 
 export function useSession(): SessionValue {
   const context = useContext(SessionContext);
-  if (!context) throw new Error("useSession must be used inside <AuthProvider>");
+  if (!context)
+    throw new Error("useSession must be used inside <AuthProvider>");
   return context;
 }

@@ -9,7 +9,12 @@ import { Card } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Select } from "@/components/ui/Form";
 import { PageHeader, Toolbar } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { notificationsApi } from "@/lib/api/insight";
 import type { Notification } from "@/lib/api/types";
 import { useApiMutation } from "@/lib/hooks/useApiMutation";
@@ -34,8 +39,12 @@ export default function AttentionPage() {
     [unreadOnly, type],
   );
 
-  const markRead = useApiMutation((id: string) => notificationsApi.markRead(id));
-  const markUnread = useApiMutation((id: string) => notificationsApi.markUnread(id));
+  const markRead = useApiMutation((id: string) =>
+    notificationsApi.markRead(id),
+  );
+  const markUnread = useApiMutation((id: string) =>
+    notificationsApi.markUnread(id),
+  );
   const markAll = useApiMutation(() => notificationsApi.markAllRead());
 
   const list = query.data;
@@ -47,24 +56,42 @@ export default function AttentionPage() {
       render: (n) => (
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            {!n.is_read ? <span className="size-2 shrink-0 rounded-full bg-brand-500" /> : null}
-            <span className={n.is_read ? "text-ink-700" : "font-medium text-ink-900"}>{n.title}</span>
-            {n.priority === "HIGH" ? <Badge tone="danger">Needs you</Badge> : null}
+            {!n.is_read ? (
+              <span className="size-2 shrink-0 rounded-full bg-brand-500" />
+            ) : null}
+            <span
+              className={
+                n.is_read ? "text-ink-700" : "font-medium text-ink-900"
+              }
+            >
+              {n.title}
+            </span>
+            {n.priority === "HIGH" ? (
+              <Badge tone="danger">Needs you</Badge>
+            ) : null}
           </div>
-          {n.body ? <p className="mt-0.5 line-clamp-2 text-xs text-ink-500">{n.body}</p> : null}
+          {n.body ? (
+            <p className="mt-0.5 line-clamp-2 text-xs text-ink-500">{n.body}</p>
+          ) : null}
         </div>
       ),
     },
     {
       key: "type",
       header: "Kind",
-      render: (n) => <span className="text-xs text-ink-500">{n.notification_type}</span>,
+      render: (n) => (
+        <span className="text-xs text-ink-500">{n.notification_type}</span>
+      ),
     },
     {
       key: "when",
       header: "When",
       numeric: true,
-      render: (n) => <span className="text-xs text-ink-500">{formatRelative(n.created_at)}</span>,
+      render: (n) => (
+        <span className="text-xs text-ink-500">
+          {formatRelative(n.created_at)}
+        </span>
+      ),
     },
     {
       key: "actions",
@@ -122,13 +149,18 @@ export default function AttentionPage() {
         }
       />
 
-      {markAll.error ? <Notice tone="danger">{markAll.error.messageForUser}</Notice> : null}
+      {markAll.error ? (
+        <Notice tone="danger">{markAll.error.messageForUser}</Notice>
+      ) : null}
 
       <Card padded={false}>
         <Toolbar>
           <label className="block">
             <span className="sr-only">Filter</span>
-            <Select value={unreadOnly ? "unread" : "all"} onChange={(e) => setUnreadOnly(e.target.value === "unread")}>
+            <Select
+              value={unreadOnly ? "unread" : "all"}
+              onChange={(e) => setUnreadOnly(e.target.value === "unread")}
+            >
               <option value="all">All notices</option>
               <option value="unread">Unread only</option>
             </Select>

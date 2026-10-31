@@ -8,10 +8,22 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, KeyValue, KeyValueGrid } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
-import { Field, FormError, Input, Select, Textarea, useForm } from "@/components/ui/Form";
+import {
+  Field,
+  FormError,
+  Input,
+  Select,
+  Textarea,
+  useForm,
+} from "@/components/ui/Form";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/Page";
-import { EmptyState, ErrorState, Loading, Notice } from "@/components/ui/States";
+import {
+  EmptyState,
+  ErrorState,
+  Loading,
+  Notice,
+} from "@/components/ui/States";
 import { useReferences } from "@/components/layout/ReferenceProvider";
 import { vehiclesApi } from "@/lib/api/shop";
 import type { MileageRecord, Vehicle, VehicleStatus } from "@/lib/api/types";
@@ -34,22 +46,36 @@ export default function VehicleDetailPage() {
   const vehicle = useApiQuery(() => vehiclesApi.get(id), [id]);
   const mileage = useApiQuery(() => vehiclesApi.mileage(id), [id]);
 
-  const setStatus = useApiMutation((status: VehicleStatus) => vehiclesApi.setStatus(id, status));
+  const setStatus = useApiMutation((status: VehicleStatus) =>
+    vehiclesApi.setStatus(id, status),
+  );
 
-  if (vehicle.loading && vehicle.initial) return <Loading label="Opening the vehicle…" />;
-  if (vehicle.error) return <ErrorState error={vehicle.error} onRetry={vehicle.refetch} />;
+  if (vehicle.loading && vehicle.initial)
+    return <Loading label="Opening the vehicle…" />;
+  if (vehicle.error)
+    return <ErrorState error={vehicle.error} onRetry={vehicle.refetch} />;
 
   const record = vehicle.data;
   if (!record) return <ErrorState error={new Error("Vehicle not found")} />;
 
-  const label = [record.year, record.make, record.model].filter(Boolean).join(" ");
+  const label = [record.year, record.make, record.model]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <>
       <PageHeader
-        breadcrumb={<Link href="/vehicles" className="hover:underline">Vehicles</Link>}
+        breadcrumb={
+          <Link href="/vehicles" className="hover:underline">
+            Vehicles
+          </Link>
+        }
         title={label}
-        subtitle={record.license_plate ? `Plate ${record.license_plate}` : "No plate on file"}
+        subtitle={
+          record.license_plate
+            ? `Plate ${record.license_plate}`
+            : "No plate on file"
+        }
         actions={
           <>
             <StatusBadge status={record.status} />
@@ -90,11 +116,15 @@ export default function VehicleDetailPage() {
             <KeyValue label="Model">{record.model}</KeyValue>
             <KeyValue label="Trim">{record.trim ?? "—"}</KeyValue>
             <KeyValue label="Engine">{record.engine ?? "—"}</KeyValue>
-            <KeyValue label="Transmission">{record.transmission ?? "—"}</KeyValue>
+            <KeyValue label="Transmission">
+              {record.transmission ?? "—"}
+            </KeyValue>
             <KeyValue label="Fuel">{record.fuel_type ?? "—"}</KeyValue>
             <KeyValue label="Colour">{record.color ?? "—"}</KeyValue>
             <KeyValue label="Mileage">{formatNumber(record.mileage)}</KeyValue>
-            <KeyValue label="Purchase date">{formatDate(record.purchase_date)}</KeyValue>
+            <KeyValue label="Purchase date">
+              {formatDate(record.purchase_date)}
+            </KeyValue>
             <KeyValue label="Owner">
               <Link
                 href={`/customers/${record.customer_id}`}
@@ -105,7 +135,9 @@ export default function VehicleDetailPage() {
             </KeyValue>
           </KeyValueGrid>
           <div className="mt-4 border-t border-ink-100 pt-3">
-            <p className="text-xs font-medium tracking-wide text-ink-500 uppercase">Notes</p>
+            <p className="text-xs font-medium tracking-wide text-ink-500 uppercase">
+              Notes
+            </p>
             <p className="mt-0.5 text-sm whitespace-pre-line text-ink-700">
               {record.notes ?? "Nothing recorded."}
             </p>
@@ -113,20 +145,25 @@ export default function VehicleDetailPage() {
         </Card>
 
         <Card>
-          <CardHeader title="Where it is" subtitle="Whether the shop is holding it" />
+          <CardHeader
+            title="Where it is"
+            subtitle="Whether the shop is holding it"
+          />
           <KeyValueGrid className="grid-cols-1">
             <KeyValue label="Status">
               <StatusBadge status={record.status} />
             </KeyValue>
-            <KeyValue label="Current mileage">{formatNumber(record.mileage)}</KeyValue>
+            <KeyValue label="Current mileage">
+              {formatNumber(record.mileage)}
+            </KeyValue>
             <KeyValue label="Readings">
               {mileage.data ? mileage.data.length : "—"} recorded
             </KeyValue>
           </KeyValueGrid>
           <div className="mt-3">
             <Notice tone="info">
-              Archiving keeps the history and stops the car appearing in pickers. It does not delete
-              anything.
+              Archiving keeps the history and stops the car appearing in
+              pickers. It does not delete anything.
             </Notice>
           </div>
         </Card>
@@ -196,13 +233,19 @@ const mileageColumns: Column<MileageRecord>[] = [
   {
     key: "notes",
     header: "Notes",
-    render: (r) => <span className="text-sm text-ink-700">{r.notes ?? "—"}</span>,
+    render: (r) => (
+      <span className="text-sm text-ink-700">{r.notes ?? "—"}</span>
+    ),
   },
   {
     key: "when",
     header: "Recorded",
     numeric: true,
-    render: (r) => <span className="text-xs text-ink-500">{formatDateTime(r.created_at)}</span>,
+    render: (r) => (
+      <span className="text-xs text-ink-500">
+        {formatDateTime(r.created_at)}
+      </span>
+    ),
   },
 ];
 
@@ -215,7 +258,9 @@ function StatusControl({
   pending: boolean;
   onApply: (status: VehicleStatus) => void;
 }) {
-  const options = VEHICLE_STATUSES.filter((status) => status !== vehicle.status);
+  const options = VEHICLE_STATUSES.filter(
+    (status) => status !== vehicle.status,
+  );
   const [next, setNext] = useState<VehicleStatus>(options[0] ?? vehicle.status);
 
   if (options.length === 0) return null;
@@ -224,7 +269,10 @@ function StatusControl({
     <div className="flex items-end gap-2">
       <label className="block">
         <span className="sr-only">Set status</span>
-        <Select value={next} onChange={(event) => setNext(event.target.value as VehicleStatus)}>
+        <Select
+          value={next}
+          onChange={(event) => setNext(event.target.value as VehicleStatus)}
+        >
           {options.map((status) => (
             <option key={status} value={status}>
               {status}
@@ -257,8 +305,9 @@ function RecordMileageModal({
     source: "MANUAL",
     notes: "",
   });
-  const add = useApiMutation((body: { mileage: number; source: string; notes: string | null }) =>
-    vehiclesApi.addMileage(id, body),
+  const add = useApiMutation(
+    (body: { mileage: number; source: string; notes: string | null }) =>
+      vehiclesApi.addMileage(id, body),
   );
 
   async function submit() {
@@ -308,7 +357,11 @@ function RecordMileageModal({
         <Field
           label="Odometer"
           required
-          hint={current ? `Currently ${formatNumber(current)} mi` : "No reading on file yet"}
+          hint={
+            current
+              ? `Currently ${formatNumber(current)} mi`
+              : "No reading on file yet"
+          }
           error={
             form.values.mileage !== "" && !(Number(form.values.mileage) > 0)
               ? "Must be greater than zero"
@@ -323,7 +376,10 @@ function RecordMileageModal({
           />
         </Field>
         <Field label="Source">
-          <Select value={form.values.source} onChange={(e) => form.set("source", e.target.value)}>
+          <Select
+            value={form.values.source}
+            onChange={(e) => form.set("source", e.target.value)}
+          >
             {MILEAGE_SOURCES.map((source) => (
               <option key={source} value={source}>
                 {source}

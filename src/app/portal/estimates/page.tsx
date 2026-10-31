@@ -16,7 +16,10 @@ import { formatDate, formatMoney } from "@/lib/format";
 /** List estimates awaiting customer decisions; expired estimates are excluded. */
 export default function PortalEstimatesPage() {
   const [openOnly, setOpenOnly] = useState(false);
-  const estimates = useApiQuery(() => portalApi.estimates({ open_only: openOnly }), [openOnly]);
+  const estimates = useApiQuery(
+    () => portalApi.estimates({ open_only: openOnly }),
+    [openOnly],
+  );
 
   const columns: Column<PortalEstimate>[] = [
     {
@@ -24,7 +27,10 @@ export default function PortalEstimatesPage() {
       header: "Estimate",
       render: (e) => (
         <div>
-          <Link href={`/portal/estimates/${e.id}`} className="font-medium text-brand-700 hover:underline">
+          <Link
+            href={`/portal/estimates/${e.id}`}
+            className="font-medium text-brand-700 hover:underline"
+          >
             {e.estimate_number}
           </Link>
           {e.is_expired ? (
@@ -35,13 +41,24 @@ export default function PortalEstimatesPage() {
         </div>
       ),
     },
-    { key: "total", header: "Total", numeric: true, render: (e) => formatMoney(e.total) },
+    {
+      key: "total",
+      header: "Total",
+      numeric: true,
+      render: (e) => formatMoney(e.total),
+    },
     {
       key: "approved",
       header: "Approved",
       numeric: true,
       render: (e) => (
-        <span className={e.approved_total > 0 ? "font-medium text-emerald-700" : "text-ink-500"}>
+        <span
+          className={
+            e.approved_total > 0
+              ? "font-medium text-emerald-700"
+              : "text-ink-500"
+          }
+        >
           {formatMoney(e.approved_total)}
         </span>
       ),
@@ -60,7 +77,11 @@ export default function PortalEstimatesPage() {
         );
       },
     },
-    { key: "valid", header: "Valid until", render: (e) => formatDate(e.valid_until) },
+    {
+      key: "valid",
+      header: "Valid until",
+      render: (e) => formatDate(e.valid_until),
+    },
     {
       key: "status",
       header: "Status",

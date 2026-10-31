@@ -7,10 +7,12 @@ type Size = "sm" | "md";
 
 const VARIANTS: Record<Variant, string> = {
   primary: "bg-brand-600 text-white hover:bg-brand-700 disabled:bg-brand-300",
-  secondary: "bg-white text-ink-800 ring-1 ring-ink-200 hover:bg-ink-50 disabled:text-ink-400",
+  secondary:
+    "bg-white text-ink-800 ring-1 ring-ink-200 hover:bg-ink-50 disabled:text-ink-400",
   ghost: "bg-transparent text-ink-600 hover:bg-ink-100 disabled:text-ink-300",
   danger: "bg-rose-600 text-white hover:bg-rose-700 disabled:bg-rose-300",
-  success: "bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-emerald-300",
+  success:
+    "bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-emerald-300",
 };
 
 const SIZES: Record<Size, string> = {
@@ -56,7 +58,6 @@ export function Spinner({ className = "" }: { className?: string }) {
     />
   );
 }
-
 
 export function LinkButton({
   children,

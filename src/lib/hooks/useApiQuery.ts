@@ -15,7 +15,9 @@ export interface QueryState<T> {
 }
 
 function toApiError(caught: unknown): ApiError {
-  return caught instanceof ApiError ? caught : new ApiError(0, caught, "Could not reach the server");
+  return caught instanceof ApiError
+    ? caught
+    : new ApiError(0, caught, "Could not reach the server");
 }
 
 export function useApiQuery<T>(
@@ -25,7 +27,10 @@ export function useApiQuery<T>(
 ): QueryState<T> {
   const enabled = options.enabled ?? true;
   const [attempt, setAttempt] = useState(0);
-  const [settled, setSettled] = useState<{ data: T | null; error: ApiError | null } | null>(null);
+  const [settled, setSettled] = useState<{
+    data: T | null;
+    error: ApiError | null;
+  } | null>(null);
 
   const fetcherRef = useRef(fetcher);
   useEffect(() => {
@@ -61,5 +66,11 @@ export function useApiQuery<T>(
   // over data the reader can already see.
   const loading = enabled && settled === null;
 
-  return { data: settled?.data ?? null, error: settled?.error ?? null, loading, initial: loading, refetch };
+  return {
+    data: settled?.data ?? null,
+    error: settled?.error ?? null,
+    loading,
+    initial: loading,
+    refetch,
+  };
 }
