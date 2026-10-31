@@ -1,0 +1,130 @@
+name: Temporary Formatting Semantics Audit
+
+on:
+  push:
+    branches:
+      - chore/formatting-only-autofix
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch and history
+        uses: actions/checkout@v4
+        with:
+          ref: chore/formatting-only-autofix
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install existing dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Compare source and emitted semantics against main
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const { execFileSync } = require("node:child_process");
+          const ts = require("typescript");
+          const postcss = require("postcss");
+          const base = "origin/main";
+          const files = execFileSync("git", ["diff", "--name-only", base + "...HEAD"], { encoding: "utf8" })
+            .trim().split("\n").filter(Boolean);
+          const git = args => execFileSync("git", args, { encoding: "utf8", maxBuffer: 20 * 1024 * 1024 });
+
+          function sourceCanon(node) {
+            if (node.kind === ts.SyntaxKind.ParenthesizedExpression) return sourceCanon(node.expression);
+            if (ts.isJsxText(node)) return null;
+            if (ts.isJsxExpression(node) && node.expression && ts.isStringLiteral(node.expression) && /^\s*$/.test(node.expression.text)) return null;
+            if (ts.isNumericLiteral(node)) {
+              const n = Number(node.text.replaceAll("_", ""));
+              return ["NumericLiteral", Number.isFinite(n) ? String(n) : node.text];
+            }
+            if (ts.isIdentifier(node)) return ["Identifier", String(node.escapedText)];
+            if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return [ts.SyntaxKind[node.kind], node.text];
+            const children = [];
+            ts.forEachChild(node, child => { const value = sourceCanon(child); if (value !== null) children.push(value); });
+            return [ts.SyntaxKind[node.kind], children];
+          }
+
+          function childCanon(node) {
+            if (ts.isArrayLiteralExpression(node)) {
+              const entries = [];
+              let text = "";
+              const flush = () => { if (text !== "") { entries.push(["Text", text]); text = ""; } };
+              for (const element of node.elements) {
+                if (ts.isStringLiteral(element) || ts.isNoSubstitutionTemplateLiteral(element)) text += element.text;
+                else { flush(); entries.push(emittedCanon(element)); }
+              }
+              flush();
+              return ["Children", entries];
+            }
+            if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return ["Children", [["Text", node.text]]];
+            return ["Children", [emittedCanon(node)]];
+          }
+
+          function emittedCanon(node) {
+            if (node.kind === ts.SyntaxKind.ParenthesizedExpression) return emittedCanon(node.expression);
+            if (ts.isNumericLiteral(node)) {
+              const n = Number(node.text.replaceAll("_", ""));
+              return ["NumericLiteral", Number.isFinite(n) ? String(n) : node.text];
+            }
+            if (ts.isIdentifier(node)) return ["Identifier", String(node.escapedText)];
+            if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return [ts.SyntaxKind[node.kind], node.text];
+            if (ts.isPropertyAssignment(node) && node.name && (node.name.text || node.name.escapedText) === "children") {
+              return ["PropertyAssignment", [emittedCanon(node.name), childCanon(node.initializer)]];
+            }
+            const children = [];
+            ts.forEachChild(node, child => children.push(emittedCanon(child)));
+            return [ts.SyntaxKind[node.kind], children];
+          }
+
+          function parseSource(text, file) {
+            const kind = /\.tsx$/i.test(file) ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
+            const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, kind);
+            if (sf.parseDiagnostics.length) throw new Error(file + ": TypeScript parse diagnostics");
+            return JSON.stringify(sourceCanon(sf));
+          }
+
+          function emit(text, file) {
+            const result = ts.transpileModule(text, { fileName: file, reportDiagnostics: true, compilerOptions: {
+              target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext,
+              jsx: ts.JsxEmit.ReactJSX, removeComments: true, useDefineForClassFields: false
+            }});
+            const errors = (result.diagnostics || []).filter(d => d.category === ts.DiagnosticCategory.Error);
+            if (errors.length) throw new Error(file + ": " + errors.map(d => ts.flattenDiagnosticMessageText(d.messageText, " ")).join("; "));
+            const sf = ts.createSourceFile(file + ".js", result.outputText, ts.ScriptTarget.ES2022, true, ts.ScriptKind.JS);
+            return JSON.stringify(emittedCanon(sf));
+          }
+
+          const checked = [];
+          const mismatches = [];
+          for (const file of files) {
+            if (/\.(ts|tsx)$/i.test(file)) {
+              const oldText = git(["show", base + ":" + file]);
+              const newText = fs.readFileSync(file, "utf8");
+              checked.push(file);
+              try {
+                if (parseSource(oldText, file) !== parseSource(newText, file)) mismatches.push(file + " (TypeScript source AST differs)");
+                else if (emit(oldText, file) !== emit(newText, file)) mismatches.push(file + " (emitted JavaScript/JSX structure or rendered text differs)");
+              } catch (error) { mismatches.push(file + " (" + error.message + ")"); }
+            } else if (/\.json$/i.test(file)) {
+              const oldValue = JSON.parse(git(["show", base + ":" + file]));
+              const newValue = JSON.parse(fs.readFileSync(file, "utf8"));
+              if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) mismatches.push(file + " (parsed JSON differs)");
+            } else if (/\.css$/i.test(file)) {
+              const oldValue = postcss.parse(git(["show", base + ":" + file]));
+              const newValue = postcss.parse(fs.readFileSync(file, "utf8"));
+              const canonCss = node => ({type:node.type,name:node.name??null,params:node.params??null,selector:node.selector??null,prop:node.prop??null,value:node.value??null,important:node.important??null,children:(node.nodes||[]).map(canonCss)});
+              if (JSON.stringify(canonCss(oldValue)) !== JSON.stringify(canonCss(newValue))) mismatches.push(file + " (CSS syntax tree differs)");
+            }
+          }
+          console.log("TypeScript/TSX source and output checked:", checked.length);
+          console.log("Changed files in comparison:", files.length);
+          if (mismatches.length) { console.error("Differences:", mismatches); process.exit(1); }
+          console.log("PASS: TypeScript source ASTs, emitted JavaScript and JSX children, JSON data, and CSS syntax trees match main.");
+          NODE
