@@ -1,0 +1,78 @@
+name: Temporary JSX Difference Diagnosis
+
+on:
+  push:
+    branches:
+      - chore/formatting-only-autofix
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch and history
+        uses: actions/checkout@v4
+        with:
+          ref: chore/formatting-only-autofix
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Diagnose emitted AST differences
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const { execFileSync } = require("node:child_process");
+          const ts = require("typescript");
+          const base = "origin/main";
+          const files = execFileSync("git", ["diff", "--name-only", base + "...HEAD"], { encoding: "utf8" })
+            .trim().split("\n").filter(f => /\.tsx$/i.test(f));
+          function git(args) { return execFileSync("git", args, { encoding: "utf8", maxBuffer: 20 * 1024 * 1024 }); }
+          function canon(node) {
+            if (node.kind === ts.SyntaxKind.ParenthesizedExpression) return canon(node.expression);
+            if (ts.isNumericLiteral(node)) {
+              const value = Number(node.text.replaceAll("_", ""));
+              return ["NumericLiteral", Number.isFinite(value) ? String(value) : node.text];
+            }
+            if (ts.isIdentifier(node)) return ["Identifier", String(node.escapedText)];
+            if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return [ts.SyntaxKind[node.kind], node.text];
+            if (ts.isJsxText(node)) return ["JsxText", node.text];
+            const children = [];
+            ts.forEachChild(node, child => { children.push(canon(child)); });
+            return [ts.SyntaxKind[node.kind], children];
+          }
+          function emitted(source, file) {
+            const result = ts.transpileModule(source, { fileName:file, compilerOptions:{
+              target:ts.ScriptTarget.ES2022, module:ts.ModuleKind.ESNext,
+              jsx:ts.JsxEmit.ReactJSX, removeComments:true, useDefineForClassFields:false
+            }});
+            return canon(ts.createSourceFile(file+".js",result.outputText,ts.ScriptTarget.ES2022,true,ts.ScriptKind.JS));
+          }
+          function firstDiff(a,b,path="$") {
+            if (JSON.stringify(a) === JSON.stringify(b)) return null;
+            if (!Array.isArray(a) || !Array.isArray(b)) return {path,old:a,new:b};
+            if (a.length !== b.length) return {path,oldLength:a.length,newLength:b.length,old:a,new:b};
+            for(let i=0;i<a.length;i++) {
+              const d=firstDiff(a[i],b[i],path+"["+i+"]");
+              if(d) return d;
+            }
+            return {path,old:a,new:b};
+          }
+          let mismatchCount=0;
+          for (const file of files) {
+            const a=emitted(git(["show",base+":"+file]),file);
+            const b=emitted(fs.readFileSync(file,"utf8"),file);
+            if(JSON.stringify(a)!==JSON.stringify(b)) {
+              mismatchCount++;
+              console.log("\nFILE:",file);
+              console.log(JSON.stringify(firstDiff(a,b),null,2).slice(0,5000));
+            }
+          }
+          console.log("\nMISMATCHED TSX FILES:",mismatchCount);
+          NODE
