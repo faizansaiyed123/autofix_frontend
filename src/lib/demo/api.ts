@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// The adapter mirrors heterogeneous response objects from the existing API contract.
 import { ApiError } from "@/lib/api/client";
 
 type Row = Record<string, any>;
@@ -119,7 +121,7 @@ function seed():Store {
     {id:"notification-3",user_id:"demo-tech",title:"Repair task assigned",message:"Inspect front brake rotors on RO-2026-0192.",notification_type:"REPAIR_ORDER",priority:"NORMAL",is_read:false,created_at:iso(0),entity_type:"repair_order",entity_id:"repair-1"}
   ];
   const auditLogs = [{id:"audit-1",action:"STATUS_CHANGED",entity_type:"repair_order",entity_id:"repair-1",entity_label:"RO-2026-0192",actor_id:"demo-advisor",actor_email:"manager@autofix.demo",actor_role:"SERVICE_ADVISOR",actor_label:"Sarah Johnson",summary:"Repair order moved to In progress",changes:null,created_at:iso(0)}];
-  return {customers,vehicles,serviceRequests,appointments,checkIns,inspections,estimates,repairOrders,parts,suppliers,partRequests,qualityChecks,invoices,payments,inventoryTransactions,purchaseOrders,labor,notifications,auditLogs,users:USERS.map(({password,...u})=>u)};
+  return {customers,vehicles,serviceRequests,appointments,checkIns,inspections,estimates,repairOrders,parts,suppliers,partRequests,qualityChecks,invoices,payments,inventoryTransactions,purchaseOrders,labor,notifications,auditLogs,users:USERS.map(safeUser)};
 }
 
 let cached:Store|null=null;
@@ -148,7 +150,7 @@ function identity():Row|null{
   return USERS.find(u=>u.email===email)??null;
 }
 function mustAuth():Row{const u=identity();if(!u)throw new ApiError(401,"Not authenticated");return u;}
-function safeUser(u:Row){const {password:_p,...rest}=u;return copy(rest);}
+function safeUser(u:Row){const safe=copy(u);delete safe.password;return safe;}
 function fail(message:string,status=404):never{throw new ApiError(status,message,message);}
 function one(s:Store,k:string,key:string){return s[k]?.find(x=>x.id===key)??null;}
 function statusView(status:string){
@@ -262,6 +264,49 @@ export async function demoRequest<T>(path:string,options:DemoRequestOptions={}):
 
   const map:Record<string,string>={customers:"customers",vehicles:"vehicles",service_requests:"serviceRequests",appointments:"appointments",check_ins:"checkIns",inspections:"inspections",estimates:"estimates",repair_orders:"repairOrders",labor:"labor",part_requests:"partRequests",qc:"qualityChecks",invoices:"invoices",payments:"payments",parts:"parts",inventory:"inventoryTransactions",suppliers:"suppliers",purchase_orders:"purchaseOrders",users:"users",audit:"auditLogs"};
   const clean=path.replace(/\/+$/,"")||"/";const parts=clean.split("/").filter(Boolean);const root=parts[0];const key=map[root];
+  if(root==="suppliers"&&parts.length===3&&parts[2]==="summary"&&method==="GET"){
+    const supplier=one(s,"suppliers",parts[1]);if(!supplier)fail("Supplier not found");
+    const orders=s.purchaseOrders.filter(x=>x.supplier_id===supplier.id);
+    return {supplier_id:supplier.id,order_count:orders.length,total_order_value:orders.reduce((a,x)=>a+x.total_amount,0),open_order_count:orders.filter(x=>!["RECEIVED","CANCELLED"].includes(x.status)).length};
+  }
+  if(root==="suppliers"&&parts.length===3&&parts[2]==="deactivate"&&method==="POST"){
+    const supplier=one(s,"suppliers",parts[1]);if(!supplier)fail("Supplier not found");
+    supplier.is_active=false;supplier.status="INACTIVE";saveStore();return copy(supplier) as T;
+  }
+  if(root==="purchase_orders"&&parts.length===3&&parts[1]==="by-number"&&method==="GET"){
+    const order=s.purchaseOrders.find(x=>x.po_number===parts[2]);if(!order)fail("Purchase order not found");return copy(order) as T;
+  }
+  if(root==="purchase_orders"&&parts.length===2&&parts[1]==="from-low-stock"&&method==="POST"){
+    const supplier=one(s,"suppliers",String(body.supplier_id??""));if(!supplier)fail("Supplier not found");
+    const selected=s.parts.filter(p=>p.quantity_on_hand<=p.reorder_level&&(!Array.isArray(body.part_ids)||body.part_ids.includes(p.id)));
+    const items=selected.map(p=>({id:id("po-item"),part_id:p.id,part_number:p.part_number,part_name:p.name,quantity_ordered:Math.max(1,(p.reorder_level-p.quantity_on_hand)*Number(body.shortage_multiplier??1)),quantity_received:0,unit_cost:p.unit_cost,line_total:Math.max(1,p.reorder_level-p.quantity_on_hand)*p.unit_cost}));
+    const subtotal=items.reduce((a,x)=>a+x.line_total,0);
+    const order=createRecord(s,"purchaseOrders","po",{supplier_id:supplier.id,supplier_name:supplier.name,status:"DRAFT",order_date:day(),expected_delivery_date:body.expected_delivery_date??null,subtotal,tax_amount:Number(body.tax_amount??0),shipping_amount:Number(body.shipping_amount??0),total_amount:subtotal+Number(body.tax_amount??0)+Number(body.shipping_amount??0),currency:"USD",notes:body.notes??null,internal_notes:null,sent_at:null,received_at:null,cancelled_at:null,cancel_reason:null,item_count:items.length,total_units_ordered:items.reduce((a,x)=>a+x.quantity_ordered,0),total_units_received:0,is_fully_received:false,is_terminal:false,is_editable:true,is_overdue:false,items});
+    return order as T;
+  }
+  if(root==="payments"&&parts.length===2&&parts[1]==="summary"&&method==="GET"){
+    const payments=s.payments.filter(x=>x.status==="COMPLETED");
+    return {payment_count:payments.length,total_collected:payments.reduce((a,x)=>a+x.amount,0),voided_count:s.payments.filter(x=>x.status==="VOIDED").length};
+  }
+  if(root==="inventory"&&parts[1]==="transactions"&&parts.length===2){
+    if(method==="GET")return paged(s.inventoryTransactions,query) as T;
+    if(method==="POST"){
+      const part=one(s,"parts",String(body.part_id??""));
+      if(!part)fail("Part not found");
+      const quantity=Number(body.quantity??0);
+      if(!Number.isFinite(quantity)||quantity<=0)fail("Quantity must be greater than zero",422);
+      const before=Number(part.quantity_on_hand??0);
+      const after=body.transaction_type==="ISSUE"?before-quantity:before+quantity;
+      if(after<0)fail("Insufficient stock on hand",422);
+      part.quantity_on_hand=after;
+      const transaction=createRecord(s,"inventoryTransactions","txn",{...body,quantity_before:before,quantity_after:after,unit_cost:body.unit_cost??part.unit_cost});
+      saveStore();
+      return transaction as T;
+    }
+  }
+  if(root==="inventory"&&parts[1]==="transactions"&&parts.length===3&&method==="GET"){
+    const transaction=one(s,"inventoryTransactions",parts[2]);if(!transaction)fail("Transaction not found");return copy(transaction) as T;
+  }
   if(root==="inventory"&&parts[1]==="parts"&&parts[3]==="history")return copy(s.inventoryTransactions.filter(x=>x.part_id===parts[2])) as T;
   if(key&&parts.length===1){
     if(method==="GET"){if(root==="users"&&u.roles[0]!=="OWNER")fail("Not permitted",403);return paged(s[key],query) as T;}

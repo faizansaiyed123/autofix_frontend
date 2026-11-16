@@ -7,7 +7,7 @@ export function DemoNotice() {
   function reset() {
     if (!window.confirm("Reset this browser's AutoFix demo data and sign out?")) return;
     resetDemoData();
-    window.location.assign("/login");
+    window.location.reload();
   }
 
   return (

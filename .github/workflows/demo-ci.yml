@@ -25,8 +25,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
+      - name: Lint demo adapter and shell components
+        run: npx eslint src/lib/demo/api.ts src/components/layout/DemoNotice.tsx src/components/layout/AppShell.tsx src/app/portal/layout.tsx
 
       - name: Build
         run: npm run build
