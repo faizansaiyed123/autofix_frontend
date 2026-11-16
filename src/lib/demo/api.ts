@@ -171,7 +171,7 @@ function customerFor(s:Store,u:Row){return s.customers.find(c=>c.user_id===u.id|
 function audit(s:Store,u:Row,action:string,entity:string,item:Row){
   s.auditLogs.unshift({id:id("audit"),action,entity_type:entity,entity_id:item.id,entity_label:item.estimate_number??item.ro_number??item.invoice_number??item.name??item.title??item.id,actor_id:u.id,actor_email:u.email,actor_role:u.roles[0],actor_label:u.first_name+" "+u.last_name,summary:action.replaceAll("_"," ").toLowerCase(),changes:null,created_at:now()});
 }
-function createRecord(s:Store,key:string,prefix:string,body:Row){
+function createRecord(s:Store,key:string,prefix:string,body:Row):Row{
   const item={...body,id:id(prefix),created_at:now(),updated_at:now()};s[key].unshift(item);persist();return copy(item);
 }
 
@@ -243,7 +243,7 @@ export async function demoRequest<T>(path:string,options:DemoRequestOptions={}):
     const invoices=s.invoices.filter(a=>a.customer_id===customer.id);
     if(sub===""&&method==="GET"){
       const balance=invoices.reduce((a,i)=>a+i.balance,0);
-      return {customer_id:customer.id,full_name:customer.first_name+" "+customer.last_name,email:customer.email,phone:customer.phone,vehicle_count:vehicles.length,open_balance:money(balance),overdue_balance:money(invoices.filter(i=>i.is_overdue).reduce((a,i)=>a+i.balance,0)),awaiting_approval:estimates.reduce((a,e)=>a+e.items.filter(x=>x.status==="PENDING").length,0),awaiting_payment:invoices.filter(i=>i.balance>0).length,ready_for_pickup:0,next_appointment:appointments[0]?{...copy(appointments[0]),vehicle_label:(vehicles[0]?.year??"")+" "+(vehicles[0]?.make??"")+" "+(vehicles[0]?.model??""),status_view:statusView(appointments[0].status)}:null} as T;
+      return {customer_id:customer.id,full_name:customer.first_name+" "+customer.last_name,email:customer.email,phone:customer.phone,vehicle_count:vehicles.length,open_balance:money(balance),overdue_balance:money(invoices.filter(i=>i.is_overdue).reduce((a,i)=>a+i.balance,0)),awaiting_approval:estimates.reduce((a,e)=>a+e.items.filter((x:Row)=>x.status==="PENDING").length,0),awaiting_payment:invoices.filter(i=>i.balance>0).length,ready_for_pickup:0,next_appointment:appointments[0]?{...copy(appointments[0]),vehicle_label:(vehicles[0]?.year??"")+" "+(vehicles[0]?.make??"")+" "+(vehicles[0]?.model??""),status_view:statusView(appointments[0].status)}:null} as T;
     }
     if(sub==="vehicles"&&method==="GET")return copy(vehicles.map(v=>({id:v.id,make:v.make,model:v.model,year:v.year,color:v.color,license_plate:v.license_plate,vin:v.vin,mileage:v.mileage,status:v.status,status_view:statusView(v.status)}))) as T;
     if(sub.startsWith("vehicles/")&&method==="GET"){const v=vehicles.find(x=>x.id===sub.split("/")[1]);if(!v)fail("Vehicle not found");return {vehicle:copy(v),service_history:[],appointments:copy(appointments)} as T;}
@@ -253,7 +253,7 @@ export async function demoRequest<T>(path:string,options:DemoRequestOptions={}):
     if(sub==="service-requests"&&method==="POST"){const r=createRecord(s,"serviceRequests","request",{customer_id:customer.id,vehicle_id:body.vehicle_id??null,title:body.title,description:body.description??null,priority:body.priority??"NORMAL",status:"NEW",service_advisor_notes:null});return {...r,status_view:statusView(r.status)} as T;}
     if(sub==="estimates"&&method==="GET")return copy(estimates.map(e=>({...e,status_view:statusView(e.status)}))) as T;
     const decision=sub.match(/^estimates\/([^/]+)\/items\/([^/]+)\/decision$/);
-    if(decision&&method==="POST"){const e=estimates.find(x=>x.id===decision[1]);const line=e?.items.find(x=>x.id===decision[2]);if(!e||!line)fail("Estimate line not found");line.status=body.decision;line.customer_notes=body.notes??null;e.approved_total=money(e.items.filter(x=>x.status==="APPROVED").reduce((a,x)=>a+x.line_total,0));e.status=e.items.every(x=>x.status!=="PENDING")?"APPROVED":"PARTIALLY_APPROVED";persist();return {estimate:copy(e),approved_total:e.approved_total,remaining_to_decide:e.items.filter(x=>x.status==="PENDING").length} as T;}
+    if(decision&&method==="POST"){const e=estimates.find((x:Row)=>x.id===decision[1]);const line=e?.items.find((x:Row)=>x.id===decision[2]);if(!e||!line)fail("Estimate line not found");line.status=body.decision;line.customer_notes=body.notes??null;e.approved_total=money(e.items.filter((x:Row)=>x.status==="APPROVED").reduce((a:number,x:Row)=>a+x.line_total,0));e.status=e.items.every((x:Row)=>x.status!=="PENDING")?"APPROVED":"PARTIALLY_APPROVED";persist();return {estimate:copy(e),approved_total:e.approved_total,remaining_to_decide:e.items.filter((x:Row)=>x.status==="PENDING").length} as T;}
     if(sub==="invoices"&&method==="GET")return copy(invoices.map(i=>({...i,status_view:statusView(i.status)}))) as T;
     const pay=sub.match(/^invoices\/([^/]+)\/payments$/);
     if(pay&&method==="POST"){const i=invoices.find(x=>x.id===pay[1]);if(!i||body.amount<=0||body.amount>i.balance)fail("Payment is outside the invoice balance",422);const p=createRecord(s,"payments","payment",{invoice_id:i.id,amount:body.amount,method:body.method??"CARD",status:"COMPLETED",payment_date:now(),reference:body.reference??"DEMO-PAYMENT",notes:body.notes??null,recorded_by_id:u.id,void_reason:null,voided_at:null});i.amount_paid=money(i.amount_paid+p.amount);i.balance=money(i.total-i.amount_paid);i.status=i.balance===0?"PAID":"PARTIALLY_PAID";persist();return {payment:p,invoice_status:i.status,invoice_status_view:statusView(i.status),invoice_balance:i.balance} as T;}
@@ -267,11 +267,11 @@ export async function demoRequest<T>(path:string,options:DemoRequestOptions={}):
   if(root==="suppliers"&&parts.length===3&&parts[2]==="summary"&&method==="GET"){
     const supplier=one(s,"suppliers",parts[1]);if(!supplier)fail("Supplier not found");
     const orders=s.purchaseOrders.filter(x=>x.supplier_id===supplier.id);
-    return {supplier_id:supplier.id,order_count:orders.length,total_order_value:orders.reduce((a,x)=>a+x.total_amount,0),open_order_count:orders.filter(x=>!["RECEIVED","CANCELLED"].includes(x.status)).length};
+    return {supplier_id:supplier.id,order_count:orders.length,total_order_value:orders.reduce((a:number,x:Row)=>a+x.total_amount,0),open_order_count:orders.filter((x:Row)=>!["RECEIVED","CANCELLED"].includes(x.status)).length} as T;
   }
   if(root==="suppliers"&&parts.length===3&&parts[2]==="deactivate"&&method==="POST"){
     const supplier=one(s,"suppliers",parts[1]);if(!supplier)fail("Supplier not found");
-    supplier.is_active=false;supplier.status="INACTIVE";saveStore();return copy(supplier) as T;
+    supplier.is_active=false;supplier.status="INACTIVE";persist();return copy(supplier) as T;
   }
   if(root==="purchase_orders"&&parts.length===3&&parts[1]==="by-number"&&method==="GET"){
     const order=s.purchaseOrders.find(x=>x.po_number===parts[2]);if(!order)fail("Purchase order not found");return copy(order) as T;
@@ -280,13 +280,13 @@ export async function demoRequest<T>(path:string,options:DemoRequestOptions={}):
     const supplier=one(s,"suppliers",String(body.supplier_id??""));if(!supplier)fail("Supplier not found");
     const selected=s.parts.filter(p=>p.quantity_on_hand<=p.reorder_level&&(!Array.isArray(body.part_ids)||body.part_ids.includes(p.id)));
     const items=selected.map(p=>({id:id("po-item"),part_id:p.id,part_number:p.part_number,part_name:p.name,quantity_ordered:Math.max(1,(p.reorder_level-p.quantity_on_hand)*Number(body.shortage_multiplier??1)),quantity_received:0,unit_cost:p.unit_cost,line_total:Math.max(1,p.reorder_level-p.quantity_on_hand)*p.unit_cost}));
-    const subtotal=items.reduce((a,x)=>a+x.line_total,0);
+    const subtotal=items.reduce((a:number,x:Row)=>a+x.line_total,0);
     const order=createRecord(s,"purchaseOrders","po",{supplier_id:supplier.id,supplier_name:supplier.name,status:"DRAFT",order_date:day(),expected_delivery_date:body.expected_delivery_date??null,subtotal,tax_amount:Number(body.tax_amount??0),shipping_amount:Number(body.shipping_amount??0),total_amount:subtotal+Number(body.tax_amount??0)+Number(body.shipping_amount??0),currency:"USD",notes:body.notes??null,internal_notes:null,sent_at:null,received_at:null,cancelled_at:null,cancel_reason:null,item_count:items.length,total_units_ordered:items.reduce((a,x)=>a+x.quantity_ordered,0),total_units_received:0,is_fully_received:false,is_terminal:false,is_editable:true,is_overdue:false,items});
     return order as T;
   }
   if(root==="payments"&&parts.length===2&&parts[1]==="summary"&&method==="GET"){
     const payments=s.payments.filter(x=>x.status==="COMPLETED");
-    return {payment_count:payments.length,total_collected:payments.reduce((a,x)=>a+x.amount,0),voided_count:s.payments.filter(x=>x.status==="VOIDED").length};
+    return {payment_count:payments.length,total_collected:payments.reduce((a:number,x:Row)=>a+x.amount,0),voided_count:s.payments.filter((x:Row)=>x.status==="VOIDED").length} as T;
   }
   if(root==="inventory"&&parts[1]==="transactions"&&parts.length===2){
     if(method==="GET")return paged(s.inventoryTransactions,query) as T;
@@ -300,7 +300,7 @@ export async function demoRequest<T>(path:string,options:DemoRequestOptions={}):
       if(after<0)fail("Insufficient stock on hand",422);
       part.quantity_on_hand=after;
       const transaction=createRecord(s,"inventoryTransactions","txn",{...body,quantity_before:before,quantity_after:after,unit_cost:body.unit_cost??part.unit_cost});
-      saveStore();
+      persist();
       return transaction as T;
     }
   }
