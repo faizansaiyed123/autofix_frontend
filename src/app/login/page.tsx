@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field, FormError, Input } from "@/components/ui/Form";
 import { ApiError } from "@/lib/api/client";
-import { COMPANY_NAME } from "@/lib/config";
+import { COMPANY_NAME, DEMO_MODE } from "@/lib/config";
 import { useSession } from "@/lib/auth/AuthProvider";
 
 function BrandMark() {
@@ -262,6 +262,23 @@ export default function LoginPage() {
               Create a customer account
             </Link>
           </form>
+          {DEMO_MODE ? (
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-amber-900">Try a demo account</p>
+              <p className="mt-1 text-xs text-amber-800">Password for every account: <strong>demo1234</strong></p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  ["Owner", "owner@autofix.demo"],
+                  ["Service advisor", "manager@autofix.demo"],
+                  ["Technician", "tech@autofix.demo"],
+                  ["Parts staff", "parts@autofix.demo"],
+                  ["Customer", "customer@autofix.demo"],
+                ].map(([role, address]) => (
+                  <button key={address} type="button" onClick={() => { setEmail(address); setPassword("demo1234"); }} className="rounded-lg border border-amber-300 bg-white px-2.5 py-1.5 text-xs font-medium text-amber-950 hover:bg-amber-100">{role}</button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <p className="mt-5 text-center text-xs leading-5 text-ink-500">
             Customers sign in here too and are taken directly to their own
             account.{" "}

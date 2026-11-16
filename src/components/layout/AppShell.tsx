@@ -8,6 +8,7 @@ import { Icon } from "@/components/layout/Icon";
 import { NAV_GROUPS } from "@/lib/navigation";
 import { notificationsApi } from "@/lib/api/insight";
 import { COMPANY_NAME } from "@/lib/config";
+import { DemoNotice } from "@/components/layout/DemoNotice";
 import { formatRelative } from "@/lib/format";
 import { useSession } from "@/lib/auth/AuthProvider";
 
@@ -92,6 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <DemoNotice />
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-ink-200 bg-white/90 px-4 py-2.5 backdrop-blur">
           <div className="lg:hidden">
             <p className="text-sm font-semibold text-ink-900">{COMPANY_NAME}</p>

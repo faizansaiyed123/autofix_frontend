@@ -1,3 +1,6 @@
+/** Demo mode is isolated to this branch; main continues to use the real API. */
+export const DEMO_MODE = true;
+
 /** Browser-facing configuration; `NEXT_PUBLIC_API_URL` must be reachable from the user's browser. */
 export const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"

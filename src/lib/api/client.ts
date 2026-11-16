@@ -3,7 +3,7 @@
  * Tokens currently use localStorage; replace this with an HttpOnly-cookie flow
  * when the backend supports one.
  */
-import { API_BASE_URL, API_PREFIX, STORAGE_KEYS } from "@/lib/config";
+import { API_BASE_URL, API_PREFIX, STORAGE_KEYS, DEMO_MODE } from "@/lib/config";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -191,6 +191,10 @@ export async function request<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
+  if (DEMO_MODE) {
+    const { demoRequest } = await import("@/lib/demo/api");
+    return demoRequest<T>(path, options);
+  }
   const { method = "GET", body, query, anonymous = false, signal } = options;
   const headers: Record<string, string> = { Accept: "application/json" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -227,6 +231,10 @@ export async function request<T>(
 
 /** Fetch printable estimate and invoice documents without exposing bearer tokens in URLs. */
 export async function requestDocument<T = string>(path: string): Promise<T> {
+  if (DEMO_MODE) {
+    const { demoDocument } = await import("@/lib/demo/api");
+    return (await demoDocument(path)) as T;
+  }
   const token = getAccessToken();
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;

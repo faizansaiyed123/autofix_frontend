@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/auth/Guard";
 import { Icon } from "@/components/layout/Icon";
 import { notificationsApi } from "@/lib/api/insight";
 import { COMPANY_NAME } from "@/lib/config";
+import { DemoNotice } from "@/components/layout/DemoNotice";
 import { useSession } from "@/lib/auth/AuthProvider";
 
 const PORTAL_LINKS = [
@@ -64,6 +65,7 @@ function PortalShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-ink-50">
+      <DemoNotice />
       <header className="border-b border-ink-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
           <Link href="/portal" className="text-sm font-semibold text-ink-900">
