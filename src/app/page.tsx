@@ -8,7 +8,7 @@ function WorkshopMark() {
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
-      className="size-7 text-[#a65336]"
+      className="size-6 text-[#a65336] sm:size-7 text-[#a65336]"
     >
       <path
         d="M14.2 6.1a5 5 0 0 0-6.1 6.1L3.7 16.6a2.3 2.3 0 1 0 3.3 3.3l4.4-4.4a5 5 0 0 0 6.1-6.1l-3 3-3.1-3.1 2.8-3.2Z"
@@ -105,18 +105,18 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f4f1e9] text-[#252923]">
       <header className="border-b border-[#d8d2c6]">
-        <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-5 px-5 py-5 sm:px-8 lg:px-12">
+        <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-2 px-3 py-4 sm:gap-5 sm:px-8 sm:py-5 lg:px-12">
           <Link
             href="/"
-            className="flex shrink-0 items-center gap-3"
+            className="flex shrink-0 items-center gap-2 sm:gap-3"
             aria-label={COMPANY_NAME + " home"}
           >
             <WorkshopMark />
             <span>
-              <span className="block text-[15px] font-semibold tracking-[-0.02em]">
+              <span className="block text-[13px] font-semibold tracking-[-0.02em] sm:text-[15px]">
                 {COMPANY_NAME}
               </span>
-              <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-[0.2em] text-[#77796f]">
+              <span className="mt-0.5 hidden text-[9px] font-semibold uppercase tracking-[0.2em] text-[#77796f] sm:block">
                 Workshop operations
               </span>
             </span>
@@ -140,13 +140,13 @@ export default function HomePage() {
           <div className="flex shrink-0 items-center gap-3">
             <Link
               href="/login"
-              className="px-2 py-2 text-[13px] font-semibold text-[#444a42] transition-colors hover:text-[#a65336] sm:px-3"
+              className="px-1 py-2 text-[12px] font-semibold text-[#444a42] transition-colors hover:text-[#a65336] sm:px-3 sm:text-[13px]"
             >
               Sign in
             </Link>
             <Link
               href="/register"
-              className="inline-flex min-h-10 items-center gap-2 bg-[#a65336] px-3.5 text-[12px] font-semibold text-white transition-colors hover:bg-[#87452f] sm:px-4 sm:text-[13px]"
+              className="inline-flex min-h-9 items-center gap-1.5 bg-[#a65336] px-2.5 text-[11px] font-semibold text-white transition-colors hover:bg-[#87452f] sm:min-h-10 sm:gap-2 sm:px-4 sm:text-[13px]"
             >
               Create account <ArrowIcon />
             </Link>
@@ -160,7 +160,7 @@ export default function HomePage() {
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#a65336] sm:text-[11px]">
               Workshop management
             </p>
-            <h1 className="mt-6 font-serif text-[clamp(3.2rem,6.7vw,6.1rem)] leading-[0.98] tracking-[-0.06em] text-[#242821]">
+            <h1 className="mt-6 font-serif text-[2.8rem] leading-[0.98] tracking-[-0.06em] text-[#242821] sm:text-[4.3rem] lg:text-[6.1rem]">
               Run the workshop.
               <span className="mt-2 block text-[#a65336]">
                 Keep every job moving.
