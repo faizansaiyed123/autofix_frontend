@@ -184,7 +184,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 border-b border-ink-400 pb-1 text-[13px] font-semibold text-ink-900 transition-colors hover:border-brand-400 hover:text-white"
+                className="inline-flex items-center gap-2 border-b border-white/20 pb-1 text-[13px] font-semibold text-ink-200 transition-colors hover:border-white hover:text-white"
               >
                 Sign in to AutoFix
               </Link>
@@ -201,7 +201,7 @@ export default function HomePage() {
 
       <section
         id="platform"
-        className="scroll-mt-8 border-b border-ink-200 bg-ink-50"
+        className="scroll-mt-8 border-b border-ink-200 bg-white"
       >
         <div className="mx-auto max-w-[1320px] px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
           <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end lg:gap-16">
@@ -235,7 +235,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="workflow" className="scroll-mt-8 border-b border-ink-200">
+      <section id="workflow" className="scroll-mt-8 border-b border-ink-200 bg-brand-50">
         <div className="mx-auto grid max-w-[1320px] gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[0.78fr_1.22fr] lg:gap-20 lg:px-12 lg:py-24">
           <div className="max-w-md">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-700 sm:text-[11px]">
@@ -314,7 +314,7 @@ export default function HomePage() {
                   className="grid grid-cols-[12px_1fr] items-center gap-3 border-b border-ink-200 py-4"
                 >
                   <span className="size-1.5 bg-brand-500" aria-hidden="true" />
-                  <span className="text-[13px] font-medium text-ink-200 sm:text-sm">
+                  <span className="text-[13px] font-medium text-ink-800 sm:text-sm">
                     {tool}
                   </span>
                 </li>
@@ -324,10 +324,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-b border-ink-200">
+      <section className="border-b border-white/10 bg-ink-950 text-white">
         <div className="mx-auto flex max-w-[1320px] flex-col gap-7 px-5 py-14 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-12 lg:py-16">
           <div className="max-w-2xl">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-700">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-200">
               {COMPANY_NAME}
             </p>
             <h2 className="mt-3 font-serif text-3xl leading-tight tracking-[-0.04em] sm:text-4xl">
@@ -337,7 +337,7 @@ export default function HomePage() {
           <div className="flex shrink-0 flex-col items-start gap-4 sm:flex-row sm:items-center">
             <Link
               href="/login"
-              className="border-b border-ink-400 pb-1 text-[13px] font-semibold text-ink-900 transition-colors hover:border-brand-400 hover:text-white"
+              className="border-b border-white/20 pb-1 text-[13px] font-semibold text-ink-200 transition-colors hover:border-white hover:text-white"
             >
               Sign in
             </Link>
@@ -351,16 +351,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="bg-ink-950 text-white">
+      <footer className="border-t border-ink-100 bg-white text-ink-900">
         <div className="mx-auto flex max-w-[1320px] flex-col gap-4 px-5 py-7 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-12">
           <div className="flex items-center gap-3">
             <WorkshopMark small />
             <span className="text-[13px] font-semibold">{COMPANY_NAME}</span>
-            <span className="text-[11px] text-ink-400">
+            <span className="text-[11px] text-ink-500">
               Workshop operations
             </span>
           </div>
-          <div className="flex gap-6 text-[12px] text-ink-300">
+          <div className="flex gap-6 text-[12px] text-ink-500">
             <Link href="/login" className="transition-colors hover:text-white">
               Sign in
             </Link>
