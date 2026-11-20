@@ -8,7 +8,7 @@ function WorkshopMark() {
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
-      className="size-6 text-[#a65336] sm:size-7 text-[#a65336]"
+      className="size-6 sm:size-7 text-[#a65336]"
     >
       <path
         d="M14.2 6.1a5 5 0 0 0-6.1 6.1L3.7 16.6a2.3 2.3 0 1 0 3.3 3.3l4.4-4.4a5 5 0 0 0 6.1-6.1l-3 3-3.1-3.1 2.8-3.2Z"
