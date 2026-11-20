@@ -42,25 +42,21 @@ function ArrowIcon() {
 
 const capabilities = [
   {
-    number: "01",
     title: "Customers and vehicles",
     description:
       "Keep customer details, vehicle records and service history together, instead of piecing them together for every visit.",
   },
   {
-    number: "02",
     title: "Bookings and inspections",
     description:
       "Work from the diary and check-in through inspection findings, notes and evidence.",
   },
   {
-    number: "03",
     title: "Estimates and repair work",
     description:
       "Turn approved work into repair orders, assign tasks and technicians, and follow progress through quality control.",
   },
   {
-    number: "04",
     title: "Parts and payments",
     description:
       "Connect stock, suppliers and purchase orders with the estimates, invoices and payments for each job.",
@@ -69,25 +65,25 @@ const capabilities = [
 
 const serviceSteps = [
   {
-    number: "01",
+    stage: "Front desk",
     title: "Request and book",
     description:
       "A customer asks for service. The workshop reviews the request and arranges the appointment.",
   },
   {
-    number: "02",
+    stage: "Assessment",
     title: "Check and estimate",
     description:
       "Record the vehicle's arrival, inspect the work and send an estimate for the customer to review.",
   },
   {
-    number: "03",
+    stage: "Service bay",
     title: "Repair and verify",
     description:
       "Move agreed work into a repair order, track tasks and parts, then record the quality-control decision.",
   },
   {
-    number: "04",
+    stage: "Accounts",
     title: "Invoice and close",
     description:
       "Issue the invoice, record payment and keep the service record with the customer's vehicle.",
@@ -155,8 +151,8 @@ export default function HomePage() {
       </header>
 
       <section className="border-b border-[#d8d2c6]">
-        <div className="mx-auto grid max-w-[1320px] gap-12 px-5 pb-16 pt-16 sm:px-8 sm:pb-20 sm:pt-20 lg:grid-cols-[1.12fr_0.88fr] lg:items-center lg:gap-20 lg:px-12 lg:pb-24 lg:pt-24">
-          <div className="max-w-[760px]">
+        <div className="mx-auto max-w-[1320px] px-5 pb-16 pt-16 sm:px-8 sm:pb-20 sm:pt-20 lg:px-12 lg:pb-24 lg:pt-24">
+          <div className="max-w-[900px]">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#a65336] sm:text-[11px]">
               Workshop management
             </p>
@@ -192,38 +188,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <aside
-            aria-label="Service workflow"
-            className="border-l border-[#cfc8ba] pl-6 sm:pl-8 lg:ml-1 lg:pl-10"
-          >
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#77796f]">
-              From first request to collection
-            </p>
-            <h2 className="mt-4 max-w-sm font-serif text-[2rem] leading-tight tracking-[-0.04em] text-[#30362e] sm:text-[2.35rem]">
-              The whole visit, not just the repair.
-            </h2>
-            <ol className="mt-8">
-              {[
-                "Customer request",
-                "Appointment and check-in",
-                "Inspection and estimate",
-                "Repair and quality control",
-                "Invoice and payment",
-              ].map((step, index) => (
-                <li
-                  key={step}
-                  className="grid grid-cols-[38px_1fr] items-center border-t border-[#d8d2c6] py-3.5 last:border-b"
-                >
-                  <span className="font-mono text-[10px] text-[#a65336]">
-                    0{index + 1}
-                  </span>
-                  <span className="text-[13px] font-medium text-[#444a42] sm:text-sm">
-                    {step}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </aside>
+
         </div>
       </section>
 
@@ -250,10 +215,7 @@ export default function HomePage() {
 
           <div className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 xl:grid-cols-4">
             {capabilities.map((item) => (
-              <article key={item.number} className="border-t border-[#bdb6a9] pt-5">
-                <span className="font-mono text-[10px] text-[#a65336]">
-                  {item.number}
-                </span>
+              <article key={item.title} className="border-t border-[#bdb6a9] pt-5">
                 <h3 className="mt-5 font-serif text-[1.55rem] leading-tight tracking-[-0.03em]">
                   {item.title}
                 </h3>
@@ -291,11 +253,11 @@ export default function HomePage() {
           <ol className="border-t border-[#bdb6a9]">
             {serviceSteps.map((step) => (
               <li
-                key={step.number}
-                className="grid gap-2 border-b border-[#d8d2c6] py-5 sm:grid-cols-[54px_0.75fr_1.25fr] sm:gap-5 sm:py-6"
+                key={step.stage}
+                className="grid gap-2 border-b border-[#d8d2c6] py-5 sm:grid-cols-[110px_0.75fr_1.25fr] sm:gap-5 sm:py-6"
               >
-                <span className="font-mono text-[11px] text-[#a65336]">
-                  {step.number}
+                <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#a65336] sm:pt-1">
+                  {step.stage}
                 </span>
                 <h3 className="font-serif text-[1.35rem] leading-tight tracking-[-0.025em] text-[#30362e]">
                   {step.title}
@@ -339,14 +301,12 @@ export default function HomePage() {
               Customer account access
             </p>
             <ul className="border-t border-[#bdb6a9]">
-              {customerTools.map((tool, index) => (
+              {customerTools.map((tool) => (
                 <li
                   key={tool}
-                  className="grid grid-cols-[36px_1fr] items-center gap-3 border-b border-[#d0c9bc] py-4"
+                  className="grid grid-cols-[12px_1fr] items-center gap-3 border-b border-[#d0c9bc] py-4"
                 >
-                  <span className="font-mono text-[10px] text-[#a65336]">
-                    0{index + 1}
-                  </span>
+                  <span className="size-1.5 bg-[#a65336]" aria-hidden="true" />
                   <span className="text-[13px] font-medium text-[#444a42] sm:text-sm">
                     {tool}
                   </span>
