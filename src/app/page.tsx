@@ -361,7 +361,7 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-[1320px] flex-col gap-7 px-5 py-14 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-12 lg:py-16">
           <div className="max-w-2xl">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#a65336]">
-              AutoFix Garage
+              {COMPANY_NAME}
             </p>
             <h2 className="mt-3 font-serif text-3xl leading-tight tracking-[-0.04em] sm:text-4xl">
               Spend less time chasing the job. More time getting it done.
