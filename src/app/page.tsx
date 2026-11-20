@@ -235,7 +235,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="workflow" className="scroll-mt-8 border-b border-ink-200 bg-brand-50">
+      <section id="workflow" className="scroll-mt-8 border-b border-ink-200 bg-ink-50">
         <div className="mx-auto grid max-w-[1320px] gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[0.78fr_1.22fr] lg:gap-20 lg:px-12 lg:py-24">
           <div className="max-w-md">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-700 sm:text-[11px]">
@@ -251,7 +251,7 @@ export default function HomePage() {
             </p>
             <Link
               href="/login"
-              className="mt-7 inline-flex items-center gap-2 border-b border-ink-400 pb-1 text-[13px] font-semibold text-ink-900 transition-colors hover:border-brand-400 hover:text-white"
+              className="mt-7 inline-flex items-center gap-2 border-b border-ink-400 pb-1 text-[13px] font-semibold text-ink-900 transition-colors hover:border-brand-400 hover:text-brand-700"
             >
               Sign in to your workspace <ArrowIcon />
             </Link>
@@ -280,7 +280,7 @@ export default function HomePage() {
 
       <section
         id="customers"
-        className="scroll-mt-8 border-b border-ink-200 bg-ink-50"
+        className="scroll-mt-8 border-b border-ink-200 bg-brand-50"
       >
         <div className="mx-auto grid max-w-[1320px] gap-10 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[1fr_0.9fr] lg:items-center lg:gap-20 lg:px-12 lg:py-24">
           <div className="max-w-[650px]">
@@ -361,10 +361,10 @@ export default function HomePage() {
             </span>
           </div>
           <div className="flex gap-6 text-[12px] text-ink-500">
-            <Link href="/login" className="transition-colors hover:text-white">
+            <Link href="/login" className="transition-colors hover:text-brand-700">
               Sign in
             </Link>
-            <Link href="/register" className="transition-colors hover:text-white">
+            <Link href="/register" className="transition-colors hover:text-brand-700">
               Create account
             </Link>
           </div>
